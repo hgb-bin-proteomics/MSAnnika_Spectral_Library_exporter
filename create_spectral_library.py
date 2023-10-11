@@ -41,10 +41,10 @@ Column1 -> iterator
 linkId -> proteinName1_proteinName2-prot1LinkPos_prot2LinkPos
 ProteinID -> proteinName1_proteinName2
 StrippedPeptide -> Both peptides without modifications concatenated
-FragementGroupId -> peptide1_peptide2-pep1LinkPos_pep2LinkPos:?                 -> needs clarification
+FragementGroupId -> peptide1_peptide2-pep1LinkPos_pep2LinkPos:charge
 PrecursorCharge -> precursorCharge
-PrecursorMz -> precursorMz (int) multiplied?                                    -> needs clarification
-ModifiedPeptide -> peptide1(XLMod)_peptide2(XLMod)                              -> needs clarification
+PrecursorMz -> precursorMz
+ModifiedPeptide -> peptide1(Mod[noXL])_peptide2(Mod[noXL])
 IsotopeLabel -> 0
 scanID -> scanNr
 run -> run
@@ -59,8 +59,8 @@ FragmentCharge -> int
 FragmentType -> b/y
 FragmentNumber -> int
 FragmentPepId -> 0 for first pep, 1 for second pep
-FragmentMz -> fragmentMz (int) multiplied?                                      -> needs clarification
-RelativeIntensity -> int but what exactly?                                      -> needs clarification
+FragmentMz -> fragmentMz
+RelativeIntensity -> [0..1]
 FragmentLossType -> empty
 CLContainingFragment -> TRUE / FALSE (XL in frag)
 LossyFragment -> FALSE
