@@ -20,8 +20,9 @@ __date = "2023-10-10"
 ##### PARAMETERS #####
 
 SPECTRA_FILE = "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf"
-CSMS_FILE = "CSMs_unfiltered.xlsx"
-DOUBLETS_FILE = "CrosslinkDoublets.txt"
+CSMS_FILE = "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001-(1).xlsx"
+RUN_NAME = "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001-(1)"
+CROSSLINKER = "DSSO"
 MODIFICATIONS = \
     {"Oxidation": [15.994915],
      "Carbamidomethyl": [57.021464],
@@ -29,9 +30,7 @@ MODIFICATIONS = \
 ION_TYPES = ("b", "y")
 MAX_CHARGE = 4
 MATCH_TOLERANCE = 0.02
-DOUBLET_IDENTIFICATION_MODE = "All"
-# DOUBLET_IDENTIFICATION_MODE = "Evidence"
-# DOUBLET_IDENTIFICATION_MODE = "Indication"
+iRT_PARAMS = {"iRT_m": 1.3066, "iRT_t": 29.502}
 
 ######################
 
@@ -86,9 +85,10 @@ import warnings
 def read_spectra(filename: str) -> Dict[int, Dict]:
     """
     Returns a dictionary that maps scan numbers to spectra:
-    Dict[int -> Dict["precursor" -> float
-                     "charge"    -> int
-                     "peaks"     -> Dict[m/z -> intensity]]
+    Dict[int -> Dict["precursor"        -> float
+                     "charge"           -> int
+                     "max_intensity"    -> float
+                     "peaks"            -> Dict[m/z -> intensity]]
     """
 
     result_dict = dict()
@@ -99,86 +99,13 @@ def read_spectra(filename: str) -> Dict[int, Dict]:
             spectrum_dict = dict()
             spectrum_dict["precursor"] = spectrum["params"]["pepmass"]
             spectrum_dict["charge"] = spectrum["params"]["charge"]
+            spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"]))
             peaks = dict()
             for i, mz in enumerate(spectrum["m/z array"]):
                 peaks[mz] = spectrum["intensity array"][i]
             spectrum_dict["peaks"] = peaks
             result_dict[scan_nr] = spectrum_dict
         reader.close()
-
-    return result_dict
-
-def read_doublets(filename: str) -> Dict[int, Dict]:
-    """
-    Returns a dictionary that maps scan numbers to doublets:
-    Dict[int -> Dict["alpha_light" -> set(float)
-                     "alpha_heavy" -> set(float)
-                     "beta_light"  -> set(float)
-                     "beta_heavy"  -> set(float)]
-    """
-
-    proton_mass = 1.007276466812
-    result_dict = dict()
-    doublet_df = pd.read_csv(filename, sep = "\t")
-
-    for i, row in tqdm(doublet_df.iterrows(), total = doublet_df.shape[0], desc = "INFO: Progress bar - Reading doublet file"):
-
-        if DOUBLET_IDENTIFICATION_MODE != "All":
-            if DOUBLET_IDENTIFICATION_MODE not in row["Identification Mode"]:
-                continue
-
-        alpha_doublets = row["Complete Alpha Doublet"]
-        uncharged_aL, uncharged_aH = [float(m.strip()) for m in alpha_doublets.split("|")]
-        mz_aL = row["m/z Alpha Light"]
-        mz_aH = row["m/z Alpha Heavy"]
-        beta_doublets = row["Complete Beta Doublet"]
-        uncharged_bL, uncharged_bH = [float(m.strip()) for m in beta_doublets.split("|")]
-        mz_bL = row["m/z Beta Light"]
-        mz_bH = row["m/z Beta Heavy"]
-        scan_nr = row["Scan number"]
-
-        # alpha light possible m/z
-        aL_masses = set()
-        if mz_aL != 0:
-            aL_masses.add(mz_aL)
-
-        for charge in range(1, MAX_CHARGE + 1):
-            aL_masses.add((uncharged_aL + charge * proton_mass) / charge)
-
-        # alpha heavy possible m/z
-        aH_masses = set()
-        if mz_aH != 0:
-            aH_masses.add(mz_aH)
-
-        for charge in range(1, MAX_CHARGE + 1):
-            aH_masses.add((uncharged_aH + charge * proton_mass) / charge)
-
-        # beta light possible m/z
-        bL_masses = set()
-        if mz_bL != 0:
-            bL_masses.add(mz_bL)
-
-        for charge in range(1, MAX_CHARGE + 1):
-            bL_masses.add((uncharged_bL + charge * proton_mass) / charge)
-
-        # beta heavy possible m/z
-        bH_masses = set()
-        if mz_bH != 0:
-            bH_masses.add(mz_bH)
-
-        for charge in range(1, MAX_CHARGE + 1):
-            bH_masses.add((uncharged_bH + charge * proton_mass) / charge)
-
-        if scan_nr not in result_dict:
-            result_dict[scan_nr] = {"alpha_light": aL_masses,
-                                    "alpha_heavy": aH_masses,
-                                    "beta_light": bL_masses,
-                                    "beta_heavy": bH_masses}
-        else:
-            result_dict[scan_nr]["alpha_light"].update(aL_masses)
-            result_dict[scan_nr]["alpha_heavy"].update(aH_masses)
-            result_dict[scan_nr]["beta_light"].update(bL_masses)
-            result_dict[scan_nr]["beta_heavy"].update(bH_masses)
 
     return result_dict
 
@@ -269,10 +196,9 @@ def generate_theoretical_fragments(peptide: str, modifications: Dict[int, List[f
 
     return fragments
 
-def get_intensities(row: pd.Series, alpha: bool, spectra: Dict[int, Dict]) -> Tuple[float, Dict[float, str], Dict[float, str]]:
-    """
-    Returns the sum of intensities of the matched fragment ions of an identified peptide, the matched ions and all potential theoretical ions.
-    """
+def get_matches(row: pd.Series, alpha: bool, spectra: Dict[int, Dict]) -> Tuple[float, Dict[float, str], Dict[float, str]]:
+
+    #todo
 
     scan_nr = row["First Scan"]
 
@@ -300,90 +226,134 @@ def get_intensities(row: pd.Series, alpha: bool, spectra: Dict[int, Dict]) -> Tu
 
     return total_intensity, matched_fragments, theoretical_fragments
 
-def get_doublets(row: pd.Series, spectra: Dict[int, Dict], doublets: Dict[int, Dict]) -> Tuple[float,
-                                                                                               float,
-                                                                                               float,
-                                                                                               float,
-                                                                                               List[Tuple],
-                                                                                               List[Tuple],
-                                                                                               List[Tuple],
-                                                                                               List[Tuple]]:
-    """
-    Returns the sum of intensities of alpha light doublet peaks, alpha heavy doublet peaks, beta light doublet peaks, beta heavy doublet peaks (index 0 - 3).
-    Returns the peaks (Tuple (m/z, intensity)) of alpha light doublet peaks, alpha heavy doublet peaks, beta light doublet peaks, beta heavy doublet peaks (index 4 - 7).
-    """
+def get_positions_in_protein(row: pd.Series) -> Dict[str, int]:
 
-    scan_nr = row["First Scan"]
-    spectrum = spectra[scan_nr]
-    aL_doublets = []
-    aH_doublets = []
-    bL_doublets = []
-    bH_doublets = []
+    pep_pos_A = int(row["A in protein"])
+    pep_pos_B = int(row["B in protein"])
+    xl_pos_A = int(row["Crosslinker Position A"])
+    xl_pos_B = int(row["Crosslinker Position B"])
 
-    if scan_nr not in doublets:
-        return 0, 0, 0, 0, [], [], [], []
-    else:
-        for peak_mz in spectrum["peaks"].keys():
+    return {"A": pep_pos_A + xl_pos_A, "B": pep_pos_B + xl_pos_B}
 
-            for doublet_mz in doublets[scan_nr]["alpha_light"]:
-                if round(peak_mz, 4) < round(doublet_mz + MATCH_TOLERANCE, 4) and round(peak_mz, 4) > round(doublet_mz - MATCH_TOLERANCE, 4):
-                    aL_doublets.append((peak_mz, spectrum["peaks"][peak_mz]))
-                    break
+def get_linkId(row: pd.Series) -> str:
 
-            for doublet_mz in doublets[scan_nr]["alpha_heavy"]:
-                if round(peak_mz, 4) < round(doublet_mz + MATCH_TOLERANCE, 4) and round(peak_mz, 4) > round(doublet_mz - MATCH_TOLERANCE, 4):
-                    aH_doublets.append((peak_mz, spectrum["peaks"][peak_mz]))
-                    break
+    positions = get_positions_in_protein(row)
 
-            for doublet_mz in doublets[scan_nr]["beta_light"]:
-                if round(peak_mz, 4) < round(doublet_mz + MATCH_TOLERANCE, 4) and round(peak_mz, 4) > round(doublet_mz - MATCH_TOLERANCE, 4):
-                    bL_doublets.append((peak_mz, spectrum["peaks"][peak_mz]))
-                    break
+    return str(row["Accession A"]) + "_" + str(row["Accession B"]) + "-" + str(positions["A"]) + "_" + str(positions["B"])
 
-            for doublet_mz in doublets[scan_nr]["beta_heavy"]:
-                if round(peak_mz, 4) < round(doublet_mz + MATCH_TOLERANCE, 4) and round(peak_mz, 4) > round(doublet_mz - MATCH_TOLERANCE, 4):
-                    bH_doublets.append((peak_mz, spectrum["peaks"][peak_mz]))
-                    break
+def get_ProteinID(row: pd.Series) -> str:
 
-        return sum([p[1] for p in aL_doublets]), \
-               sum([p[1] for p in aH_doublets]), \
-               sum([p[1] for p in bL_doublets]), \
-               sum([p[1] for p in bH_doublets]), \
-               aL_doublets, aH_doublets, bL_doublets, bH_doublets
+    return str(row["Accession A"]) + "_" + str(row["Accession B"])
 
-def get_total_fragment_intensity(row: pd.Series) -> float:
-    """
-    Returns the total intensity of fragment ions in the spectrum.
-    """
+def get_StrippedPeptide(row: pd.Series) -> str:
 
-    if row["Sequence A"].strip() == row["Sequence B"].strip():
-        return (row["Fragment Intensities A (Sum)"] + row["Fragment Intensities B (Sum)"]) / 2
-    else:
-        return row["Fragment Intensities A (Sum)"] + row["Fragment Intensities B (Sum)"]
+    return str(row["Sequence A"]) + str(row["Sequence B"])
 
-def get_total_doublet_intensity(row: pd.Series) -> float:
-    """
-    Returns the total intensity of doublet peaks in the spectrum.
-    """
+def get_FragmentGroupId(row: pd.Series) -> str:
 
-    if row["Sequence A"].strip() == row["Sequence B"].strip():
-        return (row["Alpha Doublet Intensities Total"] + row["Beta Doublet Intensities Total"]) / 2
-    else:
-        return row["Alpha Doublet Intensities Total"] + row["Beta Doublet Intensities Total"]
+    return str(row["Sequence A"]) + "_" + str(row["Sequence B"]) + "-" + str(row["Crosslinker Position A"]) + "_" + str(row["Crosslinker Position B"]) + ":" + str(row["Charge"])
 
-def get_spectrum_intensity(row: pd.Series, spectra: Dict[int, Dict]) -> float:
-    """
-    Returns the total intensity of all peaks in a spectrum.
-    """
+def get_PrecursorCharge(row: pd.Series) -> int:
 
-    scan_nr = row["First Scan"]
-    spectrum = spectra[scan_nr]
+    return int(row["Charge"])
 
-    total_intensity = 0
-    for peak_mz in spectrum["peaks"]:
-        total_intensity += spectrum["peaks"][peak_mz]
+def get_PrecursorMz(row: pd.Series) -> float:
 
-    return total_intensity
+    return float(row["m/z [Da]"])
+
+def get_ModifiedPeptide(row: pd.Series) -> str:
+
+    def parse_mod_str(mod_str):
+        modifications_dict = dict()
+        modifications = mod_str.split(";")
+        for modification in modifications:
+            aa_and_pos = modification.strip().split("(")[0]
+            mod = modification.strip().split("(")[1].rstrip(")")
+
+            if mod == CROSSLINKER:
+                continue
+
+            if aa_and_pos == "Nterm":
+                pos = 0
+            elif aa_and_pos == "Cterm":
+                pos = len(peptide)
+            else:
+                pos = int(aa_and_pos[1:])
+
+            if pos in modifications_dict:
+                modifications_dict[pos].append(mod)
+            else:
+                modifications_dict[pos] = [mod]
+
+        return modifications_dict
+
+    def str_insert(string, index, character):
+        return string[:index] + character + string[:index]
+
+    mods_A = parse_mod_str(str(row["Modifications A"]))
+    mods_B = parse_mod_str(str(row["Modifications B"]))
+
+    shift = 0
+    mod_A_template_str = str(row["Sequence A"])
+    for pos in mods_A.keys():
+        current_mods = "(" + ", ".join(mods_A[pos]) + ")"
+        mod_A_template_str = str_insert(mod_A_template_str, pos + shift, current_mods)
+        shift += len(current_mods)
+
+    shift = 0
+    mod_B_template_str = str(row["Sequence B"])
+    for pos in mods_B.keys():
+        current_mods = "(" + ", ".join(mods_B[pos]) + ")"
+        mod_B_template_str = str_insert(mod_B_template_str, pos + shift, current_mods)
+        shift += len(current_mods)
+
+    return mod_A_template_str + "_" + mod_B_template_str
+
+def get_IsotopeLabel() -> int:
+
+    return 0
+
+def get_scanID(row: pd.Series) -> int:
+
+    return int(row["First Scan"])
+
+def get_run() -> str:
+
+    return RUN_NAME
+
+def get_searchID() -> str:
+
+    return str(row["Crosslink Strategy"])
+
+def get_crosslinkedResidues(row: pd.Series) -> str:
+
+    positions = get_positions_in_protein(row)
+
+    return str(positions["A"]) + "_" + str(positions["B"])
+
+def get_LabeledSequence(row: pd.Series) -> str:
+
+    return get_ModifiedPeptide(row)
+
+def get_iRT(row: pd.Series) -> float:
+
+    return (float(row["RT [min]"]) - iRT_PARAMS["iRT_t"]) / iRT_PARAMS["iRT_m"]
+
+def get_RT(row: pd.Series) -> float:
+
+    return float(row["RT [min]"])
+
+def get_CCS() -> float:
+
+    return 0.0
+
+def get_IonMobility() -> float:
+
+    return 0.0
+
+def get_fragment_values(csm: pd.Series, spectra: Dict) -> Dict:
+    # todo
+    pass
 
 def main() -> pd.DataFrame:
 
