@@ -196,9 +196,13 @@ def generate_theoretical_fragments(peptide: str, modifications: Dict[int, List[f
 
     return fragments
 
-def get_matches(row: pd.Series, alpha: bool, spectra: Dict[int, Dict]) -> Tuple[float, Dict[float, str], Dict[float, str]]:
+def get_fragments(row: pd.Series, alpha: bool, spectra: Dict[int, Dict]) -> Tuple[float, Dict[float, str], Dict[float, str]]:
 
     #todo
+    def get_xl_in_frag(row, ion_type, fragment):
+        pass
+
+    fragments = list()
 
     scan_nr = row["First Scan"]
 
@@ -214,7 +218,6 @@ def get_matches(row: pd.Series, alpha: bool, spectra: Dict[int, Dict]) -> Tuple[
     modifications_processed = generate_modifications_dict(sequence, modifications)
     theoretical_fragments = generate_theoretical_fragments(sequence, modifications_processed, ion_types = ION_TYPES, max_charge = MAX_CHARGE)
 
-    total_intensity = 0
     matched_fragments = dict()
 
     for peak_mz in spectrum["peaks"].keys():
@@ -224,7 +227,28 @@ def get_matches(row: pd.Series, alpha: bool, spectra: Dict[int, Dict]) -> Tuple[
                 matched_fragments[peak_mz] = theoretical_fragments[fragment]
                 break
 
-    return total_intensity, matched_fragments, theoretical_fragments
+    for match in matched_fragments.keys():
+        fragment_charge = int(matched_fragments[match].split("+")[1].split(":")[0])
+        fragment_type = str(matched_fragments[match][0])
+        fragment_number = int(matched_fragments[match].split("+")[0][1:])
+        fragment_pep_id = 0 if alpha else 1
+        fragment_mz = match
+        fragment_rel_intensity = float(spectrum["peaks"][match] / spectrum["max_intensity"])
+        fragment_loss_type = ""
+        fragment_contains_xl = get_xl_in_frag(row, fragment_type, matched_fragments[match].split(":")[1])
+        fragment_lossy = False
+        fragments.append({"FragmentCharge": fragment_charge,
+                          "FragmentType": fragment_type,
+                          "FragmentNumber": fragment_number,
+                          "FragmentPepId": fragment_pep_id,
+                          "FragmentMz": fragment_mz,
+                          "RelativeIntensity": fragment_rel_intensity,
+                          "FragmentLossType": fragment_loss_type,
+                          "CLContainingFragment": fragment_contains_xl,
+                          "LossyFragment": fragment_lossy
+                          })
+
+    return fragments
 
 def get_positions_in_protein(row: pd.Series) -> Dict[str, int]:
 
