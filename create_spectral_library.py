@@ -591,6 +591,9 @@ def main() -> pd.DataFrame:
     # save spectral library
     spectral_library.to_csv(".".join(CSMS_FILE.split(".")[:-1]) + "_spectralLibrary.csv", index = True)
 
+    print("SUCCESS: Spectral library created with filename:")
+    print(".".join(CSMS_FILE.split(".")[:-1]) + "_spectralLibrary.csv")
+
     return spectral_library
 
 ##### SCRIPT #####
