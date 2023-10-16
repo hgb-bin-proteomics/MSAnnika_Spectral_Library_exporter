@@ -6,7 +6,7 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.0.0"
+__version = "1.0.1"
 __date = "2023-10-16"
 
 # REQUIREMENTS
@@ -241,8 +241,8 @@ def get_positions_in_protein(row: pd.Series) -> Dict[str, int]:
     Returns the crosslink position of the first protein of peptide alpha and the first protein of peptide beta.
     """
 
-    pep_pos_A = int(row["A in protein"]) if ";" not in row["A in protein"] else int(row["A in protein"].split(";")[0])
-    pep_pos_B = int(row["B in protein"]) if ";" not in row["B in protein"] else int(row["B in protein"].split(";")[0])
+    pep_pos_A = int(row["A in protein"]) if ";" not in str(row["A in protein"]) else int(row["A in protein"].split(";")[0])
+    pep_pos_B = int(row["B in protein"]) if ";" not in str(row["B in protein"]) else int(row["B in protein"].split(";")[0])
     xl_pos_A = int(row["Crosslinker Position A"])
     xl_pos_B = int(row["Crosslinker Position B"])
 
