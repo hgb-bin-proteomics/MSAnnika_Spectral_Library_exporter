@@ -600,4 +600,4 @@ def main() -> pd.DataFrame:
 
 if __name__ == "__main__":
 
-        sl = main()
+    sl = main()
