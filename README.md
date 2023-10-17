@@ -8,7 +8,7 @@ Generate a spectral library for [Spectronaut](https://biognosys.com/software/spe
 
 - Install python 3.7+: [https://www.python.org/downloads/](https://www.python.org/downloads/)
 - Install requirements: `pip install -r requirements.txt`
-- Export MS Annika CSMs from Proteome Discoverer to Microsoft Excel format. Filter out decoys beforehand and filter for high confidence CSMs (see below).
+- Export MS Annika CSMs from Proteome Discoverer to Microsoft Excel format. Filter out decoys beforehand and filter for high-confidence CSMs (see below).
 - Convert any RAW files to *.mgf format.
 - Set your desired parameters in `config.py`.
 - Run `python create_spectral_library.py`.
