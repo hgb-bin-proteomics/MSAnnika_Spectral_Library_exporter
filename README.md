@@ -1,6 +1,6 @@
 # MS Annika Spectral Library exporter
 
-Generate a spectral library for [Spectronaut](https://biognosys.com/software/spectronaut/) from MS Annika results.
+Generate a spectral library for [Spectronaut](https://biognosys.com/software/spectronaut/) from [MS Annika](https://github.com/hgb-bin-proteomics/MSAnnika) results.
 
 ![Screenshot](screenshot.png)
 
