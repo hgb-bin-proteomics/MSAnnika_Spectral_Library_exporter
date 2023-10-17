@@ -6,74 +6,22 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.0.0"
-__date = "2023-10-10"
-
-############################### WIP ###########################################
+__version = "1.0.1"
+__date = "2023-10-16"
 
 # REQUIREMENTS
 # pip install pandas
 # pip install openpyxl
-# pip install tqdm
 # pip install pyteomics
 
 ##### PARAMETERS #####
 
-SPECTRA_FILE = "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf"
-CSMS_FILE = "CSMs_unfiltered.xlsx"
-DOUBLETS_FILE = "CrosslinkDoublets.txt"
-MODIFICATIONS = \
-    {"Oxidation": [15.994915],
-     "Carbamidomethyl": [57.021464],
-     "DSSO": [54.01056, 85.98264, 103.99320]}
-ION_TYPES = ("b", "y")
-MAX_CHARGE = 4
-MATCH_TOLERANCE = 0.02
-DOUBLET_IDENTIFICATION_MODE = "All"
-# DOUBLET_IDENTIFICATION_MODE = "Evidence"
-# DOUBLET_IDENTIFICATION_MODE = "Indication"
-
-######################
-
-"""
-NOTES
-Column1 -> iterator
-linkId -> proteinName1_proteinName2-prot1LinkPos_prot2LinkPos
-ProteinID -> proteinName1_proteinName2
-StrippedPeptide -> Both peptides without modifications concatenated
-FragementGroupId -> peptide1_peptide2-pep1LinkPos_pep2LinkPos:?                 -> needs clarification
-PrecursorCharge -> precursorCharge
-PrecursorMz -> precursorMz (int) multiplied?                                    -> needs clarification
-ModifiedPeptide -> peptide1(XLMod)_peptide2(XLMod)                              -> needs clarification
-IsotopeLabel -> 0
-scanID -> scanNr
-run -> run
-searchID -> MS Annika
-crosslinkedResidues -> prot1LinkPos_prot2LinkPos
-LabeledSequence -> ModifiedPeptide
-iRT -> can maybe calculate
-RT -> rt
-CCS -> 0
-IonMobility -> 0
-FragmentCharge -> int
-FragmentType -> b/y
-FragmentNumber -> int
-FragmentPepId -> 0 for first pep, 1 for second pep
-FragmentMz -> fragmentMz (int) multiplied?                                      -> needs clarification
-RelativeIntensity -> int but what exactly?                                      -> needs clarification
-FragmentLossType -> empty
-CLContainingFragment -> TRUE / FALSE (XL in frag)
-LossyFragment -> FALSE
-
-Every row is a fragment ion?
-"""
+from config import *
 
 ######################
 
 # import packages
-import os
 import pandas as pd
-from tqdm import tqdm
 from pyteomics import mgf, mass
 
 from typing import Dict
@@ -86,9 +34,10 @@ import warnings
 def read_spectra(filename: str) -> Dict[int, Dict]:
     """
     Returns a dictionary that maps scan numbers to spectra:
-    Dict[int -> Dict["precursor" -> float
-                     "charge"    -> int
-                     "peaks"     -> Dict[m/z -> intensity]]
+    Dict[int -> Dict["precursor"        -> float
+                     "charge"           -> int
+                     "max_intensity"    -> float
+                     "peaks"            -> Dict[m/z -> intensity]]
     """
 
     result_dict = dict()
@@ -99,86 +48,13 @@ def read_spectra(filename: str) -> Dict[int, Dict]:
             spectrum_dict = dict()
             spectrum_dict["precursor"] = spectrum["params"]["pepmass"]
             spectrum_dict["charge"] = spectrum["params"]["charge"]
+            spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"]))
             peaks = dict()
             for i, mz in enumerate(spectrum["m/z array"]):
                 peaks[mz] = spectrum["intensity array"][i]
             spectrum_dict["peaks"] = peaks
             result_dict[scan_nr] = spectrum_dict
         reader.close()
-
-    return result_dict
-
-def read_doublets(filename: str) -> Dict[int, Dict]:
-    """
-    Returns a dictionary that maps scan numbers to doublets:
-    Dict[int -> Dict["alpha_light" -> set(float)
-                     "alpha_heavy" -> set(float)
-                     "beta_light"  -> set(float)
-                     "beta_heavy"  -> set(float)]
-    """
-
-    proton_mass = 1.007276466812
-    result_dict = dict()
-    doublet_df = pd.read_csv(filename, sep = "\t")
-
-    for i, row in tqdm(doublet_df.iterrows(), total = doublet_df.shape[0], desc = "INFO: Progress bar - Reading doublet file"):
-
-        if DOUBLET_IDENTIFICATION_MODE != "All":
-            if DOUBLET_IDENTIFICATION_MODE not in row["Identification Mode"]:
-                continue
-
-        alpha_doublets = row["Complete Alpha Doublet"]
-        uncharged_aL, uncharged_aH = [float(m.strip()) for m in alpha_doublets.split("|")]
-        mz_aL = row["m/z Alpha Light"]
-        mz_aH = row["m/z Alpha Heavy"]
-        beta_doublets = row["Complete Beta Doublet"]
-        uncharged_bL, uncharged_bH = [float(m.strip()) for m in beta_doublets.split("|")]
-        mz_bL = row["m/z Beta Light"]
-        mz_bH = row["m/z Beta Heavy"]
-        scan_nr = row["Scan number"]
-
-        # alpha light possible m/z
-        aL_masses = set()
-        if mz_aL != 0:
-            aL_masses.add(mz_aL)
-
-        for charge in range(1, MAX_CHARGE + 1):
-            aL_masses.add((uncharged_aL + charge * proton_mass) / charge)
-
-        # alpha heavy possible m/z
-        aH_masses = set()
-        if mz_aH != 0:
-            aH_masses.add(mz_aH)
-
-        for charge in range(1, MAX_CHARGE + 1):
-            aH_masses.add((uncharged_aH + charge * proton_mass) / charge)
-
-        # beta light possible m/z
-        bL_masses = set()
-        if mz_bL != 0:
-            bL_masses.add(mz_bL)
-
-        for charge in range(1, MAX_CHARGE + 1):
-            bL_masses.add((uncharged_bL + charge * proton_mass) / charge)
-
-        # beta heavy possible m/z
-        bH_masses = set()
-        if mz_bH != 0:
-            bH_masses.add(mz_bH)
-
-        for charge in range(1, MAX_CHARGE + 1):
-            bH_masses.add((uncharged_bH + charge * proton_mass) / charge)
-
-        if scan_nr not in result_dict:
-            result_dict[scan_nr] = {"alpha_light": aL_masses,
-                                    "alpha_heavy": aH_masses,
-                                    "beta_light": bL_masses,
-                                    "beta_heavy": bH_masses}
-        else:
-            result_dict[scan_nr]["alpha_light"].update(aL_masses)
-            result_dict[scan_nr]["alpha_heavy"].update(aH_masses)
-            result_dict[scan_nr]["beta_light"].update(bL_masses)
-            result_dict[scan_nr]["beta_heavy"].update(bH_masses)
 
     return result_dict
 
@@ -269,10 +145,48 @@ def generate_theoretical_fragments(peptide: str, modifications: Dict[int, List[f
 
     return fragments
 
-def get_intensities(row: pd.Series, alpha: bool, spectra: Dict[int, Dict]) -> Tuple[float, Dict[float, str], Dict[float, str]]:
+# get all fragments and their annotations
+def get_fragments(row: pd.Series, alpha: bool, spectra: Dict[int, Dict]) -> List[Dict]:
     """
-    Returns the sum of intensities of the matched fragment ions of an identified peptide, the matched ions and all potential theoretical ions.
+    Generates all fragments with the necessary spectral library annotations for a given CSM peptide.
     """
+
+    # function to check if the fragment contains the crosslinker
+    def check_if_xl_in_frag(row, alpha, ion_type, fragment):
+
+        if alpha:
+            peptide = row["Sequence A"]
+            mods = row["Modifications A"]
+        else:
+            peptide = row["Sequence B"]
+            mods = row["Modifications B"]
+
+        pos = 0
+        mods_list = mods.split(";")
+        for mod_in_list in mods_list:
+            aa_and_pos = mod_in_list.strip().split("(")[0]
+            mod = mod_in_list.strip().split("(")[1].rstrip(")")
+
+            if mod == CROSSLINKER:
+                if aa_and_pos == "Nterm":
+                    pos = -1
+                elif aa_and_pos == "Cterm":
+                    pos = len(peptide)
+                else:
+                    pos = int(aa_and_pos[1:]) - 1
+                break
+
+        if ion_type in "abc":
+            if len(fragment) > pos:
+                return True
+        else:
+            if len(peptide) - len(fragment) <= pos:
+                return True
+
+        return False
+    # end function
+
+    fragments = list()
 
     scan_nr = row["First Scan"]
 
@@ -288,106 +202,263 @@ def get_intensities(row: pd.Series, alpha: bool, spectra: Dict[int, Dict]) -> Tu
     modifications_processed = generate_modifications_dict(sequence, modifications)
     theoretical_fragments = generate_theoretical_fragments(sequence, modifications_processed, ion_types = ION_TYPES, max_charge = MAX_CHARGE)
 
-    total_intensity = 0
     matched_fragments = dict()
 
+    # match fragments
     for peak_mz in spectrum["peaks"].keys():
         for fragment in theoretical_fragments.keys():
             if round(peak_mz, 4) < round(fragment + MATCH_TOLERANCE, 4) and round(peak_mz, 4) > round(fragment - MATCH_TOLERANCE, 4):
-                total_intensity += spectrum["peaks"][peak_mz]
                 matched_fragments[peak_mz] = theoretical_fragments[fragment]
                 break
 
-    return total_intensity, matched_fragments, theoretical_fragments
+    # get annotations
+    for match in matched_fragments.keys():
+        fragment_charge = int(matched_fragments[match].split("+")[1].split(":")[0])
+        fragment_type = str(matched_fragments[match][0])
+        fragment_number = int(matched_fragments[match].split("+")[0][1:])
+        fragment_pep_id = 0 if alpha else 1
+        fragment_mz = match
+        fragment_rel_intensity = float(spectrum["peaks"][match] / spectrum["max_intensity"])
+        fragment_loss_type = ""
+        fragment_contains_xl = check_if_xl_in_frag(row, alpha, fragment_type, matched_fragments[match].split(":")[1].strip())
+        fragment_lossy = False
+        fragments.append({"FragmentCharge": fragment_charge,
+                          "FragmentType": fragment_type,
+                          "FragmentNumber": fragment_number,
+                          "FragmentPepId": fragment_pep_id,
+                          "FragmentMz": fragment_mz,
+                          "RelativeIntensity": fragment_rel_intensity,
+                          "FragmentLossType": fragment_loss_type,
+                          "CLContainingFragment": fragment_contains_xl,
+                          "LossyFragment": fragment_lossy
+                          })
 
-def get_doublets(row: pd.Series, spectra: Dict[int, Dict], doublets: Dict[int, Dict]) -> Tuple[float,
-                                                                                               float,
-                                                                                               float,
-                                                                                               float,
-                                                                                               List[Tuple],
-                                                                                               List[Tuple],
-                                                                                               List[Tuple],
-                                                                                               List[Tuple]]:
+    return fragments
+
+# get crosslink position in proteins
+def get_positions_in_protein(row: pd.Series) -> Dict[str, int]:
     """
-    Returns the sum of intensities of alpha light doublet peaks, alpha heavy doublet peaks, beta light doublet peaks, beta heavy doublet peaks (index 0 - 3).
-    Returns the peaks (Tuple (m/z, intensity)) of alpha light doublet peaks, alpha heavy doublet peaks, beta light doublet peaks, beta heavy doublet peaks (index 4 - 7).
-    """
-
-    scan_nr = row["First Scan"]
-    spectrum = spectra[scan_nr]
-    aL_doublets = []
-    aH_doublets = []
-    bL_doublets = []
-    bH_doublets = []
-
-    if scan_nr not in doublets:
-        return 0, 0, 0, 0, [], [], [], []
-    else:
-        for peak_mz in spectrum["peaks"].keys():
-
-            for doublet_mz in doublets[scan_nr]["alpha_light"]:
-                if round(peak_mz, 4) < round(doublet_mz + MATCH_TOLERANCE, 4) and round(peak_mz, 4) > round(doublet_mz - MATCH_TOLERANCE, 4):
-                    aL_doublets.append((peak_mz, spectrum["peaks"][peak_mz]))
-                    break
-
-            for doublet_mz in doublets[scan_nr]["alpha_heavy"]:
-                if round(peak_mz, 4) < round(doublet_mz + MATCH_TOLERANCE, 4) and round(peak_mz, 4) > round(doublet_mz - MATCH_TOLERANCE, 4):
-                    aH_doublets.append((peak_mz, spectrum["peaks"][peak_mz]))
-                    break
-
-            for doublet_mz in doublets[scan_nr]["beta_light"]:
-                if round(peak_mz, 4) < round(doublet_mz + MATCH_TOLERANCE, 4) and round(peak_mz, 4) > round(doublet_mz - MATCH_TOLERANCE, 4):
-                    bL_doublets.append((peak_mz, spectrum["peaks"][peak_mz]))
-                    break
-
-            for doublet_mz in doublets[scan_nr]["beta_heavy"]:
-                if round(peak_mz, 4) < round(doublet_mz + MATCH_TOLERANCE, 4) and round(peak_mz, 4) > round(doublet_mz - MATCH_TOLERANCE, 4):
-                    bH_doublets.append((peak_mz, spectrum["peaks"][peak_mz]))
-                    break
-
-        return sum([p[1] for p in aL_doublets]), \
-               sum([p[1] for p in aH_doublets]), \
-               sum([p[1] for p in bL_doublets]), \
-               sum([p[1] for p in bH_doublets]), \
-               aL_doublets, aH_doublets, bL_doublets, bH_doublets
-
-def get_total_fragment_intensity(row: pd.Series) -> float:
-    """
-    Returns the total intensity of fragment ions in the spectrum.
+    Returns the crosslink position of the first protein of peptide alpha and the first protein of peptide beta.
     """
 
-    if row["Sequence A"].strip() == row["Sequence B"].strip():
-        return (row["Fragment Intensities A (Sum)"] + row["Fragment Intensities B (Sum)"]) / 2
-    else:
-        return row["Fragment Intensities A (Sum)"] + row["Fragment Intensities B (Sum)"]
+    pep_pos_A = int(row["A in protein"]) if ";" not in str(row["A in protein"]) else int(row["A in protein"].split(";")[0])
+    pep_pos_B = int(row["B in protein"]) if ";" not in str(row["B in protein"]) else int(row["B in protein"].split(";")[0])
+    xl_pos_A = int(row["Crosslinker Position A"])
+    xl_pos_B = int(row["Crosslinker Position B"])
 
-def get_total_doublet_intensity(row: pd.Series) -> float:
-    """
-    Returns the total intensity of doublet peaks in the spectrum.
-    """
+    return {"A": pep_pos_A + xl_pos_A, "B": pep_pos_B + xl_pos_B}
 
-    if row["Sequence A"].strip() == row["Sequence B"].strip():
-        return (row["Alpha Doublet Intensities Total"] + row["Beta Doublet Intensities Total"]) / 2
-    else:
-        return row["Alpha Doublet Intensities Total"] + row["Beta Doublet Intensities Total"]
+##### SPECTRAL LIBRARY COLUMNS #####
 
-def get_spectrum_intensity(row: pd.Series, spectra: Dict[int, Dict]) -> float:
+# get the linkId value
+def get_linkId(row: pd.Series) -> str:
     """
-    Returns the total intensity of all peaks in a spectrum.
+    Returns the first accession of the alpha peptide and the first accession of the beta peptide + the corresponding crosslink positions.
     """
 
-    scan_nr = row["First Scan"]
-    spectrum = spectra[scan_nr]
+    positions = get_positions_in_protein(row)
+    accession_a = row["Accession A"] if ";" not in row["Accession A"] else row["Accession A"].split(";")[0]
+    accession_b = row["Accession B"] if ";" not in row["Accession B"] else row["Accession B"].split(";")[0]
 
-    total_intensity = 0
-    for peak_mz in spectrum["peaks"]:
-        total_intensity += spectrum["peaks"][peak_mz]
+    return str(accession_a) + "_" + str(accession_b) + "-" + str(positions["A"]) + "_" + str(positions["B"])
 
-    return total_intensity
+# get the ProteinID value
+def get_ProteinID(row: pd.Series) -> str:
+    """
+    Returns the first accession of the alpha peptide and the first accession of the beta peptide.
+    """
 
+    accession_a = row["Accession A"] if ";" not in row["Accession A"] else row["Accession A"].split(";")[0]
+    accession_b = row["Accession B"] if ";" not in row["Accession B"] else row["Accession B"].split(";")[0]
+
+    return str(accession_a) + "_" + str(accession_b)
+
+# get the StrippedPeptide value
+def get_StrippedPeptide(row: pd.Series) -> str:
+    """
+    Returns the sequences of the cross-linked peptides concatenated.
+    """
+
+    return str(row["Sequence A"]) + str(row["Sequence B"])
+
+# get the FragmentGroupId value
+def get_FragmentGroupId(row: pd.Series) -> str:
+    """
+    Returns 'SequenceA_SequenceB-CrosslinkerPositionA_CrosslinkerPositionB:Charge'.
+    """
+
+    return str(row["Sequence A"]) + "_" + str(row["Sequence B"]) + "-" + str(row["Crosslinker Position A"]) + "_" + str(row["Crosslinker Position B"]) + ":" + str(row["Charge"])
+
+# get the PrecursorCharge value
+def get_PrecursorCharge(row: pd.Series) -> int:
+    """
+    Returns the precursor charge.
+    """
+
+    return int(row["Charge"])
+
+# get the PrecursorMz value
+def get_PrecursorMz(row: pd.Series) -> float:
+    """
+    Returns the precursor m/z.
+    """
+
+    return float(row["m/z [Da]"])
+
+# get the ModifiedPeptide value
+def get_ModifiedPeptide(row: pd.Series) -> str:
+    """
+    Returns SequenceA with modification annotations (without crosslinker) _ SequenceB with modification annotations (without crosslinker).
+    """
+
+    # helper function to parse MS Annika modification string
+    def parse_mod_str(mod_str):
+        modifications_dict = dict()
+        modifications = mod_str.split(";")
+        for modification in modifications:
+            aa_and_pos = modification.strip().split("(")[0]
+            mod = modification.strip().split("(")[1].rstrip(")")
+
+            if mod == CROSSLINKER:
+                continue
+
+            if aa_and_pos == "Nterm":
+                pos = 0
+            elif aa_and_pos == "Cterm":
+                pos = len(peptide)
+            else:
+                pos = int(aa_and_pos[1:])
+
+            if pos in modifications_dict:
+                modifications_dict[pos].append(mod)
+            else:
+                modifications_dict[pos] = [mod]
+
+        return modifications_dict
+    # end function
+
+    # helper function to insert string into string
+    def str_insert(string, index, character):
+        return string[:index] + character + string[:index]
+    # end function
+
+    mods_A = parse_mod_str(str(row["Modifications A"]))
+    mods_B = parse_mod_str(str(row["Modifications B"]))
+
+    # generate annotation for sequence A
+    shift = 0
+    mod_A_template_str = str(row["Sequence A"])
+    for pos in mods_A.keys():
+        current_mods = "(" + ", ".join(mods_A[pos]) + ")"
+        mod_A_template_str = str_insert(mod_A_template_str, pos + shift, current_mods)
+        shift += len(current_mods)
+
+    # generate annotation for sequence B
+    shift = 0
+    mod_B_template_str = str(row["Sequence B"])
+    for pos in mods_B.keys():
+        current_mods = "(" + ", ".join(mods_B[pos]) + ")"
+        mod_B_template_str = str_insert(mod_B_template_str, pos + shift, current_mods)
+        shift += len(current_mods)
+
+    return mod_A_template_str + "_" + mod_B_template_str
+
+# get the IsotopeLabel value
+def get_IsotopeLabel() -> int:
+    """
+    Dummy function.
+    """
+    return 0
+
+# get the scanID value
+def get_scanID(row: pd.Series) -> int:
+    """
+    Returns the scan nr. of the CSM.
+    """
+
+    return int(row["First Scan"])
+
+# get the run value
+def get_run() -> str:
+    """
+    Returns the run name specified in config.py
+    """
+
+    return RUN_NAME
+
+# get the searchID value
+def get_searchID(row: pd.Series) -> str:
+    """
+    Returns the identifying search engine name.
+    """
+
+    return str(row["Crosslink Strategy"])
+
+# get the crosslinkedResidues value
+def get_crosslinkedResidues(row: pd.Series) -> str:
+    """
+    Returns the positions of the cross-linked residues of the first proteins of the cross-linked peptides respectively, seperated by '_'.
+    """
+
+    positions = get_positions_in_protein(row)
+
+    return str(positions["A"]) + "_" + str(positions["B"])
+
+# get the LabeledSequence value
+def get_LabeledSequence(row: pd.Series) -> str:
+    """
+    Returns SequenceA with modification annotations (without crosslinker) _ SequenceB with modification annotations (without crosslinker).
+    """
+
+    return get_ModifiedPeptide(row)
+
+# get the iRT value
+def get_iRT(row: pd.Series) -> float:
+    """
+    Returns the calculated iRT using the values specified in config.py.
+    """
+
+    return (float(row["RT [min]"]) - iRT_PARAMS["iRT_t"]) / iRT_PARAMS["iRT_m"]
+
+# get the RT value
+def get_RT(row: pd.Series) -> float:
+    """
+    Returns the RT of a CSM.
+    """
+
+    return float(row["RT [min]"])
+
+# get the CCS value
+def get_CCS() -> float:
+    """
+    Dummy function.
+    """
+    return 0.0
+
+# get the IonMobility value
+def get_IonMobility() -> float:
+    """
+    Dummy function.
+    """
+    return 0.0
+
+# get the values for all fragments of a CSM
+def get_fragment_values(csm: pd.Series, spectra: Dict) -> Dict[str, List]:
+    """
+    Returns the annotated fragments of both cross-linked peptides.
+    """
+
+    fragments_A = get_fragments(csm, True, spectra)
+    fragments_B = get_fragments(csm, False, spectra)
+
+    return {"Fragments_A": fragments_A, "Fragments_B": fragments_B}
+
+##### MAIN FUNCTION #####
+
+# generates the spectral library
 def main() -> pd.DataFrame:
 
-    print("INFO: Running CSM annotation with input files:\nSpectra: " + SPECTRA_FILE + "\nCSMs: " + CSMS_FILE + "\nDoublets: " + DOUBLETS_FILE)
+    print("INFO: Creating spectral library with input files:\nSpectra: " + SPECTRA_FILE + "\nCSMs: " + CSMS_FILE)
     print("INFO: Using the following modifications:")
     print(MODIFICATIONS)
     print("INFO: Using the following ion types:")
@@ -403,54 +474,130 @@ def main() -> pd.DataFrame:
 
     print("INFO: Reading CSMs...")
     csms = pd.read_excel(CSMS_FILE)
-    print("INFO: Done reading CSMs! Starting fragment ion annotation...")
+    print("INFO: Done reading CSMs! Starting spectral library creation...")
 
-    tqdm.pandas(desc = "INFO: Progress bar - Annotating alpha peptide fragments")
-    csms[["Fragment Intensities A (Sum)", "Matched Ions A", "Theoretical Ions A"]] = \
-        csms.progress_apply(lambda row: get_intensities(row, True, spectra),
-                            axis = 1,
-                            result_type = "expand")
-    print("INFO: Done processing alpha peptides!")
+    # columns
+    linkId_s = list()
+    ProteinID_s = list()
+    StrippedPeptide_s = list()
+    FragmentGroupId_s = list()
+    PrecursorCharge_s = list()
+    PrecursorMz_s = list()
+    ModifiedPeptide_s = list()
+    IsotopeLabel_s = list()
+    scanID_s = list()
+    run_s = list()
+    searchID_s = list()
+    crosslinkedResidues_s = list()
+    LabeledSequence_s = list()
+    iRT_s = list()
+    RT_s = list()
+    CCS_s = list()
+    IonMobility_s = list()
+    FragmentCharge_s = list()
+    FragmentType_s = list()
+    FragmentNumber_s = list()
+    FragmentPepId_s = list()
+    FragmentMz_s = list()
+    RelativeIntensity_s = list()
+    FragmentLossType_s = list()
+    CLContainingFragment_s = list()
+    LossyFragment_s = list()
 
-    tqdm.pandas(desc = "INFO: Progress bar - Annotating beta peptide fragments")
-    csms[["Fragment Intensities B (Sum)", "Matched Ions B", "Theoretical Ions B"]] = \
-        csms.progress_apply(lambda row: get_intensities(row, False, spectra),
-                            axis = 1,
-                            result_type = "expand")
-    print("INFO: Done processing beta peptides!")
+    # process CSMs
+    for i, row in csms.iterrows():
+        link_Id = get_linkId(row)
+        ProteinID = get_ProteinID(row)
+        StrippedPeptide = get_StrippedPeptide(row)
+        FragmentGroupId = get_FragmentGroupId(row)
+        PrecursorCharge = get_PrecursorCharge(row)
+        PrecursorMz = get_PrecursorMz(row)
+        ModifiedPeptide = get_ModifiedPeptide(row)
+        IsotopeLabel = get_IsotopeLabel()
+        scanID = get_scanID(row)
+        run = get_run()
+        searchID = get_searchID(row)
+        crosslinkedResidues = get_crosslinkedResidues(row)
+        LabeledSequence = get_LabeledSequence(row)
+        iRT = get_iRT(row)
+        RT = get_RT(row)
+        CCS = get_CCS()
+        IonMobility = get_IonMobility()
+        fragments = get_fragment_values(row, spectra)
 
-    csms["Fragment Intensities Total"] = csms.apply(lambda row: get_total_fragment_intensity(row), axis = 1)
+        for k in fragments.keys():
+            pep = fragments[k]
+            for frag in pep:
+                linkId_s.append(link_Id)
+                ProteinID_s.append(ProteinID)
+                StrippedPeptide_s.append(StrippedPeptide)
+                FragmentGroupId_s.append(FragmentGroupId)
+                PrecursorCharge_s.append(PrecursorCharge)
+                PrecursorMz_s.append(PrecursorMz)
+                ModifiedPeptide_s.append(ModifiedPeptide)
+                IsotopeLabel_s.append(IsotopeLabel)
+                scanID_s.append(scanID)
+                run_s.append(run)
+                searchID_s.append(searchID)
+                crosslinkedResidues_s.append(crosslinkedResidues)
+                LabeledSequence_s.append(LabeledSequence)
+                iRT_s.append(iRT)
+                RT_s.append(RT)
+                CCS_s.append(CCS)
+                IonMobility_s.append(IonMobility)
+                FragmentCharge_s.append(frag["FragmentCharge"])
+                FragmentType_s.append(frag["FragmentType"])
+                FragmentNumber_s.append(frag["FragmentNumber"])
+                FragmentPepId_s.append(frag["FragmentPepId"])
+                FragmentMz_s.append(frag["FragmentMz"])
+                RelativeIntensity_s.append(frag["RelativeIntensity"])
+                FragmentLossType_s.append(frag["FragmentLossType"])
+                CLContainingFragment_s.append(frag["CLContainingFragment"])
+                LossyFragment_s.append(frag["LossyFragment"])
 
-    print("INFO: Done annotating fragment ions!")
+        if (i + 1) % 100 == 0:
+            print("INFO: Processed " + str(i + 1) + " CSMs in total...")
 
-    if DOUBLETS_FILE is not None and os.path.isfile(DOUBLETS_FILE):
-        print("INFO: Doublet file was provided! Reading doublet file...")
-        doublets = read_doublets(DOUBLETS_FILE)
-        print("INFO: Done reading doublet file! Starting doublet annotation...")
-        tqdm.pandas(desc = "INFO: Progress bar - Annotating doublets")
-        csms[["Alpha Light Intensities (Sum)", "Alpha Heavy Intensities (Sum)", "Beta Light Intensities (Sum)", "Beta Heavy Intensities (Sum)",
-              "Alpha Light Peaks", "Alpha Heavy Peaks", "Beta Light Peaks", "Beta Heavy Peaks"]] = \
-              csms.progress_apply(lambda row: get_doublets(row, spectra, doublets),
-                                  axis = 1,
-                                  result_type = "expand")
-        print("INFO: Done annotating doublets! Calculating intensities...")
-        csms["Alpha Doublet Intensities Total"] = csms.apply(lambda row: row["Alpha Light Intensities (Sum)"] + row["Alpha Heavy Intensities (Sum)"], axis = 1)
-        csms["Beta Doublet Intensities Total"] = csms.apply(lambda row: row["Beta Light Intensities (Sum)"] + row["Beta Heavy Intensities (Sum)"], axis = 1)
-        csms["Doublet Intensities Total"] = csms.apply(lambda row: get_total_doublet_intensity(row), axis = 1)
-        print("INFO: Done calculating doublet intensities!")
-    else:
-        print("INFO: Doublet file was not provided or not found! Skipping doublet annotation.")
+    # generate dataframe
+    df_dict = {"linkId": linkId_s,
+               "ProteinID": ProteinID_s,
+               "StrippedPeptide": StrippedPeptide_s,
+               "FragmentGroupId": FragmentGroupId_s,
+               "PrecursorCharge": PrecursorCharge_s,
+               "PrecursorMz": PrecursorMz_s,
+               "ModifiedPeptide": ModifiedPeptide_s,
+               "IsotopeLabel": IsotopeLabel_s,
+               "scanID": scanID_s,
+               "run": run_s,
+               "searchID": searchID_s,
+               "crosslinkedResidues": crosslinkedResidues_s,
+               "LabeledSequence": LabeledSequence_s,
+               "iRT": iRT_s,
+               "RT": RT_s,
+               "CCS": CCS_s,
+               "IonMobility": IonMobility_s,
+               "FragmentCharge": FragmentCharge_s,
+               "FragmentType": FragmentType_s,
+               "FragmentNumber": FragmentNumber_s,
+               "FragmentPepId": FragmentPepId_s,
+               "FragmentMz": FragmentMz_s,
+               "RelativeIntensity": RelativeIntensity_s,
+               "FragmentLossType": FragmentLossType_s,
+               "CLContainingFragment": CLContainingFragment_s,
+               "LossyFragment": LossyFragment_s}
 
-    print("INFO: Calculating total spectrum intensities...")
-    tqdm.pandas(desc = "INFO: Progress bar - Intensity per spectrum")
-    csms["Total Intensity in Spectrum"] = csms.progress_apply(lambda row: get_spectrum_intensity(row, spectra), axis = 1)
-    print("INFO: Done calculating total spectrum intensities!")
+    spectral_library = pd.DataFrame(df_dict)
 
-    csms.to_excel(".".join(CSMS_FILE.split(".")[:-1]) + "_with_intensities.xlsx")
-    print("SUCCESS: Output file generated as '" + ".".join(CSMS_FILE.split(".")[:-1]) + "_with_intensities.xlsx" + "'!")
+    # save spectral library
+    spectral_library.to_csv(".".join(CSMS_FILE.split(".")[:-1]) + "_spectralLibrary.csv", index = True)
 
-    return csms
+    print("SUCCESS: Spectral library created with filename:")
+    print(".".join(CSMS_FILE.split(".")[:-1]) + "_spectralLibrary.csv")
+
+    return spectral_library
+
+##### SCRIPT #####
 
 if __name__ == "__main__":
 
-        main()
+        sl = main()
