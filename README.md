@@ -58,7 +58,7 @@ iRT_PARAMS = {"iRT_m": 1.3066, "iRT_t": 29.502}
 
 ## Citing
 
-If you are using the MS Annika CSM Annotation script please cite:
+If you are using the MS Annika Spectral Library exporter script please cite:
 ```
 MS Annika 2.0 Identifies Cross-Linked Peptides in MS2–MS3-Based Workflows at High Sensitivity and Specificity
 Micha J. Birklbauer, Manuel Matzinger, Fränze Müller, Karl Mechtler, and Viktoria Dorfer
