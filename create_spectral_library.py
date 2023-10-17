@@ -220,7 +220,7 @@ def get_fragments(row: pd.Series, alpha: bool, spectra: Dict[int, Dict]) -> List
         fragment_mz = match
         fragment_rel_intensity = float(spectrum["peaks"][match] / spectrum["max_intensity"])
         fragment_loss_type = ""
-        fragment_contains_xl = check_if_xl_in_frag(row, alpha, fragment_type, matched_fragments[match].split(":")[1])
+        fragment_contains_xl = check_if_xl_in_frag(row, alpha, fragment_type, matched_fragments[match].split(":")[1].strip())
         fragment_lossy = False
         fragments.append({"FragmentCharge": fragment_charge,
                           "FragmentType": fragment_type,
