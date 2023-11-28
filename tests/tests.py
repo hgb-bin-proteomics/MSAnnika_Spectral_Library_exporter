@@ -12,7 +12,7 @@ def test1_spectral_library_exporter():
 
     sl = main()
 
-    assert sl.shape[0] == 12 and sl.shape[1] == 26
+    assert sl.shape[0] == 12 and sl.shape[1] == 27
 
 # check values
 def test2_spectral_library_exporter():
