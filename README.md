@@ -16,11 +16,11 @@ Generate a spectral library for [Spectronaut](https://biognosys.com/software/spe
 
 ## Exporting MS Annika results to Microsoft Excel
 
-The script uses a Micrsoft Excel files as input, for that MS Annika results need to be exported from Proteome Discoverer. It is recommended to first filter results according to your needs, e.g. filter for high-confidence crosslinks and filter out decoy crosslinks as depicted below.
+The script uses a Micrsoft Excel files as input, for that MS Annika results need to be exported from Proteome Discoverer. It is recommended to first filter results according to your needs, e.g. filter for high-confidence CSMs and filter out decoy CSMs as depicted below.
 
 ![PDFilter](filter.png)
 
-Results can then be exported by selecting `File > Export > To Microsoft Excel… > Level 1: Crosslinks > Export` in Proteome Discoverer.
+Results can then be exported by selecting `File > Export > To Microsoft Excel… > Level 1: CSMs > Export` in Proteome Discoverer.
 
 ## Parameters
 
@@ -30,7 +30,36 @@ The following parameters need to be adjusted for your needs in the `config.py` f
 ##### PARAMETERS #####
 
 # name of the mgf file containing the MS2 spectra
-SPECTRA_FILE = "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf"
+SPECTRA_FILE = ["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf"]
+# name of the CSM file exported from Proteome Discoverer
+CSMS_FILE = "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.xlsx"
+# name of the experiment / run (any descriptive text is allowed)
+RUN_NAME = "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001-(1)"
+# name of the crosslink modification
+CROSSLINKER = "DSSO"
+# possible modifications and their monoisotopic masses
+MODIFICATIONS = \
+    {"Oxidation": [15.994915],
+     "Carbamidomethyl": [57.021464],
+     "DSSO": [54.01056, 85.98264, 103.99320]}
+# expected ion types (any of a, b, c, x, y, z)
+ION_TYPES = ("b", "y")
+# maximum expected charge of fragment ions
+MAX_CHARGE = 4
+# tolerance for matching peaks
+MATCH_TOLERANCE = 0.02
+# parameters for calculating iRT
+iRT_PARAMS = {"iRT_m": 1.3066, "iRT_t": 29.502}
+```
+
+In case you have more than one `SPECTRA_FILE` you can specify that like this:
+
+```python
+##### PARAMETERS #####
+
+# name of the mgf file containing the MS2 spectra
+SPECTRA_FILE = ["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf",
+                "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_002.mgf"]
 # name of the CSM file exported from Proteome Discoverer
 CSMS_FILE = "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.xlsx"
 # name of the experiment / run (any descriptive text is allowed)
