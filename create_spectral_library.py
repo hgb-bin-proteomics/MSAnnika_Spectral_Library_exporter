@@ -6,8 +6,8 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.0.1"
-__date = "2023-10-16"
+__version = "1.1.0"
+__date = "2023-11-28"
 
 # REQUIREMENTS
 # pip install pandas
@@ -55,6 +55,24 @@ def read_spectra(filename: str) -> Dict[int, Dict]:
             spectrum_dict["peaks"] = peaks
             result_dict[scan_nr] = spectrum_dict
         reader.close()
+
+    return result_dict
+
+# read multiple spectra files
+def read_multiple_spectra(filenames: List[str]) -> Dict[str, Dict[int, Dict]]:
+    """
+    Returns a dictionary that maps filenames to scan numbers to spectra:
+    Dict[str -> Dict[int -> Dict["precursor"        -> float
+                                 "charge"           -> int
+                                 "max_intensity"    -> float
+                                 "peaks"            -> Dict[m/z -> intensity]]
+    """
+
+    result_dict = dict()
+
+    for filename in filenames:
+        current_spectra_file = ".".join(filename.split(".")[:-1]).strip()
+        result_dict[current_spectra_file] = read_spectra(filename)
 
     return result_dict
 
@@ -146,7 +164,7 @@ def generate_theoretical_fragments(peptide: str, modifications: Dict[int, List[f
     return fragments
 
 # get all fragments and their annotations
-def get_fragments(row: pd.Series, alpha: bool, spectra: Dict[int, Dict]) -> List[Dict]:
+def get_fragments(row: pd.Series, alpha: bool, spectra: Dict[str, Dict[int, Dict]]) -> List[Dict]:
     """
     Generates all fragments with the necessary spectral library annotations for a given CSM peptide.
     """
@@ -197,7 +215,8 @@ def get_fragments(row: pd.Series, alpha: bool, spectra: Dict[int, Dict]) -> List
         sequence = row["Sequence B"]
         modifications = row["Modifications B"]
 
-    spectrum = spectra[scan_nr]
+    current_spectra_file = ".".join(row["Spectrum File"].split(".")[:-1]).strip()
+    spectrum = spectra[current_spectra_file][scan_nr]
 
     modifications_processed = generate_modifications_dict(sequence, modifications)
     theoretical_fragments = generate_theoretical_fragments(sequence, modifications_processed, ion_types = ION_TYPES, max_charge = MAX_CHARGE)
@@ -370,6 +389,14 @@ def get_IsotopeLabel() -> int:
     """
     return 0
 
+# get the file value
+def get_filename(row: pd.Series) -> str:
+    """
+    Returns the filename of the corresponding RAW/MGF of the CSM.
+    """
+
+    return str(row["Spectrum File"])
+
 # get the scanID value
 def get_scanID(row: pd.Series) -> int:
     """
@@ -458,7 +485,7 @@ def get_fragment_values(csm: pd.Series, spectra: Dict) -> Dict[str, List]:
 # generates the spectral library
 def main() -> pd.DataFrame:
 
-    print("INFO: Creating spectral library with input files:\nSpectra: " + SPECTRA_FILE + "\nCSMs: " + CSMS_FILE)
+    print("INFO: Creating spectral library with input files:\nSpectra: " + "\n".join(SPECTRA_FILE) + "\nCSMs: " + CSMS_FILE)
     print("INFO: Using the following modifications:")
     print(MODIFICATIONS)
     print("INFO: Using the following ion types:")
@@ -469,7 +496,7 @@ def main() -> pd.DataFrame:
     print("INFO: Starting annotation process...")
 
     print("INFO: Reading spectra...")
-    spectra = read_spectra(SPECTRA_FILE)
+    spectra = read_multiple_spectra(SPECTRA_FILE)
     print("INFO: Done reading spectra!")
 
     print("INFO: Reading CSMs...")
@@ -485,6 +512,7 @@ def main() -> pd.DataFrame:
     PrecursorMz_s = list()
     ModifiedPeptide_s = list()
     IsotopeLabel_s = list()
+    file_s = list()
     scanID_s = list()
     run_s = list()
     searchID_s = list()
@@ -514,6 +542,7 @@ def main() -> pd.DataFrame:
         PrecursorMz = get_PrecursorMz(row)
         ModifiedPeptide = get_ModifiedPeptide(row)
         IsotopeLabel = get_IsotopeLabel()
+        cfile = get_filename(row)
         scanID = get_scanID(row)
         run = get_run()
         searchID = get_searchID(row)
@@ -536,6 +565,7 @@ def main() -> pd.DataFrame:
                 PrecursorMz_s.append(PrecursorMz)
                 ModifiedPeptide_s.append(ModifiedPeptide)
                 IsotopeLabel_s.append(IsotopeLabel)
+                file_s.append(cfile)
                 scanID_s.append(scanID)
                 run_s.append(run)
                 searchID_s.append(searchID)
@@ -567,6 +597,7 @@ def main() -> pd.DataFrame:
                "PrecursorMz": PrecursorMz_s,
                "ModifiedPeptide": ModifiedPeptide_s,
                "IsotopeLabel": IsotopeLabel_s,
+               "File": file_s,
                "scanID": scanID_s,
                "run": run_s,
                "searchID": searchID_s,
