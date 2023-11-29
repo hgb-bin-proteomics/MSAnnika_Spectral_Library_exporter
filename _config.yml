@@ -1,6 +1,6 @@
 theme: jekyll-theme-minimal
-title: "MS Annika Spectral Library Exporter"
-description: "Project Website for the MS Annika Spectral Library Exporter."
+title: "MS Annika Spectral Library exporter"
+description: "The MS Annika Spectral Library exporter generates a spectral library for Spectronaut from MS Annika results."
 logo: https://raw.githubusercontent.com/hgb-bin-proteomics/MSAnnika/master/logo/annika_logo.png
 show_downloads: "true"
 github:
