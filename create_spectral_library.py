@@ -6,8 +6,8 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.1.0"
-__date = "2023-11-28"
+__version = "1.1.1"
+__date = "2023-12-06"
 
 # REQUIREMENTS
 # pip install pandas
@@ -77,7 +77,9 @@ def read_multiple_spectra(filenames: List[str]) -> Dict[str, Dict[int, Dict]]:
     return result_dict
 
 # generate a position to modification mass mapping
-def generate_modifications_dict(peptide: str, modification_str: str) -> Dict[int, List[float]]:
+def generate_modifications_dict(peptide: str,
+                                modification_str: str,
+                                possible_modifications: Dict[str, List[float]] = MODIFICATIONS) -> Dict[int, List[float]]:
     """
     Returns a mapping of peptide positions (0 based) to possible modification masses.
     modification_str is the modification string as returned by MS Annika e.g. K5(DSSO);M7(Oxidation)
@@ -101,8 +103,8 @@ def generate_modifications_dict(peptide: str, modification_str: str) -> Dict[int
             pos = len(peptide)
         else:
             pos = int(aa_and_pos[1:]) - 1
-        if mod in MODIFICATIONS:
-            modifications_dict[pos] = MODIFICATIONS[mod]
+        if mod in possible_modifications:
+            modifications_dict[pos] = possible_modifications[mod]
         else:
             warnings.warn("Modification '" + mod + "' not found!")
 
@@ -110,7 +112,10 @@ def generate_modifications_dict(peptide: str, modification_str: str) -> Dict[int
 
 # generate all theoretical fragments
 # adapted from https://pyteomics.readthedocs.io/en/latest/examples/example_msms.html
-def generate_theoretical_fragments(peptide: str, modifications: Dict[int, List[float]], ion_types: Tuple[str] = ("b", "y"), max_charge: int = 1) -> Dict[float, str]:
+def generate_theoretical_fragments(peptide: str,
+                                   modifications: Dict[int, List[float]],
+                                   ion_types: Tuple[str] = ("b", "y"),
+                                   max_charge: int = 1) -> Dict[float, str]:
     """
     Generates a set of theoretical fragment ion masses of the specified peptide with the modifications.
     """
@@ -164,13 +169,20 @@ def generate_theoretical_fragments(peptide: str, modifications: Dict[int, List[f
     return fragments
 
 # get all fragments and their annotations
-def get_fragments(row: pd.Series, alpha: bool, spectra: Dict[str, Dict[int, Dict]]) -> List[Dict]:
+def get_fragments(row: pd.Series,
+                  alpha: bool,
+                  spectra: Dict[str, Dict[int, Dict]],
+                  crosslinker: str = CROSSLINKER,
+                  possible_modifications: Dict[str, List[float]] = MODIFICATIONS,
+                  ion_types: Tuple[str] = ION_TYPES,
+                  max_charge: int = MAX_CHARGE,
+                  match_tolerance: float = MATCH_TOLERANCE) -> List[Dict]:
     """
     Generates all fragments with the necessary spectral library annotations for a given CSM peptide.
     """
 
     # function to check if the fragment contains the crosslinker
-    def check_if_xl_in_frag(row, alpha, ion_type, fragment):
+    def check_if_xl_in_frag(row, alpha, ion_type, fragment, crosslinker):
 
         if alpha:
             peptide = row["Sequence A"]
@@ -185,7 +197,7 @@ def get_fragments(row: pd.Series, alpha: bool, spectra: Dict[str, Dict[int, Dict
             aa_and_pos = mod_in_list.strip().split("(")[0]
             mod = mod_in_list.strip().split("(")[1].rstrip(")")
 
-            if mod == CROSSLINKER:
+            if mod == crosslinker:
                 if aa_and_pos == "Nterm":
                     pos = -1
                 elif aa_and_pos == "Cterm":
@@ -218,15 +230,15 @@ def get_fragments(row: pd.Series, alpha: bool, spectra: Dict[str, Dict[int, Dict
     current_spectra_file = ".".join(row["Spectrum File"].split(".")[:-1]).strip()
     spectrum = spectra[current_spectra_file][scan_nr]
 
-    modifications_processed = generate_modifications_dict(sequence, modifications)
-    theoretical_fragments = generate_theoretical_fragments(sequence, modifications_processed, ion_types = ION_TYPES, max_charge = MAX_CHARGE)
+    modifications_processed = generate_modifications_dict(sequence, modifications, possible_modifications)
+    theoretical_fragments = generate_theoretical_fragments(sequence, modifications_processed, ion_types, max_charge)
 
     matched_fragments = dict()
 
     # match fragments
     for peak_mz in spectrum["peaks"].keys():
         for fragment in theoretical_fragments.keys():
-            if round(peak_mz, 4) < round(fragment + MATCH_TOLERANCE, 4) and round(peak_mz, 4) > round(fragment - MATCH_TOLERANCE, 4):
+            if round(peak_mz, 4) < round(fragment + match_tolerance, 4) and round(peak_mz, 4) > round(fragment - match_tolerance, 4):
                 matched_fragments[peak_mz] = theoretical_fragments[fragment]
                 break
 
@@ -239,7 +251,7 @@ def get_fragments(row: pd.Series, alpha: bool, spectra: Dict[str, Dict[int, Dict
         fragment_mz = match
         fragment_rel_intensity = float(spectrum["peaks"][match] / spectrum["max_intensity"])
         fragment_loss_type = ""
-        fragment_contains_xl = check_if_xl_in_frag(row, alpha, fragment_type, matched_fragments[match].split(":")[1].strip())
+        fragment_contains_xl = check_if_xl_in_frag(row, alpha, fragment_type, matched_fragments[match].split(":")[1].strip(), crosslinker)
         fragment_lossy = False
         fragments.append({"FragmentCharge": fragment_charge,
                           "FragmentType": fragment_type,
@@ -325,20 +337,21 @@ def get_PrecursorMz(row: pd.Series) -> float:
     return float(row["m/z [Da]"])
 
 # get the ModifiedPeptide value
-def get_ModifiedPeptide(row: pd.Series) -> str:
+def get_ModifiedPeptide(row: pd.Series,
+                        crosslinker: str = CROSSLINKER) -> str:
     """
     Returns SequenceA with modification annotations (without crosslinker) _ SequenceB with modification annotations (without crosslinker).
     """
 
     # helper function to parse MS Annika modification string
-    def parse_mod_str(mod_str):
+    def parse_mod_str(mod_str, crosslinker):
         modifications_dict = dict()
         modifications = mod_str.split(";")
         for modification in modifications:
             aa_and_pos = modification.strip().split("(")[0]
             mod = modification.strip().split("(")[1].rstrip(")")
 
-            if mod == CROSSLINKER:
+            if mod == crosslinker:
                 continue
 
             if aa_and_pos == "Nterm":
@@ -406,12 +419,12 @@ def get_scanID(row: pd.Series) -> int:
     return int(row["First Scan"])
 
 # get the run value
-def get_run() -> str:
+def get_run(run_name: str = RUN_NAME) -> str:
     """
     Returns the run name specified in config.py
     """
 
-    return RUN_NAME
+    return run_name
 
 # get the searchID value
 def get_searchID(row: pd.Series) -> str:
@@ -432,20 +445,23 @@ def get_crosslinkedResidues(row: pd.Series) -> str:
     return str(positions["A"]) + "_" + str(positions["B"])
 
 # get the LabeledSequence value
-def get_LabeledSequence(row: pd.Series) -> str:
+def get_LabeledSequence(row: pd.Series,
+                        crosslinker: str = CROSSLINKER) -> str:
     """
     Returns SequenceA with modification annotations (without crosslinker) _ SequenceB with modification annotations (without crosslinker).
     """
 
-    return get_ModifiedPeptide(row)
+    return get_ModifiedPeptide(row, crosslinker)
 
 # get the iRT value
-def get_iRT(row: pd.Series) -> float:
+def get_iRT(row: pd.Series,
+            iRT_t: float = iRT_PARAMS["iRT_t"],
+            iRT_m: float = iRT_PARAMS["iRT_m"]) -> float:
     """
     Returns the calculated iRT using the values specified in config.py.
     """
 
-    return (float(row["RT [min]"]) - iRT_PARAMS["iRT_t"]) / iRT_PARAMS["iRT_m"]
+    return (float(row["RT [min]"]) - iRT_t) / iRT_m
 
 # get the RT value
 def get_RT(row: pd.Series) -> float:
@@ -470,37 +486,53 @@ def get_IonMobility() -> float:
     return 0.0
 
 # get the values for all fragments of a CSM
-def get_fragment_values(csm: pd.Series, spectra: Dict) -> Dict[str, List]:
+def get_fragment_values(csm: pd.Series,
+                        spectra: Dict,
+                        crosslinker: str = CROSSLINKER,
+                        possible_modifications: Dict[str, List[float]] = MODIFICATIONS,
+                        ion_types: Tuple[str] = ION_TYPES,
+                        max_charge: int = MAX_CHARGE,
+                        match_tolerance: float = MATCH_TOLERANCE) -> Dict[str, List]:
     """
     Returns the annotated fragments of both cross-linked peptides.
     """
 
-    fragments_A = get_fragments(csm, True, spectra)
-    fragments_B = get_fragments(csm, False, spectra)
+    fragments_A = get_fragments(csm, True, spectra, crosslinker, possible_modifications, ion_types, max_charge, match_tolerance)
+    fragments_B = get_fragments(csm, False, spectra, crosslinker, possible_modifications, ion_types, max_charge, match_tolerance)
 
     return {"Fragments_A": fragments_A, "Fragments_B": fragments_B}
 
 ##### MAIN FUNCTION #####
 
 # generates the spectral library
-def main() -> pd.DataFrame:
+def main(spectra_file: List[str] = SPECTRA_FILE,
+         csms_file: str = CSMS_FILE,
+         run_name: str = RUN_NAME,
+         crosslinker: str = CROSSLINKER,
+         modifications = Dict[str, List[float]] = MODIFICATIONS,
+         ion_types: Tuple[str] = ION_TYPES,
+         max_charge: int = MAX_CHARGE,
+         match_tolerance: float = MATCH_TOLERANCE,
+         iRT_m: float = iRT_PARAMS["iRT_m"],
+         iRT_t: float = iRT_PARAMS["iRT_t"],
+         save_output: bool = True) -> pd.DataFrame:
 
-    print("INFO: Creating spectral library with input files:\nSpectra: " + "\n".join(SPECTRA_FILE) + "\nCSMs: " + CSMS_FILE)
+    print("INFO: Creating spectral library with input files:\nSpectra: " + "\n".join(spectra_file) + "\nCSMs: " + csms_file)
     print("INFO: Using the following modifications:")
-    print(MODIFICATIONS)
+    print(modifications)
     print("INFO: Using the following ion types:")
-    print(ION_TYPES)
+    print(ion_types)
     print("INFO: Using the following charge states:")
-    print([i for i in range(1, MAX_CHARGE + 1)])
-    print("INFO: Using a match tolerance of: " + str(MATCH_TOLERANCE) + " Da")
+    print([i for i in range(1, max_charge + 1)])
+    print("INFO: Using a match tolerance of: " + str(match_tolerance) + " Da")
     print("INFO: Starting annotation process...")
 
     print("INFO: Reading spectra...")
-    spectra = read_multiple_spectra(SPECTRA_FILE)
+    spectra = read_multiple_spectra(spectra_file)
     print("INFO: Done reading spectra!")
 
     print("INFO: Reading CSMs...")
-    csms = pd.read_excel(CSMS_FILE)
+    csms = pd.read_excel(csms_file)
     print("INFO: Done reading CSMs! Starting spectral library creation...")
 
     # columns
@@ -540,19 +572,19 @@ def main() -> pd.DataFrame:
         FragmentGroupId = get_FragmentGroupId(row)
         PrecursorCharge = get_PrecursorCharge(row)
         PrecursorMz = get_PrecursorMz(row)
-        ModifiedPeptide = get_ModifiedPeptide(row)
+        ModifiedPeptide = get_ModifiedPeptide(row, crosslinker)
         IsotopeLabel = get_IsotopeLabel()
         cfile = get_filename(row)
         scanID = get_scanID(row)
-        run = get_run()
+        run = get_run(run_name)
         searchID = get_searchID(row)
         crosslinkedResidues = get_crosslinkedResidues(row)
         LabeledSequence = get_LabeledSequence(row)
-        iRT = get_iRT(row)
+        iRT = get_iRT(row, iRT_t, iRT_m)
         RT = get_RT(row)
         CCS = get_CCS()
         IonMobility = get_IonMobility()
-        fragments = get_fragment_values(row, spectra)
+        fragments = get_fragment_values(row, spectra, crosslinker, modifications, ion_types, max_charge, match_tolerance)
 
         for k in fragments.keys():
             pep = fragments[k]
@@ -619,11 +651,12 @@ def main() -> pd.DataFrame:
 
     spectral_library = pd.DataFrame(df_dict)
 
-    # save spectral library
-    spectral_library.to_csv(".".join(CSMS_FILE.split(".")[:-1]) + "_spectralLibrary.csv", index = True)
+    if save_output:
+        # save spectral library
+        spectral_library.to_csv(".".join(csms_file.split(".")[:-1]) + "_spectralLibrary.csv", index = True)
 
-    print("SUCCESS: Spectral library created with filename:")
-    print(".".join(CSMS_FILE.split(".")[:-1]) + "_spectralLibrary.csv")
+        print("SUCCESS: Spectral library created with filename:")
+        print(".".join(csms_file.split(".")[:-1]) + "_spectralLibrary.csv")
 
     return spectral_library
 
