@@ -28,10 +28,14 @@ from typing import Dict
 from typing import List
 from typing import Tuple
 from typing import Set
+from typing import Union
+from typing import BinaryIO
 import warnings
 
 # reading spectra
-def read_spectra(filename: str) -> Dict[int, Dict]:
+# def read_spectra(filename: str | BinaryIO) -> Dict[int, Dict]:
+# for backward compatibility >>
+def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
     """
     Returns a dictionary that maps scan numbers to spectra:
     Dict[int -> Dict["precursor"        -> float
@@ -73,6 +77,24 @@ def read_multiple_spectra(filenames: List[str]) -> Dict[str, Dict[int, Dict]]:
     for filename in filenames:
         current_spectra_file = ".".join(filename.split(".")[:-1]).strip()
         result_dict[current_spectra_file] = read_spectra(filename)
+
+    return result_dict
+
+# read multiple spectra files - streamlit version
+def read_multiple_spectra_streamlit(st_files) -> Dict[str, Dict[int, Dict]]:
+    """
+    Returns a dictionary that maps filenames to scan numbers to spectra:
+    Dict[str -> Dict[int -> Dict["precursor"        -> float
+                                 "charge"           -> int
+                                 "max_intensity"    -> float
+                                 "peaks"            -> Dict[m/z -> intensity]]
+    """
+
+    result_dict = dict()
+
+    for st_file in st_files:
+        current_spectra_file = ".".join(st_file.name.split(".")[:-1]).strip()
+        result_dict[current_spectra_file] = read_spectra(st_file)
 
     return result_dict
 
@@ -505,8 +527,11 @@ def get_fragment_values(csm: pd.Series,
 ##### MAIN FUNCTION #####
 
 # generates the spectral library
-def main(spectra_file: List[str] = SPECTRA_FILE,
-         csms_file: str = CSMS_FILE,
+# def main(spectra_file: List[str] | List[BinaryIO] = SPECTRA_FILE,
+#          csms_file: str | BinaryIO = CSMS_FILE,
+# for backward compatibility >>
+def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
+         csms_file: Union[str, BinaryIO] = CSMS_FILE,
          run_name: str = RUN_NAME,
          crosslinker: str = CROSSLINKER,
          modifications = Dict[str, List[float]] = MODIFICATIONS,
@@ -515,6 +540,7 @@ def main(spectra_file: List[str] = SPECTRA_FILE,
          match_tolerance: float = MATCH_TOLERANCE,
          iRT_m: float = iRT_PARAMS["iRT_m"],
          iRT_t: float = iRT_PARAMS["iRT_t"],
+         is_streamlit: bool = False,
          save_output: bool = True) -> pd.DataFrame:
 
     print("INFO: Creating spectral library with input files:\nSpectra: " + "\n".join(spectra_file) + "\nCSMs: " + csms_file)
@@ -528,7 +554,7 @@ def main(spectra_file: List[str] = SPECTRA_FILE,
     print("INFO: Starting annotation process...")
 
     print("INFO: Reading spectra...")
-    spectra = read_multiple_spectra(spectra_file)
+    spectra = read_multiple_spectra(spectra_file) if not is_streamlit else read_multiple_spectra_streamlit(spectra_file)
     print("INFO: Done reading spectra!")
 
     print("INFO: Reading CSMs...")
