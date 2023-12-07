@@ -396,8 +396,8 @@ def get_ModifiedPeptide(row: pd.Series,
         return string[:index] + character + string[:index]
     # end function
 
-    mods_A = parse_mod_str(str(row["Modifications A"]))
-    mods_B = parse_mod_str(str(row["Modifications B"]))
+    mods_A = parse_mod_str(str(row["Modifications A"]), crosslinker)
+    mods_B = parse_mod_str(str(row["Modifications B"]), crosslinker)
 
     # generate annotation for sequence A
     shift = 0
