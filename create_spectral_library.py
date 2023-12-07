@@ -543,7 +543,12 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
          is_streamlit: bool = False,
          save_output: bool = True) -> pd.DataFrame:
 
-    print("INFO: Creating spectral library with input files:\nSpectra: " + "\n".join(spectra_file) + "\nCSMs: " + csms_file)
+    if is_streamlit:
+        print("INFO: Creating spectral library with input files:\nSpectra: " +
+              "\n".join([spectrum_file.name for spectrum_file in spectra_file]) +
+              "\nCSMs: " + str(csms_file.name))
+    else:
+        print("INFO: Creating spectral library with input files:\nSpectra: " + "\n".join(spectra_file) + "\nCSMs: " + csms_file)
     print("INFO: Using the following modifications:")
     print(modifications)
     print("INFO: Using the following ion types:")
