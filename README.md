@@ -14,6 +14,25 @@ Generate a spectral library for [Spectronaut](https://biognosys.com/software/spe
 - Run `python create_spectral_library.py`.
 - If the script successfully finishes, the spectral library should be generated with the extension `_spectralLibrary.csv`.
 
+## GUI
+
+![Screenshot](gui/screenshot.png)
+
+Alternatively to the commandline-based python script, a GUI is also available via [Docker](https://www.docker.com/):
+- After [installing Docker](https://docs.docker.com/engine/install/) [[Quick Guide here](https://github.com/michabirklbauer/PIA/blob/master/DOCKER.md)] run the following command:
+  ```
+  docker run -p 8501:8501 michabirklbauer/spectrallibraryexporter
+  ```
+- Navigate to `localhost:8501` in your browser. You should see the MS Annika Spectral Library exporter GUI!
+
+Without Docker you can run the GUI locally using the following commands:
+- Open a terminal inside `MSAnnika_Spectral_Library_exporter`.
+- Enter `cp gui/streamlit_app.py .`.
+- Enter `cp gui/streamlit_util.py .`.
+- Enter `pip install streamlit`.
+- Enter `streamlit run streamlit_app.py --server.maxUploadSize 5000`.
+- Navigate to `localhost:8501` in your browser. You should see the MS Annika Spectral Library exporter GUI!
+
 ## Exporting MS Annika results to Microsoft Excel
 
 The script uses a Micrsoft Excel files as input, for that MS Annika results need to be exported from Proteome Discoverer. It is recommended to first filter results according to your needs, e.g. filter for high-confidence CSMs and filter out decoy CSMs as depicted below.
