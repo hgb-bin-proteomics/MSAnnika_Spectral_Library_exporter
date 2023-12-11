@@ -25,7 +25,7 @@ Alternatively to the commandline-based python script, a GUI is also available vi
   ```
 - Navigate to `localhost:8501` in your browser. You should see the MS Annika Spectral Library exporter GUI!
 
-Without Docker you can run the GUI locally using the following commands:
+If you don't have/want to install Docker you can also run the GUI natively using the following commands:
 - Open a terminal inside `MSAnnika_Spectral_Library_exporter`.
 - Enter `cp gui/streamlit_app.py .`.
 - Enter `cp gui/streamlit_util.py .`.
