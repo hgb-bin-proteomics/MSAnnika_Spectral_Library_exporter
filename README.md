@@ -1,3 +1,5 @@
+![workflow_state](https://github.com/hgb-bin-proteomics/MSAnnika_Spectral_Library_exporter/workflows/msannika_spectral_library/badge.svg)
+
 # MS Annika Spectral Library exporter
 
 Generate a spectral library for [Spectronaut](https://biognosys.com/software/spectronaut/) from [MS Annika](https://github.com/hgb-bin-proteomics/MSAnnika) results.
