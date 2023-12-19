@@ -16,7 +16,15 @@ __date = "2023-12-06"
 
 ##### PARAMETERS #####
 
-from config import *
+from config import SPECTRA_FILE
+from config import CSMS_FILE
+from config import RUN_NAME
+from config import CROSSLINKER
+from config import MODIFICATIONS
+from config import ION_TYPES
+from config import MAX_CHARGE
+from config import MATCH_TOLERANCE
+from config import iRT_PARAMS
 
 ######################
 
@@ -366,7 +374,7 @@ def get_ModifiedPeptide(row: pd.Series,
     """
 
     # helper function to parse MS Annika modification string
-    def parse_mod_str(mod_str, crosslinker):
+    def parse_mod_str(peptide, mod_str, crosslinker):
         modifications_dict = dict()
         modifications = mod_str.split(";")
         for modification in modifications:
@@ -396,8 +404,8 @@ def get_ModifiedPeptide(row: pd.Series,
         return string[:index] + character + string[:index]
     # end function
 
-    mods_A = parse_mod_str(str(row["Modifications A"]), crosslinker)
-    mods_B = parse_mod_str(str(row["Modifications B"]), crosslinker)
+    mods_A = parse_mod_str(str(row["Sequence A"]), str(row["Modifications A"]), crosslinker)
+    mods_B = parse_mod_str(str(row["Sequence B"]), str(row["Modifications B"]), crosslinker)
 
     # generate annotation for sequence A
     shift = 0
