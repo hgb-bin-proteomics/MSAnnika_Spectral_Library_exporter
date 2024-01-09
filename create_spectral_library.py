@@ -6,8 +6,8 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.1.1"
-__date = "2023-12-06"
+__version = "1.1.3"
+__date = "2024-01-08"
 
 # REQUIREMENTS
 # pip install pandas
@@ -401,7 +401,7 @@ def get_ModifiedPeptide(row: pd.Series,
 
     # helper function to insert string into string
     def str_insert(string, index, character):
-        return string[:index] + character + string[:index]
+        return string[:index] + character + string[index:]
     # end function
 
     mods_A = parse_mod_str(str(row["Sequence A"]), str(row["Modifications A"]), crosslinker)
