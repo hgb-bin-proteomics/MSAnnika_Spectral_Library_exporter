@@ -6,8 +6,8 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.1.3"
-__date = "2024-01-08"
+__version = "1.1.4"
+__date = "2024-06-17"
 
 # REQUIREMENTS
 # pip install pandas
@@ -60,7 +60,7 @@ def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
             spectrum_dict = dict()
             spectrum_dict["precursor"] = spectrum["params"]["pepmass"]
             spectrum_dict["charge"] = spectrum["params"]["charge"]
-            spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"]))
+            spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"])) if len(spectrum["intensity array"]) > 0 else 0.0
             peaks = dict()
             for i, mz in enumerate(spectrum["m/z array"]):
                 peaks[mz] = spectrum["intensity array"][i]
@@ -703,4 +703,4 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
 
 if __name__ == "__main__":
 
-        sl = main()
+    sl = main()
