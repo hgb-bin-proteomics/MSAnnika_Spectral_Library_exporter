@@ -6,7 +6,7 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.1.4"
+__version = "1.1.5"
 __date = "2024-06-17"
 
 # REQUIREMENTS
@@ -411,7 +411,7 @@ def get_ModifiedPeptide(row: pd.Series,
     shift = 0
     mod_A_template_str = str(row["Sequence A"])
     for pos in mods_A.keys():
-        current_mods = "(" + ", ".join(mods_A[pos]) + ")"
+        current_mods = "[" + ", ".join(mods_A[pos]) + "]"
         mod_A_template_str = str_insert(mod_A_template_str, pos + shift, current_mods)
         shift += len(current_mods)
 
@@ -419,7 +419,7 @@ def get_ModifiedPeptide(row: pd.Series,
     shift = 0
     mod_B_template_str = str(row["Sequence B"])
     for pos in mods_B.keys():
-        current_mods = "(" + ", ".join(mods_B[pos]) + ")"
+        current_mods = "[" + ", ".join(mods_B[pos]) + "]"
         mod_B_template_str = str_insert(mod_B_template_str, pos + shift, current_mods)
         shift += len(current_mods)
 
@@ -509,11 +509,11 @@ def get_CCS() -> float:
     return 0.0
 
 # get the IonMobility value
-def get_IonMobility() -> float:
+def get_IonMobility(csm: pd.Series) -> float:
     """
     Dummy function.
     """
-    return 0.0
+    return float(csm["Compensation Voltage"])
 
 # get the values for all fragments of a CSM
 def get_fragment_values(csm: pd.Series,
