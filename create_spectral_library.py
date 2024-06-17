@@ -622,7 +622,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         iRT = get_iRT(row, iRT_t, iRT_m)
         RT = get_RT(row)
         CCS = get_CCS()
-        IonMobility = get_IonMobility()
+        IonMobility = get_IonMobility(row)
         fragments = get_fragment_values(row, spectra, crosslinker, modifications, ion_types, max_charge, match_tolerance)
 
         for k in fragments.keys():
