@@ -6,8 +6,8 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.1.6"
-__date = "2024-06-17"
+__version = "1.2.0"
+__date = "2024-07-18"
 
 # REQUIREMENTS
 # pip install pandas
@@ -309,6 +309,179 @@ def get_positions_in_protein(row: pd.Series) -> Dict[str, int]:
 
     return {"A": pep_pos_A + xl_pos_A, "B": pep_pos_B + xl_pos_B}
 
+##### DECOY GENERATION #####
+
+def generate_decoy_csm(row: pd.Series, crosslinker: str = CROSSLINKER) -> pd.Series:
+    """
+    """
+
+    decoy_csm = row.copy(deep = True)
+
+    # decoy seq
+    seq_a = str(decoy_csm["Sequence A"]).strip()
+    decoy_seq_a = seq_a[:-1][::-1] + seq_a[-1]
+    seq_b = str(decoy_csm["Sequence B"]).strip()
+    decoy_seq_b = seq_b[:-1][::-1] + seq_b[-1]
+    decoy_csm["Sequence A"] = decoy_seq_a
+    decoy_csm["Sequence B"] = decoy_seq_b
+
+    # decoy mods
+    ## <calculate_new_position>
+    def calculate_new_position(csm, alpha, modification):
+        sequence = csm["Sequence B"]
+        if alpha:
+            sequence = csm["Sequence A"]
+        if "Nterm" in modification:
+            return modification
+        if "Cterm" in modification:
+            return modification
+        pos = int(modification.split("(")[0][1:]) - 1
+        aa = modification.split("(")[0][0].strip()
+        ptm = modification.split("(")[1].split(")")[0].strip()
+        if pos == (len(sequence) - 1):
+            return modification
+        new_pos = len(sequence) - 2 - pos
+        if aa != sequence[new_pos]:
+            warnings.warn(f"Target and decoy modification positions may to match (decoy position may be incorrect)!", UserWarning)
+        #assert aa == sequence[new_pos]
+        if ptm == crosslinker:
+            if alpha:
+                csm["Crosslinker Position A"] = new_pos + 1
+            else:
+                csm["Crosslinker Position B"] = new_pos + 1
+
+        return f"{aa}{new_pos + 1}({ptm})"
+    ## </calculate_new_position>
+
+    decoy_mods_a = [calculate_new_position(decoy_csm, True, mod.strip()) for mod in str(decoy_csm["Modifications A"]).split(";")]
+    decoy_mods_b = [calculate_new_position(decoy_csm, False, mod.strip()) for mod in str(decoy_csm["Modifications B"]).split(";")]
+    decoy_csm["Modifications A"] = ";".join(decoy_mods_a)
+    decoy_csm["Modifications B"] = ";".join(decoy_mods_b)
+
+    return decoy_csm
+
+def get_decoy_fragments(decoy_csm: pd.Series,
+                        target_fragments: List[Dict],
+                        possible_modifications: Dict[str, List[float]] = MODIFICATIONS,
+                        crosslinker: str = CROSSLINKER) -> List[Dict]:
+    """
+    """
+
+    decoy_fragments = list()
+
+    ## <get_decoy_mzs>
+    def get_decoy_mzs(decoy_csm, pep_id, ion_type, ion_number, charge, possible_modifications) -> List[float]:
+        decoy_mzs = list()
+        seq = decoy_csm["Sequence A"]
+        mods_str = decoy_csm["Modifications A"]
+        if pep_id == 1:
+            seq = decoy_csm["Sequence B"]
+            mods_str = decoy_csm["Modifications B"]
+        mods = generate_modifications_dict(seq, mods_str, possible_modifications)
+        if ion_type in "abc":
+            end_pos = ion_number
+            frag_mass = mass.fast_mass(seq[:end_pos], ion_type = ion_type, charge = charge)
+            mz_possibilites = set()
+            for mod_pos in mods.keys():
+                # if the modification is within the fragment:
+                if mod_pos < end_pos:
+                    # add the modification mass / charge if its a normal modification
+                    if len(mods[mod_pos]) == 1:
+                        frag_mass += mods[mod_pos][0] / charge
+                    else:
+                        # if it's a crosslinking modification we add the crosslinker fragment masses
+                        # to a set of possible modification mass additions to generate a fragment mass
+                        # for every crosslinker fragment
+                        for mod in mods[mod_pos]:
+                            mz_possibilites.add(mod / charge)
+            # we add all possible fragment masses including all crosslinker fragment possibilites
+            if len(mz_possibilites) == 0:
+                if frag_mass not in decoy_mzs:
+                    decoy_mzs.append(frag_mass)
+            else:
+                for mz_possibility in mz_possibilites:
+                    if frag_mass + mz_possibility not in decoy_mzs:
+                        decoy_mzs.append(frag_mass + mass_possibility)
+            return decoy_mzs
+        else:
+            start_pos = len(seq) - ion_number
+            frag_mass = mass.fast_mass(seq[start_pos:], ion_type = ion_type, charge = charge)
+            mz_possibilites = set()
+            for mod_pos in mods.keys():
+                if mod_pos >= start_pos:
+                    if len(mods[mod_pos]) == 1:
+                        frag_mass += mods[mod_pos][0] / charge
+                    else:
+                        for mod in mods[mod_pos]:
+                            mz_possibilites.add(mod / charge)
+            if len(mz_possibilites) == 0:
+                if frag_mass not in decoy_mzs:
+                    decoy_mzs.append(frag_mass)
+            else:
+                for mz_possibility in mz_possibilites:
+                    if frag_mass + mz_possibility not in decoy_mzs:
+                        decoy_mzs.append(frag_mass + mz_possibility)
+            return decoy_mzs
+    ## </get_decoy_mzs>
+
+    ## <check_if_xl_in_frag>
+    def check_if_xl_in_frag(decoy_csm, pep_id, ion_type, ion_number, crosslinker) -> bool:
+        if pep_id == 0:
+            peptide = decoy_csm["Sequence A"]
+            mods = decoy_csm["Modifications A"]
+        else:
+            peptide = decoy_csm["Sequence B"]
+            mods = decoy_csm["Modifications B"]
+
+        pos = 0
+        mods_list = mods.split(";")
+        for mod_in_list in mods_list:
+            aa_and_pos = mod_in_list.strip().split("(")[0]
+            mod = mod_in_list.strip().split("(")[1].rstrip(")")
+
+            if mod == crosslinker:
+                if aa_and_pos == "Nterm":
+                    pos = -1
+                elif aa_and_pos == "Cterm":
+                    pos = len(peptide)
+                else:
+                    pos = int(aa_and_pos[1:]) - 1
+                break
+
+        if ion_type in "abc":
+            if ion_number > pos:
+                return True
+        else:
+            if len(peptide) - ion_number <= pos:
+                return True
+
+        return False
+    ## </check_if_xl_in_frag>
+
+    for fragment in target_fragments:
+        fragment_charge = fragment["FragmentCharge"]
+        fragment_type = fragment["FragmentType"]
+        fragment_number = fragment["FragmentNumber"]
+        fragment_pep_id = fragment["FragmentPepId"]
+        fragment_mzs = get_decoy_mzs(decoy_csm, fragment_pep_id, fragment_type, fragment_number, fragment_charge, possible_modifications)
+        fragment_rel_intensity = fragment["RelativeIntensity"]
+        fragment_loss_type = ""
+        fragment_contains_xl = check_if_xl_in_frag(decoy_csm, fragment_pep_id, fragment_type, fragment_number, crosslinker)
+        fragment_lossy = False
+        for fragment_mz in fragment_mzs:
+            decoy_fragments.append({"FragmentCharge": fragment_charge,
+                                    "FragmentType": fragment_type,
+                                    "FragmentNumber": fragment_number,
+                                    "FragmentPepId": fragment_pep_id,
+                                    "FragmentMz": fragment_mz,
+                                    "RelativeIntensity": fragment_rel_intensity,
+                                    "FragmentLossType": fragment_loss_type,
+                                    "CLContainingFragment": fragment_contains_xl,
+                                    "LossyFragment": fragment_lossy
+                                  })
+
+    return decoy_fragments
+
 ##### SPECTRAL LIBRARY COLUMNS #####
 
 # get the linkId value
@@ -603,8 +776,38 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     CLContainingFragment_s = list()
     LossyFragment_s = list()
 
+    # decoy columns
+    linkId_s_decoy = list()
+    ProteinID_s_decoy = list()
+    StrippedPeptide_s_decoy = list()
+    FragmentGroupId_s_decoy = list()
+    PrecursorCharge_s_decoy = list()
+    PrecursorMz_s_decoy = list()
+    ModifiedPeptide_s_decoy = list()
+    IsotopeLabel_s_decoy = list()
+    file_s_decoy = list()
+    scanID_s_decoy = list()
+    run_s_decoy = list()
+    searchID_s_decoy = list()
+    crosslinkedResidues_s_decoy = list()
+    LabeledSequence_s_decoy = list()
+    iRT_s_decoy = list()
+    RT_s_decoy = list()
+    CCS_s_decoy = list()
+    IonMobility_s_decoy = list()
+    FragmentCharge_s_decoy = list()
+    FragmentType_s_decoy = list()
+    FragmentNumber_s_decoy = list()
+    FragmentPepId_s_decoy = list()
+    FragmentMz_s_decoy = list()
+    RelativeIntensity_s_decoy = list()
+    FragmentLossType_s_decoy = list()
+    CLContainingFragment_s_decoy = list()
+    LossyFragment_s_decoy = list()
+
     # process CSMs
     for i, row in csms.iterrows():
+        # target
         link_Id = get_linkId(row)
         ProteinID = get_ProteinID(row)
         StrippedPeptide = get_StrippedPeptide(row)
@@ -656,11 +859,69 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 CLContainingFragment_s.append(frag["CLContainingFragment"])
                 LossyFragment_s.append(frag["LossyFragment"])
 
+        # decoy
+        decoy_csm = generate_decoy_csm(row, crosslinker)
+        decoy_link_Id = get_linkId(decoy_csm)
+        decoy_ProteinID = get_ProteinID(decoy_csm)
+        decoy_StrippedPeptide = get_StrippedPeptide(decoy_csm)
+        decoy_FragmentGroupId = get_FragmentGroupId(decoy_csm)
+        decoy_PrecursorCharge = get_PrecursorCharge(decoy_csm)
+        decoy_PrecursorMz = get_PrecursorMz(decoy_csm)
+        decoy_ModifiedPeptide = get_ModifiedPeptide(decoy_csm, crosslinker)
+        decoy_IsotopeLabel = get_IsotopeLabel()
+        decoy_cfile = get_filename(decoy_csm)
+        decoy_scanID = get_scanID(decoy_csm)
+        decoy_run = get_run(run_name)
+        decoy_searchID = get_searchID(decoy_csm)
+        decoy_crosslinkedResidues = get_crosslinkedResidues(decoy_csm)
+        decoy_LabeledSequence = get_LabeledSequence(decoy_csm)
+        decoy_iRT = get_iRT(decoy_csm, iRT_t, iRT_m)
+        decoy_RT = get_RT(decoy_csm)
+        decoy_CCS = get_CCS()
+        decoy_IonMobility = get_IonMobility(decoy_csm)
+        decoy_fragments = {"Fragments_A": get_decoy_fragments(decoy_csm, fragments["Fragments_A"], modifications, crosslinker),
+                           "Fragments_B": get_decoy_fragments(decoy_csm, fragments["Fragments_B"], modifications, crosslinker)}
+
+        for k in decoy_fragments.keys():
+            decoy_pep = decoy_fragments[k]
+            decoy_frag_mzs = list()
+            for decoy_frag in decoy_pep:
+                if decoy_frag["FragmentMz"] in decoy_frag_mzs:
+                    continue
+                linkId_s_decoy.append(decoy_link_Id)
+                ProteinID_s_decoy.append(decoy_ProteinID)
+                StrippedPeptide_s_decoy.append(decoy_StrippedPeptide)
+                FragmentGroupId_s_decoy.append(decoy_FragmentGroupId)
+                PrecursorCharge_s_decoy.append(decoy_PrecursorCharge)
+                PrecursorMz_s_decoy.append(decoy_PrecursorMz)
+                ModifiedPeptide_s_decoy.append(decoy_ModifiedPeptide)
+                IsotopeLabel_s_decoy.append(decoy_IsotopeLabel)
+                file_s_decoy.append(decoy_cfile)
+                scanID_s_decoy.append(decoy_scanID)
+                run_s_decoy.append(decoy_run)
+                searchID_s_decoy.append(decoy_searchID)
+                crosslinkedResidues_s_decoy.append(decoy_crosslinkedResidues)
+                LabeledSequence_s_decoy.append(decoy_LabeledSequence)
+                iRT_s_decoy.append(decoy_iRT)
+                RT_s_decoy.append(decoy_RT)
+                CCS_s_decoy.append(decoy_CCS)
+                IonMobility_s_decoy.append(decoy_IonMobility)
+                FragmentCharge_s_decoy.append(decoy_frag["FragmentCharge"])
+                FragmentType_s_decoy.append(decoy_frag["FragmentType"])
+                FragmentNumber_s_decoy.append(decoy_frag["FragmentNumber"])
+                FragmentPepId_s_decoy.append(decoy_frag["FragmentPepId"])
+                FragmentMz_s_decoy.append(decoy_frag["FragmentMz"])
+                RelativeIntensity_s_decoy.append(decoy_frag["RelativeIntensity"])
+                FragmentLossType_s_decoy.append(decoy_frag["FragmentLossType"])
+                CLContainingFragment_s_decoy.append(decoy_frag["CLContainingFragment"])
+                LossyFragment_s_decoy.append(decoy_frag["LossyFragment"])
+                decoy_frag_mzs.append(decoy_frag["FragmentMz"])
+
         if (i + 1) % 100 == 0:
             print("INFO: Processed " + str(i + 1) + " CSMs in total...")
 
     # generate dataframe
-    df_dict = {"linkId": linkId_s,
+    tt_dict = {"linkId": linkId_s,
                "ProteinID": ProteinID_s,
                "StrippedPeptide": StrippedPeptide_s,
                "FragmentGroupId": FragmentGroupId_s,
@@ -688,14 +949,47 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "CLContainingFragment": CLContainingFragment_s,
                "LossyFragment": LossyFragment_s}
 
-    spectral_library = pd.DataFrame(df_dict)
+    spectral_library = pd.DataFrame(tt_dict)
+
+    dd_dict = {"linkId": linkId_s_decoy,
+               "ProteinID": ProteinID_s_decoy,
+               "StrippedPeptide": StrippedPeptide_s_decoy,
+               "FragmentGroupId": FragmentGroupId_s_decoy,
+               "PrecursorCharge": PrecursorCharge_s_decoy,
+               "PrecursorMz": PrecursorMz_s_decoy,
+               "ModifiedPeptide": ModifiedPeptide_s_decoy,
+               "IsotopeLabel": IsotopeLabel_s_decoy,
+               "File": file_s_decoy,
+               "scanID": scanID_s_decoy,
+               "run": run_s_decoy,
+               "searchID": searchID_s_decoy,
+               "crosslinkedResidues": crosslinkedResidues_s_decoy,
+               "LabeledSequence": LabeledSequence_s_decoy,
+               "iRT": iRT_s_decoy,
+               "RT": RT_s_decoy,
+               "CCS": CCS_s_decoy,
+               "IonMobility": IonMobility_s_decoy,
+               "FragmentCharge": FragmentCharge_s_decoy,
+               "FragmentType": FragmentType_s_decoy,
+               "FragmentNumber": FragmentNumber_s_decoy,
+               "FragmentPepId": FragmentPepId_s_decoy,
+               "FragmentMz": FragmentMz_s_decoy,
+               "RelativeIntensity": RelativeIntensity_s_decoy,
+               "FragmentLossType": FragmentLossType_s_decoy,
+               "CLContainingFragment": CLContainingFragment_s_decoy,
+               "LossyFragment": LossyFragment_s_decoy}
+
+    spectral_library_decoy = pd.DataFrame(dd_dict)
 
     if save_output:
         # save spectral library
         spectral_library.to_csv(".".join(csms_file.split(".")[:-1]) + "_spectralLibrary.csv", index = True)
+        spectral_library_decoy.to_csv(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY.csv", index = True)
 
         print("SUCCESS: Spectral library created with filename:")
         print(".".join(csms_file.split(".")[:-1]) + "_spectralLibrary.csv")
+        print("SUCCESS: Decoy Spectral library created with filename:")
+        print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY.csv")
 
     return spectral_library
 
