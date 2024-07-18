@@ -6,7 +6,7 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.2.0"
+__version = "1.2.1"
 __date = "2024-07-18"
 
 # REQUIREMENTS
@@ -401,7 +401,7 @@ def get_decoy_fragments(decoy_csm: pd.Series,
             else:
                 for mz_possibility in mz_possibilites:
                     if frag_mass + mz_possibility not in decoy_mzs:
-                        decoy_mzs.append(frag_mass + mass_possibility)
+                        decoy_mzs.append(frag_mass + mz_possibility)
             return decoy_mzs
         else:
             start_pos = len(seq) - ion_number
