@@ -6,8 +6,8 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.2.1"
-__date = "2024-07-18"
+__version = "1.2.2"
+__date = "2024-07-21"
 
 # REQUIREMENTS
 # pip install pandas
@@ -310,6 +310,7 @@ def get_positions_in_protein(row: pd.Series) -> Dict[str, int]:
     return {"A": pep_pos_A + xl_pos_A, "B": pep_pos_B + xl_pos_B}
 
 ##### DECOY GENERATION #####
+# decoy generation implemented as described by Zhang et al. here: https://doi.org/10.1021/acs.jproteome.7b00614
 
 def generate_decoy_csm(row: pd.Series, crosslinker: str = CROSSLINKER) -> pd.Series:
     """
@@ -722,7 +723,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
          iRT_m: float = iRT_PARAMS["iRT_m"],
          iRT_t: float = iRT_PARAMS["iRT_t"],
          is_streamlit: bool = False,
-         save_output: bool = True) -> pd.DataFrame:
+         save_output: bool = True) -> Dict[str, pd.DataFrame]:
 
     if is_streamlit:
         print("INFO: Creating spectral library with input files:\nSpectra: " +
@@ -991,7 +992,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         print("SUCCESS: Decoy Spectral library created with filename:")
         print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY.csv")
 
-    return spectral_library
+    return {"TargetLib": spectral_library, "DecoyLib": spectral_library_decoy}
 
 ##### SCRIPT #####
 
