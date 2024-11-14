@@ -312,7 +312,7 @@ def get_positions_in_protein(row: pd.Series) -> Dict[str, int]:
 ##### DECOY GENERATION #####
 # decoy generation implemented as described by Zhang et al. here: https://doi.org/10.1021/acs.jproteome.7b00614
 
-def generate_decoy_csm(row: pd.Series, crosslinker: str = CROSSLINKER) -> pd.Series:
+def generate_decoy_csm_dd(row: pd.Series, crosslinker: str = CROSSLINKER) -> pd.Series:
     """
     """
 
@@ -358,6 +358,94 @@ def generate_decoy_csm(row: pd.Series, crosslinker: str = CROSSLINKER) -> pd.Ser
     decoy_mods_b = [calculate_new_position(decoy_csm, False, mod.strip()) for mod in str(decoy_csm["Modifications B"]).split(";")]
     decoy_csm["Modifications A"] = ";".join(decoy_mods_a)
     decoy_csm["Modifications B"] = ";".join(decoy_mods_b)
+
+    return decoy_csm
+    
+def generate_decoy_csm_td(row: pd.Series, crosslinker: str = CROSSLINKER) -> pd.Series:
+    """
+    """
+
+    decoy_csm = row.copy(deep = True)
+
+    # decoy seq
+    seq_b = str(decoy_csm["Sequence B"]).strip()
+    decoy_seq_b = seq_b[:-1][::-1] + seq_b[-1]
+    decoy_csm["Sequence B"] = decoy_seq_b
+
+    # decoy mods
+    ## <calculate_new_position>
+    def calculate_new_position(csm, alpha, modification):
+        sequence = csm["Sequence B"]
+        if alpha:
+            sequence = csm["Sequence A"]
+        if "Nterm" in modification:
+            return modification
+        if "Cterm" in modification:
+            return modification
+        pos = int(modification.split("(")[0][1:]) - 1
+        aa = modification.split("(")[0][0].strip()
+        ptm = modification.split("(")[1].split(")")[0].strip()
+        if pos == (len(sequence) - 1):
+            return modification
+        new_pos = len(sequence) - 2 - pos
+        if aa != sequence[new_pos]:
+            warnings.warn(f"Target and decoy modification positions may to match (decoy position may be incorrect)!", UserWarning)
+        #assert aa == sequence[new_pos]
+        if ptm == crosslinker:
+            if alpha:
+                csm["Crosslinker Position A"] = new_pos + 1
+            else:
+                csm["Crosslinker Position B"] = new_pos + 1
+
+        return f"{aa}{new_pos + 1}({ptm})"
+    ## </calculate_new_position>
+
+    decoy_mods_b = [calculate_new_position(decoy_csm, False, mod.strip()) for mod in str(decoy_csm["Modifications B"]).split(";")]
+    decoy_csm["Modifications B"] = ";".join(decoy_mods_b)
+
+    return decoy_csm
+    
+def generate_decoy_csm_dt(row: pd.Series, crosslinker: str = CROSSLINKER) -> pd.Series:
+    """
+    """
+
+    decoy_csm = row.copy(deep = True)
+
+    # decoy seq
+    seq_a = str(decoy_csm["Sequence A"]).strip()
+    decoy_seq_a = seq_a[:-1][::-1] + seq_a[-1]
+    decoy_csm["Sequence A"] = decoy_seq_a
+
+    # decoy mods
+    ## <calculate_new_position>
+    def calculate_new_position(csm, alpha, modification):
+        sequence = csm["Sequence B"]
+        if alpha:
+            sequence = csm["Sequence A"]
+        if "Nterm" in modification:
+            return modification
+        if "Cterm" in modification:
+            return modification
+        pos = int(modification.split("(")[0][1:]) - 1
+        aa = modification.split("(")[0][0].strip()
+        ptm = modification.split("(")[1].split(")")[0].strip()
+        if pos == (len(sequence) - 1):
+            return modification
+        new_pos = len(sequence) - 2 - pos
+        if aa != sequence[new_pos]:
+            warnings.warn(f"Target and decoy modification positions may to match (decoy position may be incorrect)!", UserWarning)
+        #assert aa == sequence[new_pos]
+        if ptm == crosslinker:
+            if alpha:
+                csm["Crosslinker Position A"] = new_pos + 1
+            else:
+                csm["Crosslinker Position B"] = new_pos + 1
+
+        return f"{aa}{new_pos + 1}({ptm})"
+    ## </calculate_new_position>
+
+    decoy_mods_a = [calculate_new_position(decoy_csm, True, mod.strip()) for mod in str(decoy_csm["Modifications A"]).split(";")]
+    decoy_csm["Modifications A"] = ";".join(decoy_mods_a)
 
     return decoy_csm
 
