@@ -13,7 +13,7 @@ def test1_spectral_library_exporter():
     sl = main()
     sl = sl["TargetLib"]
 
-    assert sl.shape[0] == 12 and sl.shape[1] == 27
+    assert sl.shape[0] == 12 and sl.shape[1] == 28
 
 # check values target
 def test2_spectral_library_exporter():
@@ -66,7 +66,7 @@ def test3_spectral_library_exporter():
     sl = main()
     sl = sl["DecoyLib"]
 
-    assert sl.shape[0] == 22 and sl.shape[1] == 27
+    assert sl.shape[0] == 22 and sl.shape[1] == 28
 
 # check values decoy
 def test4_spectral_library_exporter():
