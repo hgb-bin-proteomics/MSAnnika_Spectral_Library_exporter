@@ -865,7 +865,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     CLContainingFragment_s = list()
     LossyFragment_s = list()
 
-    # decoy columns
+    # decoy dd columns
     linkId_s_decoy = list()
     ProteinID_s_decoy = list()
     StrippedPeptide_s_decoy = list()
@@ -893,6 +893,64 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     FragmentLossType_s_decoy = list()
     CLContainingFragment_s_decoy = list()
     LossyFragment_s_decoy = list()
+    
+    # decoy dt columns
+    linkId_s_decoy_dt = list()
+    ProteinID_s_decoy_dt = list()
+    StrippedPeptide_s_decoy_dt = list()
+    FragmentGroupId_s_decoy_dt = list()
+    PrecursorCharge_s_decoy_dt = list()
+    PrecursorMz_s_decoy_dt = list()
+    ModifiedPeptide_s_decoy_dt = list()
+    IsotopeLabel_s_decoy_dt = list()
+    file_s_decoy_dt = list()
+    scanID_s_decoy_dt = list()
+    run_s_decoy_dt = list()
+    searchID_s_decoy_dt = list()
+    crosslinkedResidues_s_decoy_dt = list()
+    LabeledSequence_s_decoy_dt = list()
+    iRT_s_decoy_dt = list()
+    RT_s_decoy_dt = list()
+    CCS_s_decoy_dt = list()
+    IonMobility_s_decoy_dt = list()
+    FragmentCharge_s_decoy_dt = list()
+    FragmentType_s_decoy_dt = list()
+    FragmentNumber_s_decoy_dt = list()
+    FragmentPepId_s_decoy_dt = list()
+    FragmentMz_s_decoy_dt = list()
+    RelativeIntensity_s_decoy_dt = list()
+    FragmentLossType_s_decoy_dt = list()
+    CLContainingFragment_s_decoy_dt = list()
+    LossyFragment_s_decoy_dt = list()
+    
+    # decoy td columns
+    linkId_s_decoy_td = list()
+    ProteinID_s_decoy_td = list()
+    StrippedPeptide_s_decoy_td = list()
+    FragmentGroupId_s_decoy_td = list()
+    PrecursorCharge_s_decoy_td = list()
+    PrecursorMz_s_decoy_td = list()
+    ModifiedPeptide_s_decoy_td = list()
+    IsotopeLabel_s_decoy_td = list()
+    file_s_decoy_td = list()
+    scanID_s_decoy_td = list()
+    run_s_decoy_td = list()
+    searchID_s_decoy_td = list()
+    crosslinkedResidues_s_decoy_td = list()
+    LabeledSequence_s_decoy_td = list()
+    iRT_s_decoy_td = list()
+    RT_s_decoy_td = list()
+    CCS_s_decoy_td = list()
+    IonMobility_s_decoy_td = list()
+    FragmentCharge_s_decoy_td = list()
+    FragmentType_s_decoy_td = list()
+    FragmentNumber_s_decoy_td = list()
+    FragmentPepId_s_decoy_td = list()
+    FragmentMz_s_decoy_td = list()
+    RelativeIntensity_s_decoy_td = list()
+    FragmentLossType_s_decoy_td = list()
+    CLContainingFragment_s_decoy_td = list()
+    LossyFragment_s_decoy_td = list()
 
     # process CSMs
     for i, row in csms.iterrows():
@@ -948,8 +1006,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 CLContainingFragment_s.append(frag["CLContainingFragment"])
                 LossyFragment_s.append(frag["LossyFragment"])
 
-        # decoy
-        decoy_csm = generate_decoy_csm(row, crosslinker)
+        # decoy dd
+        decoy_csm = generate_decoy_csm_dd(row, crosslinker)
         decoy_link_Id = get_linkId(decoy_csm)
         decoy_ProteinID = get_ProteinID(decoy_csm)
         decoy_StrippedPeptide = get_StrippedPeptide(decoy_csm)
@@ -1005,6 +1063,122 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 CLContainingFragment_s_decoy.append(decoy_frag["CLContainingFragment"])
                 LossyFragment_s_decoy.append(decoy_frag["LossyFragment"])
                 decoy_frag_mzs.append(decoy_frag["FragmentMz"])
+                
+        # decoy dt
+        decoy_csm_dt = generate_decoy_csm_dt(row, crosslinker)
+        decoy_link_Id_dt = get_linkId(decoy_csm_dt)
+        decoy_ProteinID_dt = get_ProteinID(decoy_csm_dt)
+        decoy_StrippedPeptide_dt = get_StrippedPeptide(decoy_csm_dt)
+        decoy_FragmentGroupId_dt = get_FragmentGroupId(decoy_csm_dt)
+        decoy_PrecursorCharge_dt = get_PrecursorCharge(decoy_csm_dt)
+        decoy_PrecursorMz_dt = get_PrecursorMz(decoy_csm_dt)
+        decoy_ModifiedPeptide_dt = get_ModifiedPeptide(decoy_csm_dt, crosslinker)
+        decoy_IsotopeLabel_dt = get_IsotopeLabel()
+        decoy_cfile_dt = get_filename(decoy_csm_dt)
+        decoy_scanID_dt = get_scanID(decoy_csm_dt)
+        decoy_run_dt = get_run(run_name)
+        decoy_searchID_dt = get_searchID(decoy_csm_dt)
+        decoy_crosslinkedResidues_dt = get_crosslinkedResidues(decoy_csm_dt)
+        decoy_LabeledSequence_dt = get_LabeledSequence(decoy_csm_dt)
+        decoy_iRT_dt = get_iRT(decoy_csm_dt, iRT_t, iRT_m)
+        decoy_RT_dt = get_RT(decoy_csm_dt)
+        decoy_CCS_dt = get_CCS()
+        decoy_IonMobility_dt = get_IonMobility(decoy_csm_dt)
+        decoy_fragments_dt = {"Fragments_A": get_decoy_fragments(decoy_csm, fragments["Fragments_A"], modifications, crosslinker),
+                              "Fragments_B": fragments["Fragments_B"]}
+
+        for k in decoy_fragments_dt.keys():
+            decoy_pep_dt = decoy_fragments_dt[k]
+            decoy_frag_mzs_dt = list()
+            for decoy_frag_dt in decoy_pep_dt:
+                if decoy_frag_dt["FragmentMz"] in decoy_frag_mzs_dt:
+                    continue
+                linkId_s_decoy_dt.append(decoy_link_Id_dt)
+                ProteinID_s_decoy_dt.append(decoy_ProteinID_dt)
+                StrippedPeptide_s_decoy_dt.append(decoy_StrippedPeptide_dt)
+                FragmentGroupId_s_decoy_dt.append(decoy_FragmentGroupId_dt)
+                PrecursorCharge_s_decoy_dt.append(decoy_PrecursorCharge_dt)
+                PrecursorMz_s_decoy_dt.append(decoy_PrecursorMz_dt)
+                ModifiedPeptide_s_decoy_dt.append(decoy_ModifiedPeptide_dt)
+                IsotopeLabel_s_decoy_dt.append(decoy_IsotopeLabel_dt)
+                file_s_decoy_dt.append(decoy_cfile_dt)
+                scanID_s_decoy_dt.append(decoy_scanID_dt)
+                run_s_decoy_dt.append(decoy_run_dt)
+                searchID_s_decoy_dt.append(decoy_searchID_dt)
+                crosslinkedResidues_s_decoy_dt.append(decoy_crosslinkedResidues_dt)
+                LabeledSequence_s_decoy_dt.append(decoy_LabeledSequence_dt)
+                iRT_s_decoy_dt.append(decoy_iRT_dt)
+                RT_s_decoy_dt.append(decoy_RT_dt)
+                CCS_s_decoy_dt.append(decoy_CCS_dt)
+                IonMobility_s_decoy_dt.append(decoy_IonMobility_dt)
+                FragmentCharge_s_decoy_dt.append(decoy_frag_dt["FragmentCharge"])
+                FragmentType_s_decoy_dt.append(decoy_frag_dt["FragmentType"])
+                FragmentNumber_s_decoy_dt.append(decoy_frag_dt["FragmentNumber"])
+                FragmentPepId_s_decoy_dt.append(decoy_frag_dt["FragmentPepId"])
+                FragmentMz_s_decoy_dt.append(decoy_frag_dt["FragmentMz"])
+                RelativeIntensity_s_decoy_dt.append(decoy_frag_dt["RelativeIntensity"])
+                FragmentLossType_s_decoy_dt.append(decoy_frag_dt["FragmentLossType"])
+                CLContainingFragment_s_decoy_dt.append(decoy_frag_dt["CLContainingFragment"])
+                LossyFragment_s_decoy_dt.append(decoy_frag_dt["LossyFragment"])
+                decoy_frag_mzs_dt.append(decoy_frag_dt["FragmentMz"])
+                
+        # decoy td
+        decoy_csm_td = generate_decoy_csm_td(row, crosslinker)
+        decoy_link_Id_td = get_linkId(decoy_csm_td)
+        decoy_ProteinID_td = get_ProteinID(decoy_csm_td)
+        decoy_StrippedPeptide_td = get_StrippedPeptide(decoy_csm_td)
+        decoy_FragmentGroupId_td = get_FragmentGroupId(decoy_csm_td)
+        decoy_PrecursorCharge_td = get_PrecursorCharge(decoy_csm_td)
+        decoy_PrecursorMz_td = get_PrecursorMz(decoy_csm_td)
+        decoy_ModifiedPeptide_td = get_ModifiedPeptide(decoy_csm_td, crosslinker)
+        decoy_IsotopeLabel_td = get_IsotopeLabel()
+        decoy_cfile_td = get_filename(decoy_csm_td)
+        decoy_scanID_td = get_scanID(decoy_csm_td)
+        decoy_run_td = get_run(run_name)
+        decoy_searchID_td = get_searchID(decoy_csm_td)
+        decoy_crosslinkedResidues_td = get_crosslinkedResidues(decoy_csm_td)
+        decoy_LabeledSequence_td = get_LabeledSequence(decoy_csm_td)
+        decoy_iRT_td = get_iRT(decoy_csm_td, iRT_t, iRT_m)
+        decoy_RT_td = get_RT(decoy_csm_td)
+        decoy_CCS_td = get_CCS()
+        decoy_IonMobility_td = get_IonMobility(decoy_csm_td)
+        decoy_fragments_td = {"Fragments_A": fragments["Fragments_A"],
+                              "Fragments_B": get_decoy_fragments(decoy_csm, fragments["Fragments_B"], modifications, crosslinker)}
+
+        for k in decoy_fragments_td.keys():
+            decoy_pep_td = decoy_fragments_td[k]
+            decoy_frag_mzs_td = list()
+            for decoy_frag_td in decoy_pep_td:
+                if decoy_frag_td["FragmentMz"] in decoy_frag_mzs_td:
+                    continue
+                linkId_s_decoy_td.append(decoy_link_Id_td)
+                ProteinID_s_decoy_td.append(decoy_ProteinID_td)
+                StrippedPeptide_s_decoy_td.append(decoy_StrippedPeptide_td)
+                FragmentGroupId_s_decoy_td.append(decoy_FragmentGroupId_td)
+                PrecursorCharge_s_decoy_td.append(decoy_PrecursorCharge_td)
+                PrecursorMz_s_decoy_td.append(decoy_PrecursorMz_td)
+                ModifiedPeptide_s_decoy_td.append(decoy_ModifiedPeptide_td)
+                IsotopeLabel_s_decoy_td.append(decoy_IsotopeLabel_td)
+                file_s_decoy_td.append(decoy_cfile_td)
+                scanID_s_decoy_td.append(decoy_scanID_td)
+                run_s_decoy_td.append(decoy_run_td)
+                searchID_s_decoy_td.append(decoy_searchID_td)
+                crosslinkedResidues_s_decoy_td.append(decoy_crosslinkedResidues_td)
+                LabeledSequence_s_decoy_td.append(decoy_LabeledSequence_td)
+                iRT_s_decoy_td.append(decoy_iRT_td)
+                RT_s_decoy_td.append(decoy_RT_td)
+                CCS_s_decoy_td.append(decoy_CCS_td)
+                IonMobility_s_decoy_td.append(decoy_IonMobility_td)
+                FragmentCharge_s_decoy_td.append(decoy_frag_td["FragmentCharge"])
+                FragmentType_s_decoy_td.append(decoy_frag_td["FragmentType"])
+                FragmentNumber_s_decoy_td.append(decoy_frag_td["FragmentNumber"])
+                FragmentPepId_s_decoy_td.append(decoy_frag_td["FragmentPepId"])
+                FragmentMz_s_decoy_td.append(decoy_frag_td["FragmentMz"])
+                RelativeIntensity_s_decoy_td.append(decoy_frag_td["RelativeIntensity"])
+                FragmentLossType_s_decoy_td.append(decoy_frag_td["FragmentLossType"])
+                CLContainingFragment_s_decoy_td.append(decoy_frag_td["CLContainingFragment"])
+                LossyFragment_s_decoy_td.append(decoy_frag_td["LossyFragment"])
+                decoy_frag_mzs_td.append(decoy_frag_td["FragmentMz"])
 
         if (i + 1) % 100 == 0:
             print("INFO: Processed " + str(i + 1) + " CSMs in total...")
@@ -1068,19 +1242,83 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "CLContainingFragment": CLContainingFragment_s_decoy,
                "LossyFragment": LossyFragment_s_decoy}
 
-    spectral_library_decoy = pd.DataFrame(dd_dict)
+    spectral_library_decoy_dd = pd.DataFrame(dd_dict)
+    
+    dt_dict = {"linkId": linkId_s_decoy_dt,
+               "ProteinID": ProteinID_s_decoy_dt,
+               "StrippedPeptide": StrippedPeptide_s_decoy_dt,
+               "FragmentGroupId": FragmentGroupId_s_decoy_dt,
+               "PrecursorCharge": PrecursorCharge_s_decoy_dt,
+               "PrecursorMz": PrecursorMz_s_decoy_dt,
+               "ModifiedPeptide": ModifiedPeptide_s_decoy_dt,
+               "IsotopeLabel": IsotopeLabel_s_decoy_dt,
+               "File": file_s_decoy_dt,
+               "scanID": scanID_s_decoy_dt,
+               "run": run_s_decoy_dt,
+               "searchID": searchID_s_decoy_dt,
+               "crosslinkedResidues": crosslinkedResidues_s_decoy_dt,
+               "LabeledSequence": LabeledSequence_s_decoy_dt,
+               "iRT": iRT_s_decoy_dt,
+               "RT": RT_s_decoy_dt,
+               "CCS": CCS_s_decoy_dt,
+               "IonMobility": IonMobility_s_decoy_dt,
+               "FragmentCharge": FragmentCharge_s_decoy_dt,
+               "FragmentType": FragmentType_s_decoy_dt,
+               "FragmentNumber": FragmentNumber_s_decoy_dt,
+               "FragmentPepId": FragmentPepId_s_decoy_dt,
+               "FragmentMz": FragmentMz_s_decoy_dt,
+               "RelativeIntensity": RelativeIntensity_s_decoy_dt,
+               "FragmentLossType": FragmentLossType_s_decoy_dt,
+               "CLContainingFragment": CLContainingFragment_s_decoy_dt,
+               "LossyFragment": LossyFragment_s_decoy_dt}
+
+    spectral_library_decoy_dt = pd.DataFrame(dt_dict)
+    
+    td_dict = {"linkId": linkId_s_decoy_td,
+               "ProteinID": ProteinID_s_decoy_td,
+               "StrippedPeptide": StrippedPeptide_s_decoy_td,
+               "FragmentGroupId": FragmentGroupId_s_decoy_td,
+               "PrecursorCharge": PrecursorCharge_s_decoy_td,
+               "PrecursorMz": PrecursorMz_s_decoy_td,
+               "ModifiedPeptide": ModifiedPeptide_s_decoy_td,
+               "IsotopeLabel": IsotopeLabel_s_decoy_td,
+               "File": file_s_decoy_td,
+               "scanID": scanID_s_decoy_td,
+               "run": run_s_decoy_td,
+               "searchID": searchID_s_decoy_td,
+               "crosslinkedResidues": crosslinkedResidues_s_decoy_td,
+               "LabeledSequence": LabeledSequence_s_decoy_td,
+               "iRT": iRT_s_decoy_td,
+               "RT": RT_s_decoy_td,
+               "CCS": CCS_s_decoy_td,
+               "IonMobility": IonMobility_s_decoy_td,
+               "FragmentCharge": FragmentCharge_s_decoy_td,
+               "FragmentType": FragmentType_s_decoy_td,
+               "FragmentNumber": FragmentNumber_s_decoy_td,
+               "FragmentPepId": FragmentPepId_s_decoy_td,
+               "FragmentMz": FragmentMz_s_decoy_td,
+               "RelativeIntensity": RelativeIntensity_s_decoy_td,
+               "FragmentLossType": FragmentLossType_s_decoy_td,
+               "CLContainingFragment": CLContainingFragment_s_decoy_td,
+               "LossyFragment": LossyFragment_s_decoy_td}
+
+    spectral_library_decoy_td = pd.DataFrame(td_dict)
 
     if save_output:
         # save spectral library
         spectral_library.to_csv(".".join(csms_file.split(".")[:-1]) + "_spectralLibrary.csv", index = True)
-        spectral_library_decoy.to_csv(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY.csv", index = True)
+        spectral_library_decoy_dd.to_csv(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY_DD.csv", index = True)
+        spectral_library_decoy_dt.to_csv(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY_DT.csv", index = True)
+        spectral_library_decoy_td.to_csv(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY_TD.csv", index = True)
 
         print("SUCCESS: Spectral library created with filename:")
         print(".".join(csms_file.split(".")[:-1]) + "_spectralLibrary.csv")
-        print("SUCCESS: Decoy Spectral library created with filename:")
-        print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY.csv")
+        print("SUCCESS: Decoy Spectral libraries created with filenames:")
+        print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY_DD.csv")
+        print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY_DT.csv")
+        print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY_TD.csv")
 
-    return {"TargetLib": spectral_library, "DecoyLib": spectral_library_decoy}
+    return {"TargetLib": spectral_library, "DecoyLib": spectral_library_decoy_dd, "DecoyLib_DT": spectral_library_decoy_dt, "DecoyLib_TD": spectral_library_decoy_td}
 
 ##### SCRIPT #####
 
