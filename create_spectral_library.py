@@ -25,6 +25,7 @@ from config import ION_TYPES
 from config import MAX_CHARGE
 from config import MATCH_TOLERANCE
 from config import iRT_PARAMS
+from config import ORGANISM
 
 ######################
 
@@ -595,6 +596,13 @@ def get_ProteinID(row: pd.Series) -> str:
     accession_b = row["Accession B"] if ";" not in row["Accession B"] else row["Accession B"].split(";")[0]
 
     return str(accession_a) + "_" + str(accession_b)
+    
+def get_Organism() -> str:
+    """
+    Returns the organism of the sample.
+    """
+
+    return str(ORGANISM)
 
 # get the StrippedPeptide value
 def get_StrippedPeptide(row: pd.Series) -> str:
@@ -839,6 +847,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     # columns
     linkId_s = list()
     ProteinID_s = list()
+    Organism_s = list()
     StrippedPeptide_s = list()
     FragmentGroupId_s = list()
     PrecursorCharge_s = list()
@@ -868,6 +877,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     # decoy dd columns
     linkId_s_decoy = list()
     ProteinID_s_decoy = list()
+    Organism_s_decoy = list()
     StrippedPeptide_s_decoy = list()
     FragmentGroupId_s_decoy = list()
     PrecursorCharge_s_decoy = list()
@@ -897,6 +907,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     # decoy dt columns
     linkId_s_decoy_dt = list()
     ProteinID_s_decoy_dt = list()
+    Organism_s_decoy_dt = list()
     StrippedPeptide_s_decoy_dt = list()
     FragmentGroupId_s_decoy_dt = list()
     PrecursorCharge_s_decoy_dt = list()
@@ -926,6 +937,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     # decoy td columns
     linkId_s_decoy_td = list()
     ProteinID_s_decoy_td = list()
+    Organism_s_decoy_td = list()
     StrippedPeptide_s_decoy_td = list()
     FragmentGroupId_s_decoy_td = list()
     PrecursorCharge_s_decoy_td = list()
@@ -957,6 +969,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         # target
         link_Id = get_linkId(row)
         ProteinID = get_ProteinID(row)
+        Organism = get_Organism()
         StrippedPeptide = get_StrippedPeptide(row)
         FragmentGroupId = get_FragmentGroupId(row)
         PrecursorCharge = get_PrecursorCharge(row)
@@ -980,6 +993,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
             for frag in pep:
                 linkId_s.append(link_Id)
                 ProteinID_s.append(ProteinID)
+                Organism_s.append(Organism)
                 StrippedPeptide_s.append(StrippedPeptide)
                 FragmentGroupId_s.append(FragmentGroupId)
                 PrecursorCharge_s.append(PrecursorCharge)
@@ -1010,6 +1024,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         decoy_csm = generate_decoy_csm_dd(row, crosslinker)
         decoy_link_Id = get_linkId(decoy_csm)
         decoy_ProteinID = get_ProteinID(decoy_csm)
+        decoy_Organism = get_Organism()
         decoy_StrippedPeptide = get_StrippedPeptide(decoy_csm)
         decoy_FragmentGroupId = get_FragmentGroupId(decoy_csm)
         decoy_PrecursorCharge = get_PrecursorCharge(decoy_csm)
@@ -1037,6 +1052,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                     continue
                 linkId_s_decoy.append(decoy_link_Id)
                 ProteinID_s_decoy.append(decoy_ProteinID)
+                Organism_s_decoy.append(decoy_Organism)
                 StrippedPeptide_s_decoy.append(decoy_StrippedPeptide)
                 FragmentGroupId_s_decoy.append(decoy_FragmentGroupId)
                 PrecursorCharge_s_decoy.append(decoy_PrecursorCharge)
@@ -1068,6 +1084,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         decoy_csm_dt = generate_decoy_csm_dt(row, crosslinker)
         decoy_link_Id_dt = get_linkId(decoy_csm_dt)
         decoy_ProteinID_dt = get_ProteinID(decoy_csm_dt)
+        decoy_Organism_dt = get_Organism()
         decoy_StrippedPeptide_dt = get_StrippedPeptide(decoy_csm_dt)
         decoy_FragmentGroupId_dt = get_FragmentGroupId(decoy_csm_dt)
         decoy_PrecursorCharge_dt = get_PrecursorCharge(decoy_csm_dt)
@@ -1095,6 +1112,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                     continue
                 linkId_s_decoy_dt.append(decoy_link_Id_dt)
                 ProteinID_s_decoy_dt.append(decoy_ProteinID_dt)
+                Organism_s_decoy_dt.append(decoy_Organism_dt)
                 StrippedPeptide_s_decoy_dt.append(decoy_StrippedPeptide_dt)
                 FragmentGroupId_s_decoy_dt.append(decoy_FragmentGroupId_dt)
                 PrecursorCharge_s_decoy_dt.append(decoy_PrecursorCharge_dt)
@@ -1126,6 +1144,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         decoy_csm_td = generate_decoy_csm_td(row, crosslinker)
         decoy_link_Id_td = get_linkId(decoy_csm_td)
         decoy_ProteinID_td = get_ProteinID(decoy_csm_td)
+        decoy_Organism_td = get_Organism()
         decoy_StrippedPeptide_td = get_StrippedPeptide(decoy_csm_td)
         decoy_FragmentGroupId_td = get_FragmentGroupId(decoy_csm_td)
         decoy_PrecursorCharge_td = get_PrecursorCharge(decoy_csm_td)
@@ -1153,6 +1172,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                     continue
                 linkId_s_decoy_td.append(decoy_link_Id_td)
                 ProteinID_s_decoy_td.append(decoy_ProteinID_td)
+                Organism_s_decoy_td.append(decoy_Organism_td)
                 StrippedPeptide_s_decoy_td.append(decoy_StrippedPeptide_td)
                 FragmentGroupId_s_decoy_td.append(decoy_FragmentGroupId_td)
                 PrecursorCharge_s_decoy_td.append(decoy_PrecursorCharge_td)
@@ -1186,6 +1206,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     # generate dataframe
     tt_dict = {"linkId": linkId_s,
                "ProteinID": ProteinID_s,
+               "Organism": Organism_s,
                "StrippedPeptide": StrippedPeptide_s,
                "FragmentGroupId": FragmentGroupId_s,
                "PrecursorCharge": PrecursorCharge_s,
@@ -1216,6 +1237,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
 
     dd_dict = {"linkId": linkId_s_decoy,
                "ProteinID": ProteinID_s_decoy,
+               "Organism": Organism_s_decoy,
                "StrippedPeptide": StrippedPeptide_s_decoy,
                "FragmentGroupId": FragmentGroupId_s_decoy,
                "PrecursorCharge": PrecursorCharge_s_decoy,
@@ -1246,6 +1268,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     
     dt_dict = {"linkId": linkId_s_decoy_dt,
                "ProteinID": ProteinID_s_decoy_dt,
+               "Organism": Organism_s_decoy_dt,
                "StrippedPeptide": StrippedPeptide_s_decoy_dt,
                "FragmentGroupId": FragmentGroupId_s_decoy_dt,
                "PrecursorCharge": PrecursorCharge_s_decoy_dt,
@@ -1276,6 +1299,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     
     td_dict = {"linkId": linkId_s_decoy_td,
                "ProteinID": ProteinID_s_decoy_td,
+               "Organism": Organism_s_decoy_td,
                "StrippedPeptide": StrippedPeptide_s_decoy_td,
                "FragmentGroupId": FragmentGroupId_s_decoy_td,
                "PrecursorCharge": PrecursorCharge_s_decoy_td,
