@@ -30,7 +30,7 @@ def test2_spectral_library_exporter():
     assert str(sl.loc[0, "FragmentPepId"]) == "0"
     assert str(sl.loc[0, "CLContainingFragment"]) == "False"
     assert str(sl.loc[0, "IsDecoy"]) == "False"
-    assert str(sl.loc[0, "Decoy_Type"]) == "TT"
+    assert str(sl.loc[0, "DecoyType"]) == "TT"
 
     assert str(sl.loc[1, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
     assert str(sl.loc[1, "FragmentCharge"]) == "1"
@@ -39,7 +39,7 @@ def test2_spectral_library_exporter():
     assert str(sl.loc[1, "FragmentPepId"]) == "0"
     assert str(sl.loc[1, "CLContainingFragment"]) == "True"
     assert str(sl.loc[1, "IsDecoy"]) == "False"
-    assert str(sl.loc[1, "Decoy_Type"]) == "TT"
+    assert str(sl.loc[1, "DecoyType"]) == "TT"
 
     assert str(sl.loc[2, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
     assert str(sl.loc[2, "FragmentCharge"]) == "1"
@@ -48,7 +48,7 @@ def test2_spectral_library_exporter():
     assert str(sl.loc[2, "FragmentPepId"]) == "0"
     assert str(sl.loc[2, "CLContainingFragment"]) == "True"
     assert str(sl.loc[2, "IsDecoy"]) == "False"
-    assert str(sl.loc[2, "Decoy_Type"]) == "TT"
+    assert str(sl.loc[2, "DecoyType"]) == "TT"
 
     assert str(sl.loc[3, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
     assert str(sl.loc[3, "FragmentCharge"]) == "1"
@@ -57,7 +57,7 @@ def test2_spectral_library_exporter():
     assert str(sl.loc[3, "FragmentPepId"]) == "0"
     assert str(sl.loc[3, "CLContainingFragment"]) == "False"
     assert str(sl.loc[3, "IsDecoy"]) == "False"
-    assert str(sl.loc[3, "Decoy_Type"]) == "TT"
+    assert str(sl.loc[3, "DecoyType"]) == "TT"
 
     assert str(sl.loc[11, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
     assert str(sl.loc[11, "FragmentCharge"]) == "1"
@@ -66,7 +66,7 @@ def test2_spectral_library_exporter():
     assert str(sl.loc[11, "FragmentPepId"]) == "1"
     assert str(sl.loc[11, "CLContainingFragment"]) == "False"
     assert str(sl.loc[11, "IsDecoy"]) == "False"
-    assert str(sl.loc[11, "Decoy_Type"]) == "TT"
+    assert str(sl.loc[11, "DecoyType"]) == "TT"
 
 # check output shape decoy dd
 def test3_spectral_library_exporter():
@@ -93,7 +93,7 @@ def test4_spectral_library_exporter():
     assert str(sl.loc[0, "FragmentPepId"]) == "0"
     assert str(sl.loc[0, "CLContainingFragment"]) == "False"
     assert str(sl.loc[0, "IsDecoy"]) == "True"
-    assert str(sl.loc[0, "Decoy_Type"]) == "DD"
+    assert str(sl.loc[0, "DecoyType"]) == "DD"
 
     assert str(sl.loc[1, "ModifiedPeptide"]) == "HGQQKR_HGQQKR"
     assert str(sl.loc[1, "FragmentCharge"]) == "1"
@@ -102,7 +102,7 @@ def test4_spectral_library_exporter():
     assert str(sl.loc[1, "FragmentPepId"]) == "0"
     assert str(sl.loc[1, "CLContainingFragment"]) == "False"
     assert str(sl.loc[1, "IsDecoy"]) == "True"
-    assert str(sl.loc[1, "Decoy_Type"]) == "DD"
+    assert str(sl.loc[1, "DecoyType"]) == "DD"
 
     assert str(sl.loc[2, "ModifiedPeptide"]) == "HGQQKR_HGQQKR"
     assert str(sl.loc[2, "FragmentCharge"]) == "1"
@@ -111,7 +111,7 @@ def test4_spectral_library_exporter():
     assert str(sl.loc[2, "FragmentPepId"]) == "0"
     assert str(sl.loc[2, "CLContainingFragment"]) == "True"
     assert str(sl.loc[2, "IsDecoy"]) == "True"
-    assert str(sl.loc[2, "Decoy_Type"]) == "DD"
+    assert str(sl.loc[2, "DecoyType"]) == "DD"
 
     assert str(sl.loc[3, "ModifiedPeptide"]) == "HGQQKR_HGQQKR"
     assert str(sl.loc[3, "FragmentCharge"]) == "1"
@@ -120,7 +120,7 @@ def test4_spectral_library_exporter():
     assert str(sl.loc[3, "FragmentPepId"]) == "0"
     assert str(sl.loc[3, "CLContainingFragment"]) == "True"
     assert str(sl.loc[3, "IsDecoy"]) == "True"
-    assert str(sl.loc[3, "Decoy_Type"]) == "DD"
+    assert str(sl.loc[3, "DecoyType"]) == "DD"
 
     assert str(sl.loc[21, "ModifiedPeptide"]) == "HGQQKR_HGQQKR"
     assert str(sl.loc[21, "FragmentCharge"]) == "1"
@@ -129,7 +129,7 @@ def test4_spectral_library_exporter():
     assert str(sl.loc[21, "FragmentPepId"]) == "1"
     assert str(sl.loc[21, "CLContainingFragment"]) == "True"
     assert str(sl.loc[21, "IsDecoy"]) == "True"
-    assert str(sl.loc[21, "Decoy_Type"]) == "DD"
+    assert str(sl.loc[21, "DecoyType"]) == "DD"
 
 # check output shape decoy dt
 def test5_spectral_library_exporter():
@@ -156,7 +156,7 @@ def test6_spectral_library_exporter():
     assert str(sl.loc[0, "FragmentPepId"]) == "0"
     assert str(sl.loc[0, "CLContainingFragment"]) == "False"
     assert str(sl.loc[0, "IsDecoy"]) == "True"
-    assert str(sl.loc[0, "Decoy_Type"]) == "DT"
+    assert str(sl.loc[0, "DecoyType"]) == "DT"
 
     assert str(sl.loc[1, "ModifiedPeptide"]) == "HGQQKR_KQQGHR"
     assert str(sl.loc[1, "FragmentCharge"]) == "1"
@@ -165,7 +165,7 @@ def test6_spectral_library_exporter():
     assert str(sl.loc[1, "FragmentPepId"]) == "0"
     assert str(sl.loc[1, "CLContainingFragment"]) == "False"
     assert str(sl.loc[1, "IsDecoy"]) == "True"
-    assert str(sl.loc[1, "Decoy_Type"]) == "DT"
+    assert str(sl.loc[1, "DecoyType"]) == "DT"
 
     assert str(sl.loc[2, "ModifiedPeptide"]) == "HGQQKR_KQQGHR"
     assert str(sl.loc[2, "FragmentCharge"]) == "1"
@@ -174,7 +174,7 @@ def test6_spectral_library_exporter():
     assert str(sl.loc[2, "FragmentPepId"]) == "0"
     assert str(sl.loc[2, "CLContainingFragment"]) == "True"
     assert str(sl.loc[2, "IsDecoy"]) == "True"
-    assert str(sl.loc[2, "Decoy_Type"]) == "DT"
+    assert str(sl.loc[2, "DecoyType"]) == "DT"
 
     assert str(sl.loc[3, "ModifiedPeptide"]) == "HGQQKR_KQQGHR"
     assert str(sl.loc[3, "FragmentCharge"]) == "1"
@@ -183,7 +183,7 @@ def test6_spectral_library_exporter():
     assert str(sl.loc[3, "FragmentPepId"]) == "0"
     assert str(sl.loc[3, "CLContainingFragment"]) == "True"
     assert str(sl.loc[3, "IsDecoy"]) == "True"
-    assert str(sl.loc[3, "Decoy_Type"]) == "DT"
+    assert str(sl.loc[3, "DecoyType"]) == "DT"
 
     assert str(sl.loc[16, "ModifiedPeptide"]) == "HGQQKR_KQQGHR"
     assert str(sl.loc[16, "FragmentCharge"]) == "1"
@@ -192,7 +192,7 @@ def test6_spectral_library_exporter():
     assert str(sl.loc[16, "FragmentPepId"]) == "1"
     assert str(sl.loc[16, "CLContainingFragment"]) == "False"
     assert str(sl.loc[16, "IsDecoy"]) == "True"
-    assert str(sl.loc[16, "Decoy_Type"]) == "DT"
+    assert str(sl.loc[16, "DecoyType"]) == "DT"
 
 # check output shape decoy td
 def test7_spectral_library_exporter():
@@ -219,7 +219,7 @@ def test8_spectral_library_exporter():
     assert str(sl.loc[0, "FragmentPepId"]) == "0"
     assert str(sl.loc[0, "CLContainingFragment"]) == "False"
     assert str(sl.loc[0, "IsDecoy"]) == "True"
-    assert str(sl.loc[0, "Decoy_Type"]) == "TD"
+    assert str(sl.loc[0, "DecoyType"]) == "TD"
 
     assert str(sl.loc[1, "ModifiedPeptide"]) == "KQQGHR_HGQQKR"
     assert str(sl.loc[1, "FragmentCharge"]) == "1"
@@ -228,7 +228,7 @@ def test8_spectral_library_exporter():
     assert str(sl.loc[1, "FragmentPepId"]) == "0"
     assert str(sl.loc[1, "CLContainingFragment"]) == "True"
     assert str(sl.loc[1, "IsDecoy"]) == "True"
-    assert str(sl.loc[1, "Decoy_Type"]) == "TD"
+    assert str(sl.loc[1, "DecoyType"]) == "TD"
 
     assert str(sl.loc[2, "ModifiedPeptide"]) == "KQQGHR_HGQQKR"
     assert str(sl.loc[2, "FragmentCharge"]) == "1"
@@ -237,7 +237,7 @@ def test8_spectral_library_exporter():
     assert str(sl.loc[2, "FragmentPepId"]) == "0"
     assert str(sl.loc[2, "CLContainingFragment"]) == "True"
     assert str(sl.loc[2, "IsDecoy"]) == "True"
-    assert str(sl.loc[2, "Decoy_Type"]) == "TD"
+    assert str(sl.loc[2, "DecoyType"]) == "TD"
 
     assert str(sl.loc[3, "ModifiedPeptide"]) == "KQQGHR_HGQQKR"
     assert str(sl.loc[3, "FragmentCharge"]) == "1"
@@ -246,7 +246,7 @@ def test8_spectral_library_exporter():
     assert str(sl.loc[3, "FragmentPepId"]) == "0"
     assert str(sl.loc[3, "CLContainingFragment"]) == "False"
     assert str(sl.loc[3, "IsDecoy"]) == "True"
-    assert str(sl.loc[3, "Decoy_Type"]) == "TD"
+    assert str(sl.loc[3, "DecoyType"]) == "TD"
 
     assert str(sl.loc[16, "ModifiedPeptide"]) == "KQQGHR_HGQQKR"
     assert str(sl.loc[16, "FragmentCharge"]) == "1"
@@ -255,7 +255,7 @@ def test8_spectral_library_exporter():
     assert str(sl.loc[16, "FragmentPepId"]) == "1"
     assert str(sl.loc[16, "CLContainingFragment"]) == "True"
     assert str(sl.loc[16, "IsDecoy"]) == "True"
-    assert str(sl.loc[16, "Decoy_Type"]) == "TD"
+    assert str(sl.loc[16, "DecoyType"]) == "TD"
 
 # check output shape full
 def test9_spectral_library_exporter():
@@ -282,7 +282,7 @@ def test10_spectral_library_exporter():
     assert str(sl.loc[0, "FragmentPepId"]) == "0"
     assert str(sl.loc[0, "CLContainingFragment"]) == "False"
     assert str(sl.loc[0, "IsDecoy"]) == "False"
-    assert str(sl.loc[0, "Decoy_Type"]) == "TT"
+    assert str(sl.loc[0, "DecoyType"]) == "TT"
 
     assert str(sl.loc[1, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
     assert str(sl.loc[1, "FragmentCharge"]) == "1"
@@ -291,7 +291,7 @@ def test10_spectral_library_exporter():
     assert str(sl.loc[1, "FragmentPepId"]) == "0"
     assert str(sl.loc[1, "CLContainingFragment"]) == "True"
     assert str(sl.loc[1, "IsDecoy"]) == "False"
-    assert str(sl.loc[1, "Decoy_Type"]) == "TT"
+    assert str(sl.loc[1, "DecoyType"]) == "TT"
 
     assert str(sl.loc[2, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
     assert str(sl.loc[2, "FragmentCharge"]) == "1"
@@ -300,7 +300,7 @@ def test10_spectral_library_exporter():
     assert str(sl.loc[2, "FragmentPepId"]) == "0"
     assert str(sl.loc[2, "CLContainingFragment"]) == "True"
     assert str(sl.loc[2, "IsDecoy"]) == "False"
-    assert str(sl.loc[2, "Decoy_Type"]) == "TT"
+    assert str(sl.loc[2, "DecoyType"]) == "TT"
 
     assert str(sl.loc[3, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
     assert str(sl.loc[3, "FragmentCharge"]) == "1"
@@ -309,7 +309,7 @@ def test10_spectral_library_exporter():
     assert str(sl.loc[3, "FragmentPepId"]) == "0"
     assert str(sl.loc[3, "CLContainingFragment"]) == "False"
     assert str(sl.loc[3, "IsDecoy"]) == "False"
-    assert str(sl.loc[3, "Decoy_Type"]) == "TT"
+    assert str(sl.loc[3, "DecoyType"]) == "TT"
     
     assert str(sl.loc[67, "ModifiedPeptide"]) == "KQQGHR_HGQQKR"
     assert str(sl.loc[67, "FragmentCharge"]) == "1"
@@ -318,4 +318,4 @@ def test10_spectral_library_exporter():
     assert str(sl.loc[67, "FragmentPepId"]) == "1"
     assert str(sl.loc[67, "CLContainingFragment"]) == "True"
     assert str(sl.loc[67, "IsDecoy"]) == "True"
-    assert str(sl.loc[67, "Decoy_Type"]) == "TD"
+    assert str(sl.loc[67, "DecoyType"]) == "TD"
