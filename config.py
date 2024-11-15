@@ -8,6 +8,8 @@ SPECTRA_FILE = ["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_step
 CSMS_FILE = "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.xlsx"
 # name of the experiment / run (any descriptive text is allowed)
 RUN_NAME = "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001-(1)"
+# name of the sample organism that should be reported in the spectral library
+ORGANISM = "Homo sapiens"
 # name of the crosslink modification
 CROSSLINKER = "DSSO"
 # possible modifications and their monoisotopic masses
