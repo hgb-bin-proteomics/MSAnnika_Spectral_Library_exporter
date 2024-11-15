@@ -6,7 +6,7 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.3.0"
+__version = "1.3.1"
 __date = "2024-11-14"
 
 # REQUIREMENTS
@@ -873,6 +873,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     FragmentLossType_s = list()
     CLContainingFragment_s = list()
     LossyFragment_s = list()
+    Is_Decoy_s = list()
+    Decoy_Type_s = list()
 
     # decoy dd columns
     linkId_s_decoy = list()
@@ -903,6 +905,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     FragmentLossType_s_decoy = list()
     CLContainingFragment_s_decoy = list()
     LossyFragment_s_decoy = list()
+    Is_Decoy_s_decoy = list()
+    Decoy_Type_s_decoy = list()
     
     # decoy dt columns
     linkId_s_decoy_dt = list()
@@ -933,6 +937,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     FragmentLossType_s_decoy_dt = list()
     CLContainingFragment_s_decoy_dt = list()
     LossyFragment_s_decoy_dt = list()
+    Is_Decoy_s_decoy_dt = list()
+    Decoy_Type_s_decoy_dt = list()
     
     # decoy td columns
     linkId_s_decoy_td = list()
@@ -963,6 +969,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     FragmentLossType_s_decoy_td = list()
     CLContainingFragment_s_decoy_td = list()
     LossyFragment_s_decoy_td = list()
+    Is_Decoy_s_decoy_td = list()
+    Decoy_Type_s_decoy_td = list()
 
     # process CSMs
     for i, row in csms.iterrows():
@@ -1019,6 +1027,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 FragmentLossType_s.append(frag["FragmentLossType"])
                 CLContainingFragment_s.append(frag["CLContainingFragment"])
                 LossyFragment_s.append(frag["LossyFragment"])
+                Is_Decoy_s.append(False)
+                Decoy_Type_s.append("TT")
 
         # decoy dd
         decoy_csm = generate_decoy_csm_dd(row, crosslinker)
@@ -1078,6 +1088,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 FragmentLossType_s_decoy.append(decoy_frag["FragmentLossType"])
                 CLContainingFragment_s_decoy.append(decoy_frag["CLContainingFragment"])
                 LossyFragment_s_decoy.append(decoy_frag["LossyFragment"])
+                Is_Decoy_s_decoy.append(True)
+                Decoy_Type_s_decoy.append("DD")
                 decoy_frag_mzs.append(decoy_frag["FragmentMz"])
                 
         # decoy dt
@@ -1138,6 +1150,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 FragmentLossType_s_decoy_dt.append(decoy_frag_dt["FragmentLossType"])
                 CLContainingFragment_s_decoy_dt.append(decoy_frag_dt["CLContainingFragment"])
                 LossyFragment_s_decoy_dt.append(decoy_frag_dt["LossyFragment"])
+                Is_Decoy_s_decoy_dt.append(True)
+                Decoy_Type_s_decoy_dt.append("DT")
                 decoy_frag_mzs_dt.append(decoy_frag_dt["FragmentMz"])
                 
         # decoy td
@@ -1198,6 +1212,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 FragmentLossType_s_decoy_td.append(decoy_frag_td["FragmentLossType"])
                 CLContainingFragment_s_decoy_td.append(decoy_frag_td["CLContainingFragment"])
                 LossyFragment_s_decoy_td.append(decoy_frag_td["LossyFragment"])
+                Is_Decoy_s_decoy_td.append(True)
+                Decoy_Type_s_decoy_td.append("TD")
                 decoy_frag_mzs_td.append(decoy_frag_td["FragmentMz"])
 
         if (i + 1) % 100 == 0:
@@ -1231,7 +1247,9 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "RelativeIntensity": RelativeIntensity_s,
                "FragmentLossType": FragmentLossType_s,
                "CLContainingFragment": CLContainingFragment_s,
-               "LossyFragment": LossyFragment_s}
+               "LossyFragment": LossyFragment_s,
+               "IsDecoy": Is_Decoy_s,
+               "DecoyType": Decoy_Type_s}
 
     spectral_library = pd.DataFrame(tt_dict)
 
@@ -1262,7 +1280,9 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "RelativeIntensity": RelativeIntensity_s_decoy,
                "FragmentLossType": FragmentLossType_s_decoy,
                "CLContainingFragment": CLContainingFragment_s_decoy,
-               "LossyFragment": LossyFragment_s_decoy}
+               "LossyFragment": LossyFragment_s_decoy,
+               "IsDecoy": Is_Decoy_s_decoy,
+               "DecoyType": Decoy_Type_s_decoy}
 
     spectral_library_decoy_dd = pd.DataFrame(dd_dict)
     
@@ -1293,7 +1313,9 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "RelativeIntensity": RelativeIntensity_s_decoy_dt,
                "FragmentLossType": FragmentLossType_s_decoy_dt,
                "CLContainingFragment": CLContainingFragment_s_decoy_dt,
-               "LossyFragment": LossyFragment_s_decoy_dt}
+               "LossyFragment": LossyFragment_s_decoy_dt,
+               "IsDecoy": Is_Decoy_s_decoy_dt,
+               "DecoyType": Decoy_Type_s_decoy_dt}
 
     spectral_library_decoy_dt = pd.DataFrame(dt_dict)
     
@@ -1324,7 +1346,9 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "RelativeIntensity": RelativeIntensity_s_decoy_td,
                "FragmentLossType": FragmentLossType_s_decoy_td,
                "CLContainingFragment": CLContainingFragment_s_decoy_td,
-               "LossyFragment": LossyFragment_s_decoy_td}
+               "LossyFragment": LossyFragment_s_decoy_td,
+               "IsDecoy": Is_Decoy_s_decoy_td,
+               "DecoyType": Decoy_Type_s_decoy_td}
 
     spectral_library_decoy_td = pd.DataFrame(td_dict)
 
@@ -1341,8 +1365,17 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY_DD.csv")
         print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY_DT.csv")
         print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY_TD.csv")
+        
+        print("Creating merged library...")
+        merged_spec_lib = pd.concat([spectral_library, spectral_library_decoy_dd, spectral_library_decoy_dt, spectral_library_decoy_td], ignore_index = True)
+        should_shape = spectral_library.shape[0] + spectral_library_decoy_dd.shape[0] + spectral_library_decoy_dt.shape[0] + spectral_library_decoy_td.shape[0]
+        if merged_spec_lib.shape[0] != should_shape:
+            warnings.warn(f"Merged spectral library has {merged_spec_lib.shape[0]} rows, should be {should_shape} rows! Potential loss of data, please consider merging manually!")
+        merged_spec_lib.to_csv(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryFULL.csv", index = True)
+        print("SUCCESS: Merged spectral library created with filename:")
+        print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryFULL.csv")
 
-    return {"TargetLib": spectral_library, "DecoyLib": spectral_library_decoy_dd, "DecoyLib_DT": spectral_library_decoy_dt, "DecoyLib_TD": spectral_library_decoy_td}
+    return {"TargetLib": spectral_library, "DecoyLib": spectral_library_decoy_dd, "DecoyLib_DT": spectral_library_decoy_dt, "DecoyLib_TD": spectral_library_decoy_td, "FullLib": merged_spec_lib}
 
 ##### SCRIPT #####
 
