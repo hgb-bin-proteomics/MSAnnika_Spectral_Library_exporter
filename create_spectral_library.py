@@ -43,6 +43,21 @@ from typing import Union
 from typing import BinaryIO
 import warnings
 
+##################### FILE READERS #####################
+
+def parse_xi(result_file: str) -> pd.DataFrame:
+    """Parses the xiFDR CSM result file and returns it in MS Annika format for
+    spectral library creation.
+    """
+    xi = pd.read_csv(result_file)
+    ms_annika_struc = {}
+
+    # TODO
+
+    return pd.DataFrame(ms_annika_struc)
+
+############### SPECTRAL LIBRARY CREATOR ###############
+
 # parse scan number from pyteomics mgf params
 def parse_scannr(params: Dict, pattern: str = PARSER_PATTERN, i: int = 0) -> Tuple[int, int]:
     """Parses the scan number from the params dictionary of the pyteomics mgf
@@ -905,7 +920,10 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     print("INFO: Done reading spectra!")
 
     print("INFO: Reading CSMs...")
-    csms = pd.read_excel(csms_file)
+    if if "xlsx" in csms_file.split(".")[-1]:
+        csms = pd.read_excel(csms_file)
+    else:
+        csms = parse_xi(csms_file)
     print("INFO: Done reading CSMs! Starting spectral library creation...")
 
     # columns
