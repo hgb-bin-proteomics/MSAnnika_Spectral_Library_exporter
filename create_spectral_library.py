@@ -6,8 +6,8 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.3.1"
-__date = "2024-11-14"
+__version = "1.3.2"
+__date = "2024-11-20"
 
 # REQUIREMENTS
 # pip install pandas
@@ -26,10 +26,12 @@ from config import MAX_CHARGE
 from config import MATCH_TOLERANCE
 from config import iRT_PARAMS
 from config import ORGANISM
+from config import PARSER_PATTERN
 
 ######################
 
 # import packages
+import re
 import pandas as pd
 from pyteomics import mgf, mass
 
@@ -40,6 +42,65 @@ from typing import Set
 from typing import Union
 from typing import BinaryIO
 import warnings
+
+# parse scan number from pyteomics mgf params
+def parse_scannr(params: Dict, pattern: str = PARSER_PATTERN, i: int = 0) -> Tuple[int, int]:
+    """Parses the scan number from the params dictionary of the pyteomics mgf
+    spectrum.
+
+    Parameters
+    ----------
+    params : Dict
+        The "params" dictionary of the pyteomics mgf spectrum.
+
+    pattern : str
+        Regex pattern to use for parsing the scan number from the title if it
+        can't be infered otherwise.
+
+    i : int
+        The scan number to be returned in case of failure.
+
+    Returns
+    -------
+    (exit_code, scan_nr) : Tuple
+        A tuple with the exit code (0 if successful, 1 if parsing failed) at the
+        first position [0] and the scan number at the second position [1].
+    """
+
+    # prefer scans attr over title attr
+    if "scans" in params:
+        try:
+            return (0, int(params["scans"]))
+        except:
+            pass
+
+    # try parse title
+    if "title" in params:
+
+        # if there is a scan token in the title, try parse scan_nr
+        if "scan" in params["title"]:
+            try:
+                return (0, int(params["title"].split("scan=")[1].strip("\"")))
+            except:
+                pass
+
+        # else try to parse by pattern
+        try:
+            scan_nr = re.findall(pattern, params["title"])[0]
+            scan_nr = re.sub(r"[^0-9]", "", scan_nr)
+            if len(scan_nr) > 0:
+                return (0, int(scan_nr))
+        except:
+            pass
+
+        # else try parse whole title
+        try:
+            return (0, int(params["title"]))
+        except:
+            pass
+
+    # return unsuccessful parse
+    return (1, i)
 
 # reading spectra
 # def read_spectra(filename: str | BinaryIO) -> Dict[int, Dict]:
@@ -57,7 +118,10 @@ def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
 
     with mgf.read(filename) as reader:
         for spectrum in reader:
-            scan_nr = int(spectrum["params"]["title"].split("scan=")[1].strip("\""))
+            parser_result = parse_scannr(spectrum["params"])
+            if parser_result[0] != 0:
+                raise RuntimeError(f"Could not parse scan number for spectrum {spectrum}. Please adjust PARSER_PATTERN in the config file!")
+            scan_nr = parser_result[1]
             spectrum_dict = dict()
             spectrum_dict["precursor"] = spectrum["params"]["pepmass"]
             spectrum_dict["charge"] = spectrum["params"]["charge"]
@@ -361,7 +425,7 @@ def generate_decoy_csm_dd(row: pd.Series, crosslinker: str = CROSSLINKER) -> pd.
     decoy_csm["Modifications B"] = ";".join(decoy_mods_b)
 
     return decoy_csm
-    
+
 def generate_decoy_csm_td(row: pd.Series, crosslinker: str = CROSSLINKER) -> pd.Series:
     """
     """
@@ -405,7 +469,7 @@ def generate_decoy_csm_td(row: pd.Series, crosslinker: str = CROSSLINKER) -> pd.
     decoy_csm["Modifications B"] = ";".join(decoy_mods_b)
 
     return decoy_csm
-    
+
 def generate_decoy_csm_dt(row: pd.Series, crosslinker: str = CROSSLINKER) -> pd.Series:
     """
     """
@@ -596,7 +660,7 @@ def get_ProteinID(row: pd.Series) -> str:
     accession_b = row["Accession B"] if ";" not in row["Accession B"] else row["Accession B"].split(";")[0]
 
     return str(accession_a) + "_" + str(accession_b)
-    
+
 def get_Organism() -> str:
     """
     Returns the organism of the sample.
@@ -907,7 +971,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     LossyFragment_s_decoy = list()
     Is_Decoy_s_decoy = list()
     Decoy_Type_s_decoy = list()
-    
+
     # decoy dt columns
     linkId_s_decoy_dt = list()
     ProteinID_s_decoy_dt = list()
@@ -939,7 +1003,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     LossyFragment_s_decoy_dt = list()
     Is_Decoy_s_decoy_dt = list()
     Decoy_Type_s_decoy_dt = list()
-    
+
     # decoy td columns
     linkId_s_decoy_td = list()
     ProteinID_s_decoy_td = list()
@@ -1091,7 +1155,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 Is_Decoy_s_decoy.append(True)
                 Decoy_Type_s_decoy.append("DD")
                 decoy_frag_mzs.append(decoy_frag["FragmentMz"])
-                
+
         # decoy dt
         decoy_csm_dt = generate_decoy_csm_dt(row, crosslinker)
         decoy_link_Id_dt = get_linkId(decoy_csm_dt)
@@ -1153,7 +1217,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 Is_Decoy_s_decoy_dt.append(True)
                 Decoy_Type_s_decoy_dt.append("DT")
                 decoy_frag_mzs_dt.append(decoy_frag_dt["FragmentMz"])
-                
+
         # decoy td
         decoy_csm_td = generate_decoy_csm_td(row, crosslinker)
         decoy_link_Id_td = get_linkId(decoy_csm_td)
@@ -1285,7 +1349,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "DecoyType": Decoy_Type_s_decoy}
 
     spectral_library_decoy_dd = pd.DataFrame(dd_dict)
-    
+
     dt_dict = {"linkId": linkId_s_decoy_dt,
                "ProteinID": ProteinID_s_decoy_dt,
                "Organism": Organism_s_decoy_dt,
@@ -1318,7 +1382,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "DecoyType": Decoy_Type_s_decoy_dt}
 
     spectral_library_decoy_dt = pd.DataFrame(dt_dict)
-    
+
     td_dict = {"linkId": linkId_s_decoy_td,
                "ProteinID": ProteinID_s_decoy_td,
                "Organism": Organism_s_decoy_td,
@@ -1365,7 +1429,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY_DD.csv")
         print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY_DT.csv")
         print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY_TD.csv")
-        
+
         print("Creating merged library...")
         merged_spec_lib = pd.concat([spectral_library, spectral_library_decoy_dd, spectral_library_decoy_dt, spectral_library_decoy_td], ignore_index = True)
         should_shape = spectral_library.shape[0] + spectral_library_decoy_dd.shape[0] + spectral_library_decoy_dt.shape[0] + spectral_library_decoy_td.shape[0]
