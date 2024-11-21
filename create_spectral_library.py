@@ -127,6 +127,13 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
         return mod_str
 
     # TODO
+    def xi_get_rt(row: pd.Series, spectra: Dict[str, Any]) -> float:
+        return
+
+    # TODO
+    def xi_get_cv(row: pd.Series, spectra: Dict[str, Any]) -> float:
+        return
+
     for i, row in xi.iterrows():
         if row["isDecoy"]:
             continue
@@ -134,6 +141,19 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
         ms_annika_struc["Sequence B"].append(xi_get_sequence(row, False))
         ms_annika_struc["Modifications A"].append(xi_get_modifications(row, True))
         ms_annika_struc["Modifications B"].append(xi_get_modifications(row, False))
+        ms_annika_struc["First Scan"].append(int(row["scanId"]))
+        ms_annika_struc["Spectrum File"].append(str(row["PeakListFileName"]).strip())
+        ms_annika_struc["A in protein"].append(int(row["PepPos1"])-1)
+        ms_annika_struc["B in protein"].append(int(row["PepPos2"])-1)
+        ms_annika_struc["Crosslinker Position A"].append(int(row["LinkPos1"]))
+        ms_annika_struc["Crosslinker Position B"].append(int(row["LinkPos2"]))
+        ms_annika_struc["Accession A"].append(str(row["Protein1"]).strip())
+        ms_annika_struc["Accession B"].append(str(row["Protein2"]).strip())
+        ms_annika_struc["Charge"].append(int(row["exp charge"]))
+        ms_annika_struc["m/z [Da]"].append(float(row["exp m/z"]))
+        ms_annika_struc["Crosslink Strategy"].append("xi")
+        ms_annika_struc["RT [min]"].append(xi_get_rt(row, spectra))
+        ms_annika_struc["Compensation Voltage"].append(xi_get_cv(row, spectra))
 
     return pd.DataFrame(ms_annika_struc)
 
