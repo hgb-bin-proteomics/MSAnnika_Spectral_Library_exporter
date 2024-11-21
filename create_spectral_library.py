@@ -42,11 +42,12 @@ from typing import Tuple
 from typing import Set
 from typing import Union
 from typing import BinaryIO
+from typing import Any
 import warnings
 
 ##################### FILE READERS #####################
 
-def parse_xi(result_file: str) -> pd.DataFrame:
+def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
     """Parses the xiFDR CSM result file and returns it in MS Annika format for
     spectral library creation.
     """
@@ -87,10 +88,52 @@ def parse_xi(result_file: str) -> pd.DataFrame:
                        "RT [min]": [],
                        "Compensation Voltage": []}
 
+    # parsing functions
+    def xi_get_sequence(row: pd.Series, alpha: bool = True) -> str:
+        seq = str(row["PepSeq1"]).strip() if alpha else str(row["PepSeq2"]).strip()
+        seq_a = ""
+        for aa in seq:
+            if aa.isupper():
+                seq_a += aa
+        return seq_a
+
+    def xi_get_modifications(row: pd.Series, alpha: bool = True) -> str:
+        seq = str(row["PepSeq1"]).strip() if alpha else str(row["PepSeq2"]).strip()
+        clean_seq = xi_get_sequence(row, alpha)
+        xl_pos = int(row["LinkPos1"]) if alpha else int(row["LinkPos2"])
+
+        if len(MODIFICATIONS_XI) > 10:
+            msg = "Found more than 10 possible modifications for xi. " + \
+                  "Maximum number of modifications supported is 10. " + \
+                  "Please update MODIFICATIONS_XI in the config file!"
+            raise RuntimeError(msg)
+
+        mod_map = dict()
+        mod_map_rev = dict()
+        for i, key in enumerate(MODIFICATIONS_XI.keys()):
+            mod_map[str(i)] = key
+            mod_map[key] = str(i)
+
+        for mod in MODIFICATIONS_XI.keys():
+            seq = seq.replace(mod, mod_map_rev[mod])
+
+        mod_str = ""
+        for i, aa in enumerate(seq):
+            if aa in mod_map:
+                mod_str += f"{MODIFICATIONS_XI[mod_map[aa]][0]}{i+1}({MODIFICATIONS_XI[mod_map[aa]][1]});"
+
+        mod_str += f"{clean_seq[xl_pos-1]}{xl_pos}({str(row["Crosslinker"]).strip()})"
+
+        return mod_str
+
     # TODO
     for i, row in xi.iterrows():
         if row["isDecoy"]:
             continue
+        ms_annika_struc["Sequence A"].append(xi_get_sequence(row, True))
+        ms_annika_struc["Sequence B"].append(xi_get_sequence(row, False))
+        ms_annika_struc["Modifications A"].append(xi_get_modifications(row, True))
+        ms_annika_struc["Modifications B"].append(xi_get_modifications(row, False))
 
     return pd.DataFrame(ms_annika_struc)
 
