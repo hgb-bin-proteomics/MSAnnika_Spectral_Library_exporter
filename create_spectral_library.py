@@ -122,7 +122,7 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
             if aa in mod_map:
                 mod_str += f"{MODIFICATIONS_XI[mod_map[aa]][0]}{i+1}({MODIFICATIONS_XI[mod_map[aa]][1]});"
 
-        mod_str += f"{clean_seq[xl_pos-1]}{xl_pos}({str(row["Crosslinker"]).strip()})"
+        mod_str += f"{clean_seq[xl_pos-1]}{xl_pos}({str(row['Crosslinker']).strip()})"
 
         return mod_str
 
