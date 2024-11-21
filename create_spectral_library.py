@@ -21,6 +21,7 @@ from config import CSMS_FILE
 from config import RUN_NAME
 from config import CROSSLINKER
 from config import MODIFICATIONS
+from config import MODIFICATIONS_XI
 from config import ION_TYPES
 from config import MAX_CHARGE
 from config import MATCH_TOLERANCE
@@ -50,9 +51,46 @@ def parse_xi(result_file: str) -> pd.DataFrame:
     spectral library creation.
     """
     xi = pd.read_csv(result_file)
-    ms_annika_struc = {}
+    ## needed cols
+    # Sequence A
+    # Modifications A
+    # Sequence B
+    # Modifications B
+    # First Scan
+    # Spectrum File
+    # A in protein
+    # B in protein
+    # Crosslinker Position A
+    # Crosslinker Position B
+    # Accession A
+    # Accession B
+    # Charge
+    # m/z [Da]
+    # Crosslink Strategy
+    # RT [min]
+    # Compensation Voltage
+    ms_annika_struc = {"Sequence A": [],
+                       "Modifications A": [],
+                       "Sequence B": [],
+                       "Modifications B": [],
+                       "First Scan": [],
+                       "Spectrum File": [],
+                       "A in protein": [],
+                       "B in protein": [],
+                       "Crosslinker Position A": [],
+                       "Crosslinker Position B": [],
+                       "Accession A": [],
+                       "Accession B": [],
+                       "Charge": [],
+                       "m/z [Da]": [],
+                       "Crosslink Strategy": [],
+                       "RT [min]": [],
+                       "Compensation Voltage": []}
 
     # TODO
+    for i, row in xi.iterrows():
+        if row["isDecoy"]:
+            continue
 
     return pd.DataFrame(ms_annika_struc)
 
