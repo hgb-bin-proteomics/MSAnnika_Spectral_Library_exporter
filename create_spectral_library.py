@@ -226,6 +226,7 @@ def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
     Returns a dictionary that maps scan numbers to spectra:
     Dict[int -> Dict["precursor"        -> float
                      "charge"           -> int
+                     "rt"               -> float
                      "max_intensity"    -> float
                      "peaks"            -> Dict[m/z -> intensity]]
     """
@@ -241,6 +242,7 @@ def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
             spectrum_dict = dict()
             spectrum_dict["precursor"] = spectrum["params"]["pepmass"]
             spectrum_dict["charge"] = spectrum["params"]["charge"]
+            spectrum_dict["rt"] = spectrum["params"]["rtinseconds"] if "rtinseconds" in spectrum["params"] else 0.0
             spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"])) if len(spectrum["intensity array"]) > 0 else 0.0
             peaks = dict()
             for i, mz in enumerate(spectrum["m/z array"]):
