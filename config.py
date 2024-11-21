@@ -19,8 +19,8 @@ MODIFICATIONS = \
      "DSSO": [54.01056, 85.98264, 103.99320]}
 # modifications mapping for xiFDR sequences
 MODIFICATIONS_XI = \
-    {"Ccm": {"C": "Carbamidomethyl"},
-     "Mox": {"M": "Oxidation"}}
+    {"Ccm": ["C", "Carbamidomethyl"],
+     "Mox": ["M", "Oxidation"]}
 # expected ion types (any of a, b, c, x, y, z)
 ION_TYPES = ("b", "y")
 # maximum expected charge of fragment ions
