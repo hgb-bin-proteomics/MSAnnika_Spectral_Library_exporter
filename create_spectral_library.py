@@ -1024,7 +1024,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     print("INFO: Done reading spectra!")
 
     print("INFO: Reading CSMs...")
-    if if "xlsx" in csms_file.split(".")[-1]:
+    if "xlsx" in csms_file.split(".")[-1]:
         csms = pd.read_excel(csms_file)
     else:
         csms = parse_xi(csms_file)
