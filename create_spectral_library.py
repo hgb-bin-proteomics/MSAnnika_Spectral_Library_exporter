@@ -126,13 +126,14 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
 
         return mod_str
 
-    # TODO
     def xi_get_rt(row: pd.Series, spectra: Dict[str, Any]) -> float:
-        return
+        spec_file_name = ".".join(str(row["PeakListFileName"]).split(".")[:-1]).strip()
+        rt = spectra[spec_file_name][int(row["scanId"])]["rt"]
+        return rt / 60.0
 
-    # TODO
     def xi_get_cv(row: pd.Series, spectra: Dict[str, Any]) -> float:
-        return
+        # I don't think we get this from the MGF file?
+        return 0.0
 
     for i, row in xi.iterrows():
         if row["isDecoy"]:
