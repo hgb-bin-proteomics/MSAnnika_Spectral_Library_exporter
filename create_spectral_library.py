@@ -6,8 +6,8 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.4.1"
-__date = "2024-11-21"
+__version = "1.4.2"
+__date = "2024-11-26"
 
 # REQUIREMENTS
 # pip install pandas
@@ -128,7 +128,7 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
 
     def xi_get_rt(row: pd.Series, spectra: Dict[str, Any]) -> float:
         spec_file_name = ".".join(str(row["PeakListFileName"]).split(".")[:-1]).strip()
-        rt = spectra[spec_file_name][int(row["ScanId"])]["rt"]
+        rt = spectra[spec_file_name][int(row["scan"])]["rt"]
         return rt / 60.0
 
     def xi_get_cv(row: pd.Series, spectra: Dict[str, Any]) -> float:
@@ -142,7 +142,7 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
         ms_annika_struc["Sequence B"].append(xi_get_sequence(row, False))
         ms_annika_struc["Modifications A"].append(xi_get_modifications(row, True))
         ms_annika_struc["Modifications B"].append(xi_get_modifications(row, False))
-        ms_annika_struc["First Scan"].append(int(row["ScanId"]))
+        ms_annika_struc["First Scan"].append(int(row["scan"]))
         ms_annika_struc["Spectrum File"].append(str(row["PeakListFileName"]).strip())
         ms_annika_struc["A in protein"].append(int(row["PepPos1"])-1)
         ms_annika_struc["B in protein"].append(int(row["PepPos2"])-1)
