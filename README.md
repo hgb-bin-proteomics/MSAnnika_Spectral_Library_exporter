@@ -25,7 +25,7 @@ Generate a spectral library for [Spectronaut](https://biognosys.com/software/spe
 
 ## Usage with xiSearch + xiFDR
 
-Starting with version [1.4.4](https://github.com/hgb-bin-proteomics/MSAnnika_Spectral_Library_exporter/releases/tag/v1.1.6) this script also supports input from
+Starting with version [1.4.4](https://github.com/hgb-bin-proteomics/MSAnnika_Spectral_Library_exporter/releases/tag/v1.4.4) this script also supports input from
 [xiSearch](https://www.rappsilberlab.org/software/xisearch/) with [xiFDR](https://www.rappsilberlab.org/software/xifdr/). Simply use the validated CSMs file from
 xiFDR (e.g. usually ending with extension `CSM_xiFDR*.*.*.csv` where `*` denotes the xiFDR version) as input for the `CSMS_FILE` parameter in the `config.py` file!
 
