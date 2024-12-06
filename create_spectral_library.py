@@ -6,7 +6,7 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.4.3"
+__version = "1.4.4"
 __date = "2024-12-06"
 
 # REQUIREMENTS
@@ -1030,7 +1030,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         csms = parse_xi(csms_file, spectra)
         csms.to_csv(csms_file + ".converted.csv", index = False)
         if csms.shape[0] < 1000000:
-            csms.to_excel(csms_file + ".converted.csv", index = False)
+            csms.to_excel(csms_file + ".converted.xlsx", index = False)
     print("INFO: Done reading CSMs! Starting spectral library creation...")
 
     # columns
