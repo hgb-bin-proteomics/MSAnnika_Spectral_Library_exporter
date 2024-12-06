@@ -23,6 +23,12 @@ Generate a spectral library for [Spectronaut](https://biognosys.com/software/spe
 - The full spectral library including all target and decoy annotations is created with extension `_spectralLibraryFULL.csv`.
   - This spectral library should be used with [Spectronaut](https://biognosys.com/software/spectronaut/)!
 
+## Usage with xiSearch + xiFDR
+
+Starting with version [1.4.4](https://github.com/hgb-bin-proteomics/MSAnnika_Spectral_Library_exporter/releases/tag/v1.1.6) this script also supports input from
+[xiSearch](https://www.rappsilberlab.org/software/xisearch/) with [xiFDR](https://www.rappsilberlab.org/software/xifdr/). Simply use the validated CSMs file from
+xiFDR (e.g. usually ending with extension `CSM_xiFDR*.*.*.csv` where `*` denotes the xiFDR version) as input for the `CSMS_FILE` parameter in the `config.py` file!
+
 ## GUI
 
 ![Screenshot](gui/screenshot.png)
@@ -61,6 +67,8 @@ The following parameters need to be adjusted for your needs in the `config.py` f
 
 # name of the mgf file containing the MS2 spectra
 SPECTRA_FILE = ["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf"]
+# you can process multiple files like this:
+# SPECTRA_FILE = ["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf", "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_002.mgf"]
 # name of the CSM file exported from Proteome Discoverer
 CSMS_FILE = "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.xlsx"
 # name of the experiment / run (any descriptive text is allowed)
@@ -74,6 +82,10 @@ MODIFICATIONS = \
     {"Oxidation": [15.994915],
      "Carbamidomethyl": [57.021464],
      "DSSO": [54.01056, 85.98264, 103.99320]}
+# modifications mapping for xiFDR sequences
+MODIFICATIONS_XI = \
+    {"Ccm": ["C", "Carbamidomethyl"],
+     "Mox": ["M", "Oxidation"]}
 # expected ion types (any of a, b, c, x, y, z)
 ION_TYPES = ("b", "y")
 # maximum expected charge of fragment ions
@@ -82,6 +94,8 @@ MAX_CHARGE = 4
 MATCH_TOLERANCE = 0.02
 # parameters for calculating iRT
 iRT_PARAMS = {"iRT_m": 1.3066, "iRT_t": 29.502}
+# regex pattern used for parsing scan number from the spectrum title
+PARSER_PATTERN = "\\.\\d+\\."
 ```
 
 In case you have more than one `SPECTRA_FILE` you can specify that like this:
@@ -105,6 +119,10 @@ MODIFICATIONS = \
     {"Oxidation": [15.994915],
      "Carbamidomethyl": [57.021464],
      "DSSO": [54.01056, 85.98264, 103.99320]}
+# modifications mapping for xiFDR sequences
+MODIFICATIONS_XI = \
+    {"Ccm": ["C", "Carbamidomethyl"],
+     "Mox": ["M", "Oxidation"]}
 # expected ion types (any of a, b, c, x, y, z)
 ION_TYPES = ("b", "y")
 # maximum expected charge of fragment ions
@@ -113,6 +131,8 @@ MAX_CHARGE = 4
 MATCH_TOLERANCE = 0.02
 # parameters for calculating iRT
 iRT_PARAMS = {"iRT_m": 1.3066, "iRT_t": 29.502}
+# regex pattern used for parsing scan number from the spectrum title
+PARSER_PATTERN = "\\.\\d+\\."
 ```
 
 ## Known Issues

@@ -6,8 +6,8 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.3.1"
-__date = "2024-11-14"
+__version = "1.4.4"
+__date = "2024-12-06"
 
 # REQUIREMENTS
 # pip install pandas
@@ -21,15 +21,18 @@ from config import CSMS_FILE
 from config import RUN_NAME
 from config import CROSSLINKER
 from config import MODIFICATIONS
+from config import MODIFICATIONS_XI
 from config import ION_TYPES
 from config import MAX_CHARGE
 from config import MATCH_TOLERANCE
 from config import iRT_PARAMS
 from config import ORGANISM
+from config import PARSER_PATTERN
 
 ######################
 
 # import packages
+import re
 import pandas as pd
 from pyteomics import mgf, mass
 
@@ -39,7 +42,182 @@ from typing import Tuple
 from typing import Set
 from typing import Union
 from typing import BinaryIO
+from typing import Any
 import warnings
+
+##################### FILE READERS #####################
+
+def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
+    """Parses the xiFDR CSM result file and returns it in MS Annika format for
+    spectral library creation.
+    """
+    xi = pd.read_csv(result_file)
+    ## needed cols
+    # Sequence A
+    # Modifications A
+    # Sequence B
+    # Modifications B
+    # First Scan
+    # Spectrum File
+    # A in protein
+    # B in protein
+    # Crosslinker Position A
+    # Crosslinker Position B
+    # Accession A
+    # Accession B
+    # Charge
+    # m/z [Da]
+    # Crosslink Strategy
+    # RT [min]
+    # Compensation Voltage
+    ms_annika_struc = {"Sequence A": [],
+                       "Modifications A": [],
+                       "Sequence B": [],
+                       "Modifications B": [],
+                       "First Scan": [],
+                       "Spectrum File": [],
+                       "A in protein": [],
+                       "B in protein": [],
+                       "Crosslinker Position A": [],
+                       "Crosslinker Position B": [],
+                       "Accession A": [],
+                       "Accession B": [],
+                       "Charge": [],
+                       "m/z [Da]": [],
+                       "Crosslink Strategy": [],
+                       "RT [min]": [],
+                       "Compensation Voltage": []}
+
+    # parsing functions
+    def xi_get_sequence(row: pd.Series, alpha: bool = True) -> str:
+        seq = str(row["PepSeq1"]).strip() if alpha else str(row["PepSeq2"]).strip()
+        seq_a = ""
+        for aa in seq:
+            if aa.isupper():
+                seq_a += aa
+        return seq_a
+
+    def xi_get_modifications(row: pd.Series, alpha: bool = True) -> str:
+        seq = str(row["PepSeq1"]).strip() if alpha else str(row["PepSeq2"]).strip()
+        clean_seq = xi_get_sequence(row, alpha)
+        xl_pos = int(row["LinkPos1"]) if alpha else int(row["LinkPos2"])
+
+        if len(MODIFICATIONS_XI) > 10:
+            msg = "Found more than 10 possible modifications for xi. " + \
+                  "Maximum number of modifications supported is 10. " + \
+                  "Please update MODIFICATIONS_XI in the config file!"
+            raise RuntimeError(msg)
+
+        mod_map = dict()
+        mod_map_rev = dict()
+        for i, key in enumerate(MODIFICATIONS_XI.keys()):
+            mod_map[str(i)] = key
+            mod_map_rev[key] = str(i)
+
+        for mod in MODIFICATIONS_XI.keys():
+            seq = seq.replace(mod, mod_map_rev[mod])
+
+        mod_str = ""
+        for i, aa in enumerate(seq):
+            if aa in mod_map:
+                mod_str += f"{MODIFICATIONS_XI[mod_map[aa]][0]}{i+1}({MODIFICATIONS_XI[mod_map[aa]][1]});"
+
+        mod_str += f"{clean_seq[xl_pos-1]}{xl_pos}({str(row['Crosslinker']).strip()})"
+
+        return mod_str
+
+    def xi_get_rt(row: pd.Series, spectra: Dict[str, Any]) -> float:
+        spec_file_name = ".".join(str(row["PeakListFileName"]).split(".")[:-1]).strip()
+        rt = spectra[spec_file_name][int(row["scan"])]["rt"]
+        return rt / 60.0
+
+    def xi_get_cv(row: pd.Series, spectra: Dict[str, Any]) -> float:
+        # I don't think we get this from the MGF file?
+        return 0.0
+
+    for i, row in xi.iterrows():
+        if row["isDecoy"]:
+            continue
+        ms_annika_struc["Sequence A"].append(xi_get_sequence(row, True))
+        ms_annika_struc["Sequence B"].append(xi_get_sequence(row, False))
+        ms_annika_struc["Modifications A"].append(xi_get_modifications(row, True))
+        ms_annika_struc["Modifications B"].append(xi_get_modifications(row, False))
+        ms_annika_struc["First Scan"].append(int(row["scan"]))
+        ms_annika_struc["Spectrum File"].append(str(row["PeakListFileName"]).strip())
+        ms_annika_struc["A in protein"].append(int(row["PepPos1"])-1)
+        ms_annika_struc["B in protein"].append(int(row["PepPos2"])-1)
+        ms_annika_struc["Crosslinker Position A"].append(int(row["LinkPos1"]))
+        ms_annika_struc["Crosslinker Position B"].append(int(row["LinkPos2"]))
+        ms_annika_struc["Accession A"].append(str(row["Protein1"]).strip())
+        ms_annika_struc["Accession B"].append(str(row["Protein2"]).strip())
+        ms_annika_struc["Charge"].append(int(row["exp charge"]))
+        ms_annika_struc["m/z [Da]"].append(float(row["exp m/z"]))
+        ms_annika_struc["Crosslink Strategy"].append("xi")
+        ms_annika_struc["RT [min]"].append(xi_get_rt(row, spectra))
+        ms_annika_struc["Compensation Voltage"].append(xi_get_cv(row, spectra))
+
+    return pd.DataFrame(ms_annika_struc)
+
+############### SPECTRAL LIBRARY CREATOR ###############
+
+# parse scan number from pyteomics mgf params
+def parse_scannr(params: Dict, pattern: str = PARSER_PATTERN, i: int = 0) -> Tuple[int, int]:
+    """Parses the scan number from the params dictionary of the pyteomics mgf
+    spectrum.
+
+    Parameters
+    ----------
+    params : Dict
+        The "params" dictionary of the pyteomics mgf spectrum.
+
+    pattern : str
+        Regex pattern to use for parsing the scan number from the title if it
+        can't be infered otherwise.
+
+    i : int
+        The scan number to be returned in case of failure.
+
+    Returns
+    -------
+    (exit_code, scan_nr) : Tuple
+        A tuple with the exit code (0 if successful, 1 if parsing failed) at the
+        first position [0] and the scan number at the second position [1].
+    """
+
+    # prefer scans attr over title attr
+    if "scans" in params:
+        try:
+            return (0, int(params["scans"]))
+        except:
+            pass
+
+    # try parse title
+    if "title" in params:
+
+        # if there is a scan token in the title, try parse scan_nr
+        if "scan" in params["title"]:
+            try:
+                return (0, int(params["title"].split("scan=")[1].strip("\"")))
+            except:
+                pass
+
+        # else try to parse by pattern
+        try:
+            scan_nr = re.findall(pattern, params["title"])[0]
+            scan_nr = re.sub(r"[^0-9]", "", scan_nr)
+            if len(scan_nr) > 0:
+                return (0, int(scan_nr))
+        except:
+            pass
+
+        # else try parse whole title
+        try:
+            return (0, int(params["title"]))
+        except:
+            pass
+
+    # return unsuccessful parse
+    return (1, i)
 
 # reading spectra
 # def read_spectra(filename: str | BinaryIO) -> Dict[int, Dict]:
@@ -49,6 +227,7 @@ def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
     Returns a dictionary that maps scan numbers to spectra:
     Dict[int -> Dict["precursor"        -> float
                      "charge"           -> int
+                     "rt"               -> float
                      "max_intensity"    -> float
                      "peaks"            -> Dict[m/z -> intensity]]
     """
@@ -57,10 +236,14 @@ def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
 
     with mgf.read(filename) as reader:
         for spectrum in reader:
-            scan_nr = int(spectrum["params"]["title"].split("scan=")[1].strip("\""))
+            parser_result = parse_scannr(spectrum["params"])
+            if parser_result[0] != 0:
+                raise RuntimeError(f"Could not parse scan number for spectrum {spectrum}. Please adjust PARSER_PATTERN in the config file!")
+            scan_nr = parser_result[1]
             spectrum_dict = dict()
             spectrum_dict["precursor"] = spectrum["params"]["pepmass"]
             spectrum_dict["charge"] = spectrum["params"]["charge"]
+            spectrum_dict["rt"] = spectrum["params"]["rtinseconds"] if "rtinseconds" in spectrum["params"] else 0.0
             spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"])) if len(spectrum["intensity array"]) > 0 else 0.0
             peaks = dict()
             for i, mz in enumerate(spectrum["m/z array"]):
@@ -361,7 +544,7 @@ def generate_decoy_csm_dd(row: pd.Series, crosslinker: str = CROSSLINKER) -> pd.
     decoy_csm["Modifications B"] = ";".join(decoy_mods_b)
 
     return decoy_csm
-    
+
 def generate_decoy_csm_td(row: pd.Series, crosslinker: str = CROSSLINKER) -> pd.Series:
     """
     """
@@ -405,7 +588,7 @@ def generate_decoy_csm_td(row: pd.Series, crosslinker: str = CROSSLINKER) -> pd.
     decoy_csm["Modifications B"] = ";".join(decoy_mods_b)
 
     return decoy_csm
-    
+
 def generate_decoy_csm_dt(row: pd.Series, crosslinker: str = CROSSLINKER) -> pd.Series:
     """
     """
@@ -596,7 +779,7 @@ def get_ProteinID(row: pd.Series) -> str:
     accession_b = row["Accession B"] if ";" not in row["Accession B"] else row["Accession B"].split(";")[0]
 
     return str(accession_a) + "_" + str(accession_b)
-    
+
 def get_Organism() -> str:
     """
     Returns the organism of the sample.
@@ -841,7 +1024,13 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     print("INFO: Done reading spectra!")
 
     print("INFO: Reading CSMs...")
-    csms = pd.read_excel(csms_file)
+    if "xlsx" in csms_file.split(".")[-1]:
+        csms = pd.read_excel(csms_file)
+    else:
+        csms = parse_xi(csms_file, spectra)
+        csms.to_csv(csms_file + ".converted.csv", index = False)
+        if csms.shape[0] < 1000000:
+            csms.to_excel(csms_file + ".converted.xlsx", index = False)
     print("INFO: Done reading CSMs! Starting spectral library creation...")
 
     # columns
@@ -907,7 +1096,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     LossyFragment_s_decoy = list()
     Is_Decoy_s_decoy = list()
     Decoy_Type_s_decoy = list()
-    
+
     # decoy dt columns
     linkId_s_decoy_dt = list()
     ProteinID_s_decoy_dt = list()
@@ -939,7 +1128,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     LossyFragment_s_decoy_dt = list()
     Is_Decoy_s_decoy_dt = list()
     Decoy_Type_s_decoy_dt = list()
-    
+
     # decoy td columns
     linkId_s_decoy_td = list()
     ProteinID_s_decoy_td = list()
@@ -1091,7 +1280,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 Is_Decoy_s_decoy.append(True)
                 Decoy_Type_s_decoy.append("DD")
                 decoy_frag_mzs.append(decoy_frag["FragmentMz"])
-                
+
         # decoy dt
         decoy_csm_dt = generate_decoy_csm_dt(row, crosslinker)
         decoy_link_Id_dt = get_linkId(decoy_csm_dt)
@@ -1153,7 +1342,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 Is_Decoy_s_decoy_dt.append(True)
                 Decoy_Type_s_decoy_dt.append("DT")
                 decoy_frag_mzs_dt.append(decoy_frag_dt["FragmentMz"])
-                
+
         # decoy td
         decoy_csm_td = generate_decoy_csm_td(row, crosslinker)
         decoy_link_Id_td = get_linkId(decoy_csm_td)
@@ -1285,7 +1474,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "DecoyType": Decoy_Type_s_decoy}
 
     spectral_library_decoy_dd = pd.DataFrame(dd_dict)
-    
+
     dt_dict = {"linkId": linkId_s_decoy_dt,
                "ProteinID": ProteinID_s_decoy_dt,
                "Organism": Organism_s_decoy_dt,
@@ -1318,7 +1507,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "DecoyType": Decoy_Type_s_decoy_dt}
 
     spectral_library_decoy_dt = pd.DataFrame(dt_dict)
-    
+
     td_dict = {"linkId": linkId_s_decoy_td,
                "ProteinID": ProteinID_s_decoy_td,
                "Organism": Organism_s_decoy_td,
@@ -1365,7 +1554,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY_DD.csv")
         print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY_DT.csv")
         print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryDECOY_TD.csv")
-        
+
         print("Creating merged library...")
         merged_spec_lib = pd.concat([spectral_library, spectral_library_decoy_dd, spectral_library_decoy_dt, spectral_library_decoy_td], ignore_index = True)
         should_shape = spectral_library.shape[0] + spectral_library_decoy_dd.shape[0] + spectral_library_decoy_dt.shape[0] + spectral_library_decoy_td.shape[0]

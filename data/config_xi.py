@@ -1,22 +1,20 @@
 ##### PARAMETERS #####
 
 # name of the mgf file containing the MS2 spectra
-SPECTRA_FILE = ["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf"]
-# you can process multiple files like this:
-# SPECTRA_FILE = ["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf", "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_002.mgf"]
+SPECTRA_FILE = ["XLpeplib_Beveridge_QEx-HFX_DSS_R1.mgf"]
 # name of the CSM file exported from Proteome Discoverer
-CSMS_FILE = "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.xlsx"
+CSMS_FILE = "example_CSM_xiFDR2.2.1.csv"
 # name of the experiment / run (any descriptive text is allowed)
-RUN_NAME = "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001-(1)"
+RUN_NAME = "XLpeplib_Beveridge_DSS_rep1_xiSearch"
 # name of the sample organism that should be reported in the spectral library
-ORGANISM = "Homo sapiens"
+ORGANISM = "S. pyogenes"
 # name of the crosslink modification
-CROSSLINKER = "DSSO"
+CROSSLINKER = "BS3"
 # possible modifications and their monoisotopic masses
 MODIFICATIONS = \
     {"Oxidation": [15.994915],
      "Carbamidomethyl": [57.021464],
-     "DSSO": [54.01056, 85.98264, 103.99320]}
+     "BS3": [138.06808]}
 # modifications mapping for xiFDR sequences
 MODIFICATIONS_XI = \
     {"Ccm": ["C", "Carbamidomethyl"],
