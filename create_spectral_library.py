@@ -863,7 +863,7 @@ def get_ModifiedPeptide(row: pd.Series,
     # generate annotation for sequence A
     shift = 0
     mod_A_template_str = str(row["Sequence A"])
-    for pos in mods_A.keys():
+    for pos in sorted(mods_A.keys()):
         current_mods = "[" + ", ".join(mods_A[pos]) + "]"
         mod_A_template_str = str_insert(mod_A_template_str, pos + shift, current_mods)
         shift += len(current_mods)
@@ -871,7 +871,7 @@ def get_ModifiedPeptide(row: pd.Series,
     # generate annotation for sequence B
     shift = 0
     mod_B_template_str = str(row["Sequence B"])
-    for pos in mods_B.keys():
+    for pos in sorted(mods_B.keys()):
         current_mods = "[" + ", ".join(mods_B[pos]) + "]"
         mod_B_template_str = str_insert(mod_B_template_str, pos + shift, current_mods)
         shift += len(current_mods)
