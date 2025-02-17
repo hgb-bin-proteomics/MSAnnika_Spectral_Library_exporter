@@ -140,7 +140,7 @@ def test5_spectral_library_exporter():
     sl = sl["DecoyLib_DT"]
 
     assert sl.shape[0] == 17 and sl.shape[1] == 30
-    
+
 # check values decoy dt
 def test6_spectral_library_exporter():
 
@@ -203,7 +203,7 @@ def test7_spectral_library_exporter():
     sl = sl["DecoyLib_TD"]
 
     assert sl.shape[0] == 17 and sl.shape[1] == 30
-    
+
 # check values decoy td
 def test8_spectral_library_exporter():
 
@@ -266,7 +266,7 @@ def test9_spectral_library_exporter():
     sl = sl["FullLib"]
 
     assert sl.shape[0] == 68 and sl.shape[1] == 30
-    
+
 # check values full
 def test10_spectral_library_exporter():
 
@@ -310,7 +310,7 @@ def test10_spectral_library_exporter():
     assert str(sl.loc[3, "CLContainingFragment"]) == "False"
     assert str(sl.loc[3, "IsDecoy"]) == "False"
     assert str(sl.loc[3, "DecoyType"]) == "TT"
-    
+
     assert str(sl.loc[67, "ModifiedPeptide"]) == "KQQGHR_HGQQKR"
     assert str(sl.loc[67, "FragmentCharge"]) == "1"
     assert str(sl.loc[67, "FragmentType"]) == "y"
@@ -319,3 +319,15 @@ def test10_spectral_library_exporter():
     assert str(sl.loc[67, "CLContainingFragment"]) == "True"
     assert str(sl.loc[67, "IsDecoy"]) == "True"
     assert str(sl.loc[67, "DecoyType"]) == "TD"
+
+# check reverse modification annotator
+def test11_spectral_library_exporter():
+
+    import pandas as pd
+    from create_spectral_library import generate_decoy_csm_dd
+    from create_spectral_library import get_ModifiedPeptide
+
+    data = pd.read_excel("test_reverse_mods.xlsx")
+    decoy = generate_decoy_csm_dd(data.iloc[0])
+
+    assert str(get_ModifiedPeptide(decoy)) == "EPSYEKWKQEK_QSAIQSMMLEKATQVRVGGGTVDRLNM[Oxidation]M[Oxidation]SR"
