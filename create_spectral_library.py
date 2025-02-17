@@ -6,8 +6,8 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.4.4"
-__date = "2024-12-06"
+__version = "1.4.5"
+__date = "2025-02-17"
 
 # REQUIREMENTS
 # pip install pandas
