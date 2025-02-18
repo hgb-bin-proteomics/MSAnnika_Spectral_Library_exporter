@@ -7,17 +7,18 @@
 
 # check converted csm file
 def test1_converter():
-    
+
+    import pytest
     import pandas as pd
     from create_spectral_library import main
     from config import CSMS_FILE as CSMS_FILE
-    
+
     sl = main()
     csms = pd.read_csv(CSMS_FILE + ".converted.csv")
-    
+
     assert csms.shape[0] == 2
     assert csms.shape[1] == 18
-    
+
     assert str(csms.loc[0, "Sequence A"]) == "KIECFDSVEISGVEDR"
     assert str(csms.loc[0, "Modifications A"]) == "C4(Carbamidomethyl);K1(BS3)"
     assert str(csms.loc[0, "Sequence B"]) == "KIECFDSVEISGVEDR"
