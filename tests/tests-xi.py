@@ -35,7 +35,7 @@ def test1_converter():
     assert str(csms.loc[0, "Crosslink Strategy"]) == "xi"
     assert str(int(csms.loc[0, "RT [min]"])) == "85"
     assert str(int(csms.loc[0, "Compensation Voltage"])) == "0"
-    assert csms.loc[0, "Combined Score"])) == pytest.approx(27.268)
+    assert float(csms.loc[0, "Combined Score"]) == pytest.approx(27.268)
 
     assert str(csms.loc[1, "Sequence A"]) == "MIAKSEQEIGK"
     assert str(csms.loc[1, "Modifications A"]) == "K4(BS3)"
@@ -54,7 +54,7 @@ def test1_converter():
     assert str(csms.loc[1, "Crosslink Strategy"]) == "xi"
     assert str(int(csms.loc[1, "RT [min]"])) == "72"
     assert str(int(csms.loc[1, "Compensation Voltage"])) == "0"
-    assert csms.loc[1, "Combined Score"])) == pytest.approx(24.473)
+    assert float(csms.loc[1, "Combined Score"]) == pytest.approx(24.473)
 
 # check output shape target
 def test1_spectral_library_exporter():
