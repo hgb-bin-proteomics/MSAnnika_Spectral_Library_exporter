@@ -86,7 +86,8 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
                        "m/z [Da]": [],
                        "Crosslink Strategy": [],
                        "RT [min]": [],
-                       "Compensation Voltage": []}
+                       "Compensation Voltage": [],
+                       "Combined Score": []}
 
     # parsing functions
     def xi_get_sequence(row: pd.Series, alpha: bool = True) -> str:
@@ -135,6 +136,9 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
         # I don't think we get this from the MGF file?
         return 0.0
 
+    def xi_get_score(row: pd.Series) -> float:
+        return float(row["Score"])
+
     for i, row in xi.iterrows():
         if row["isDecoy"]:
             continue
@@ -155,6 +159,7 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
         ms_annika_struc["Crosslink Strategy"].append("xi")
         ms_annika_struc["RT [min]"].append(xi_get_rt(row, spectra))
         ms_annika_struc["Compensation Voltage"].append(xi_get_cv(row, spectra))
+        ms_annika_struc["Combined Score"].append(xi_get_score(row))
 
     return pd.DataFrame(ms_annika_struc)
 
