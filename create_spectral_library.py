@@ -311,7 +311,7 @@ def filter_df_for_unique_residue_pairs(df: pd.DataFrame) -> pd.DataFrame:
             if unique_residue_pairs[key]["score"] < float(row["Combined Score"]):
                 unique_residue_pairs[key] = {"score": float(row["Combined Score"]), "csm": row}
                 
-    return pd.concat([val["csm"] for val in unique_residue_pairs.values()], axis = 0)
+    return pd.concat([val["csm"] for val in unique_residue_pairs.values()], axis = 1).T
 
 # generate a position to modification mass mapping
 def generate_modifications_dict(peptide: str,
