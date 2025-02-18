@@ -6,7 +6,7 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.4.6"
+__version = "1.4.7"
 __date = "2025-02-18"
 
 # REQUIREMENTS
