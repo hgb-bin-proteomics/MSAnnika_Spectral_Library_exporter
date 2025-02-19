@@ -6,8 +6,8 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.4.5"
-__date = "2025-02-17"
+__version = "1.4.7"
+__date = "2025-02-18"
 
 # REQUIREMENTS
 # pip install pandas
@@ -86,7 +86,8 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
                        "m/z [Da]": [],
                        "Crosslink Strategy": [],
                        "RT [min]": [],
-                       "Compensation Voltage": []}
+                       "Compensation Voltage": [],
+                       "Combined Score": []}
 
     # parsing functions
     def xi_get_sequence(row: pd.Series, alpha: bool = True) -> str:
@@ -135,6 +136,9 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
         # I don't think we get this from the MGF file?
         return 0.0
 
+    def xi_get_score(row: pd.Series) -> float:
+        return float(row["Score"])
+
     for i, row in xi.iterrows():
         if row["isDecoy"]:
             continue
@@ -155,6 +159,7 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
         ms_annika_struc["Crosslink Strategy"].append("xi")
         ms_annika_struc["RT [min]"].append(xi_get_rt(row, spectra))
         ms_annika_struc["Compensation Voltage"].append(xi_get_cv(row, spectra))
+        ms_annika_struc["Combined Score"].append(xi_get_score(row))
 
     return pd.DataFrame(ms_annika_struc)
 
@@ -289,6 +294,29 @@ def read_multiple_spectra_streamlit(st_files) -> Dict[str, Dict[int, Dict]]:
         result_dict[current_spectra_file] = read_spectra(st_file)
 
     return result_dict
+
+# filter unique residue pair/charge CSMs
+def filter_df_for_unique_residue_pairs(df: pd.DataFrame) -> pd.DataFrame:
+
+    def generate_residue_pair_key(row: pd.Series) -> str:
+        seq_a = str(row["Sequence A"]).strip()
+        pos_a = int(row["Crosslinker Position A"])
+        seq_b = str(row["Sequence B"]).strip()
+        pos_b = int(row["Crosslinker Position B"])
+        charge = int(row["Charge"])
+        rp = sorted([f"{seq_a}{pos_a}", f"{seq_b}{pos_b}"])
+        return f"{rp[0]}_{rp[1]}:{charge}"
+
+    unique_residue_pairs = dict()
+    for i, row in df.iterrows():
+        key = generate_residue_pair_key(row)
+        if key not in unique_residue_pairs:
+            unique_residue_pairs[key] = {"score": float(row["Combined Score"]), "csm": row}
+        else:
+            if unique_residue_pairs[key]["score"] < float(row["Combined Score"]):
+                unique_residue_pairs[key] = {"score": float(row["Combined Score"]), "csm": row}
+                
+    return pd.concat([val["csm"] for val in unique_residue_pairs.values()], axis = 1).T
 
 # generate a position to modification mass mapping
 def generate_modifications_dict(peptide: str,
@@ -1025,13 +1053,16 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
 
     print("INFO: Reading CSMs...")
     if "xlsx" in csms_file.split(".")[-1]:
-        csms = pd.read_excel(csms_file)
+        raw_csms = pd.read_excel(csms_file)
     else:
-        csms = parse_xi(csms_file, spectra)
-        csms.to_csv(csms_file + ".converted.csv", index = False)
-        if csms.shape[0] < 1000000:
-            csms.to_excel(csms_file + ".converted.xlsx", index = False)
-    print("INFO: Done reading CSMs! Starting spectral library creation...")
+        raw_csms = parse_xi(csms_file, spectra)
+        raw_csms.to_csv(csms_file + ".converted.csv", index = False)
+        if raw_csms.shape[0] < 1000000:
+            raw_csms.to_excel(csms_file + ".converted.xlsx", index = False)
+    print("INFO: Done reading CSMs! Filtering for unique residue pairs...")
+
+    csms = filter_df_for_unique_residue_pairs(raw_csms)
+    print("INFO: Done filtering for unique residue pairs! Starting spectral library creation...")
 
     # columns
     linkId_s = list()
