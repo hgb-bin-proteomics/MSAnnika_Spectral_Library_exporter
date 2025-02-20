@@ -295,16 +295,18 @@ def read_multiple_spectra_streamlit(st_files) -> Dict[str, Dict[int, Dict]]:
 
     return result_dict
 
-# filter unique residue pair/charge CSMs
+# filter unique residue pair/charge/PTMs CSMs
 def filter_df_for_unique_residue_pairs(df: pd.DataFrame) -> pd.DataFrame:
 
     def generate_residue_pair_key(row: pd.Series) -> str:
         seq_a = str(row["Sequence A"]).strip()
         pos_a = int(row["Crosslinker Position A"])
+        mods_a = ",".join(sorted([mod.strip() for mod in str(row["Modifications A"]).split(";")]))
         seq_b = str(row["Sequence B"]).strip()
         pos_b = int(row["Crosslinker Position B"])
+        mods_b = ",".join(sorted([mod.strip() for mod in str(row["Modifications B"]).split(";")]))
         charge = int(row["Charge"])
-        rp = sorted([f"{seq_a}{pos_a}", f"{seq_b}{pos_b}"])
+        rp = sorted([f"{seq_a}{pos_a}[{mods_a}]", f"{seq_b}{pos_b}[{mods_b}]"])
         return f"{rp[0]}_{rp[1]}:{charge}"
 
     unique_residue_pairs = dict()
@@ -315,7 +317,7 @@ def filter_df_for_unique_residue_pairs(df: pd.DataFrame) -> pd.DataFrame:
         else:
             if unique_residue_pairs[key]["score"] < float(row["Combined Score"]):
                 unique_residue_pairs[key] = {"score": float(row["Combined Score"]), "csm": row}
-                
+
     return pd.concat([val["csm"] for val in unique_residue_pairs.values()], axis = 1).T
 
 # generate a position to modification mass mapping

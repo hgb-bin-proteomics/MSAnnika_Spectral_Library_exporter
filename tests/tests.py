@@ -331,3 +331,24 @@ def test11_spectral_library_exporter():
     decoy = generate_decoy_csm_dd(data.iloc[0])
 
     assert str(get_ModifiedPeptide(decoy)) == "EPSYEKWKQEK_QSAIQSMMLEKATQVRVGGGTVDRLNM[Oxidation]M[Oxidation]SR"
+
+# check filtering
+def test12_spectral_library_exporter():
+
+    import pytest
+    import pandas as pd
+    from create_spectral_library import filter_df_for_unique_residue_pairs
+
+    data = pd.read_excel("test_filter.xlsx")
+    filtered_data = filter_df_for_unique_residue_pairs(data)
+
+    assert filtered_data.shape[0] == 2
+    checked = 0
+    for i, row in filtered_data.iterrows():
+        if str(row["Modifications A"]).strip() == "K1(DSSO)":
+            assert float(row["Combined Score"]) == pytest.approx(198.71)
+            checked += 1
+        if str(row["Modifications A"]).strip() == "K1(DSSO);M6(Oxidation)":
+            assert float(row["Combined Score"]) == pytest.approx(8.71)
+            checked += 1
+    assert checked == 2
