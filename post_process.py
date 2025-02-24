@@ -84,7 +84,7 @@ def read_spectral_library(filename: str) -> Dict[str, Dict[str, Any]]:
 
 def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
 
-    spectronaut = pd.read_csv(filename, sep = "\t", low_memory = False)
+    spectronaut = pd.read_csv(filename, sep = SPECTRONAUT_DELIM, low_memory = False)
     filename_spec_lib = str(spectronaut["EG.Library"].at[0])
     index = read_spectral_library(filename_spec_lib)
 
