@@ -54,7 +54,7 @@ def get_key_spectronaut(row: pd.Series) -> str:
         return f"{str(row['EG.PrecursorId']).strip()}:{str(row['PG.ProteinNames']).strip()}"
     return f"{str(row['EG.PrecursorId']).strip()}:{str(row['PG.ProteinNames']).strip()}-{str(row['FG.Comment']).strip()}"
 
-def read_spectral_library(filename: str) -> Dict[str, List[pd.Series]]:
+def read_spectral_library(filename: str) -> Dict[str, Dict[str, Any]]:
 
     spec_lib = pd.read_csv(filename, low_memory = False)
 
@@ -62,9 +62,23 @@ def read_spectral_library(filename: str) -> Dict[str, List[pd.Series]]:
     for i, row in tqdm(spec_lib.iterrows(), total = spec_lib.shape[0], desc = "Creating index..."):
         key = get_key_spec_lib(row)
         if key in index:
-            index[key].append(row)
+            index[key]["rows"].append(row)
+
+            if int(row["FragmentPepId"]) == 0:
+                index[key]["total_ions_a"] += 1
+            else:
+                index[key]["total_ions_b"] += 1
+
+            ion_mz = get_mz_key(float(row["FragmentMz"]))
+            if ion_mz in index[key]["ions"]:
+                index[key]["ions"][ion_mz].append(row)
+            else:
+                index[key]["ions"][ion_mz] = [row]
         else:
-            index[key] = [row]
+            index[key] = {"rows": [row],
+                          "total_ions_a": 1 if int(row["FragmentPepId"]) == 0 else 0,
+                          "total_ions_b": 1 if int(row["FragmentPepId"]) == 1 else 0,
+                          "ions": {get_mz_key(float(row["FragmentMz"])): [row]}}
 
     return index
 
