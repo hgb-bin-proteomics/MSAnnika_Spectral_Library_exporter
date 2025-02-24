@@ -42,7 +42,13 @@ def get_key_spectronaut(row: pd.Series) -> str:
     # AAHHADGLAKGLHETC[Carbamidomethyl]K_M[Oxidation]FIPKSHTK.5
     # PG.ProteinNames
     # P10771_P10771-113_46
-    return f"{str(row['EG.PrecursorId']).strip()}:{str(row['PG.ProteinNames']).strip()}"
+    # ---> if PG.ProteinNames
+    # P10771_P10771
+    # use FG.Comment
+    # 113_46
+    if "-" in str(row["PG.ProteinNames"]):
+        return f"{str(row['EG.PrecursorId']).strip()}:{str(row['PG.ProteinNames']).strip()}"
+    return f"{str(row['EG.PrecursorId']).strip()}:{str(row['PG.ProteinNames']).strip()}-{str(row['FG.Comment']).strip()}"
 
 def read_spectral_library(filename: str) -> Dict[str, List[pd.Series]]:
 
