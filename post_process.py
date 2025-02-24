@@ -28,6 +28,10 @@ from typing import List
 
 ##################### POST PROCESS #####################
 
+def get_mz_key(mz: float) -> str:
+    #return str(int(mz * 1000))
+    return mz
+
 def get_key_spec_lib(row: pd.Series) -> str:
     # ModifiedPeptide
     # DAKQRIVDK_NGVKM[Oxidation]C[Carbamidomethyl]PR
