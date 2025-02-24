@@ -223,3 +223,17 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     spectronaut["DecoyType"] = spectronaut.progress_apply(lambda row: annotate_DecoyType(row, index), axis = 1)
 
     return spectronaut
+
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) < 2:
+        raise RuntimeError("No Spectronaut file was given!")
+
+    filename = sys.argv[1]
+    filename_o = filename + "_annotated.csv"
+
+    df = annotate_spectronaut_result(filename)
+    print("Writing annotated Spectronaut result to file...")
+    df.to_csv(filename_o, index = False)
+    print("Finished annotation!")
