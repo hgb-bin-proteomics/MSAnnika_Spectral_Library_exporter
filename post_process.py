@@ -10,7 +10,7 @@ __version = "1.0.0"
 __date = "2025-02-20"
 
 # PARAMETERS
-SPECTRONAUT_MATCH_TOLERANCE = 0.02 # match tolerance in Da
+SPECTRONAUT_MATCH_TOLERANCE = 0.05 # match tolerance in Da
 SPECTRONAUT_DELIM = "," #"\t" # delimiter in Spectronaut output file
 SPECTRONAUT_CSCORE_COLUMN_NAME = "PG.Cscore (Run-Wise)" # which Cscore to use for re-soring
 
