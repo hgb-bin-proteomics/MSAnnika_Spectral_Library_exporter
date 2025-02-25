@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # SPECTRONAUT POST PROCESSING
-# 2023 (c) Micha Johannes Birklbauer
+# 2025 (c) Micha Johannes Birklbauer
 # https://github.com/michabirklbauer/
 # micha.birklbauer@gmail.com
 
