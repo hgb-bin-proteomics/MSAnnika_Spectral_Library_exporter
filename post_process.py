@@ -82,6 +82,26 @@ def read_spectral_library(filename: str) -> Dict[str, Dict[str, Any]]:
 
     return index
 
+def generate_fragment_index(spectronaut: pd.DataFrame, index: dict) -> Dict[str, Dict[str, int]]:
+
+    fragment_annotation = dict()
+    for i, row in tqdm(spectronaut.iterrows(), total = spectronaut.shape[0], desc = "Generating fragment ion index..."):
+        key = get_key_spectronaut(row)
+        ion = float(row["F.MeasuredMz"])
+        ions = index[key]["ions"]
+        for current_ion_mz in ions.keys():
+            if current_ion_mz > ion - SPECTRONAUT_MATCH_TOLERANCE and current_ion_mz < ion + SPECTRONAUT_MATCH_TOLERANCE:
+                if key not in fragment_annotation:
+                    fragment_annotation[key] = {"matched_number_ions_a": 0,
+                                                "matched_number_ions_b": 0}
+                for current_ion in ions[current_ion_mz]:
+                    if current_ion["FragmentPepId"] == 0:
+                        fragment_annotation[key]["matched_number_ions_a"] += 1
+                    else:
+                        fragment_annotation[key]["matched_number_ions_b"] += 1
+
+    return fragment_annotation
+
 def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
 
     spectronaut = pd.read_csv(filename, sep = SPECTRONAUT_DELIM, low_memory = False)
@@ -132,21 +152,7 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     # h: partial c score b (c score * (c / a + c))
     # i: composite relative match score min(e, f)
     # j: composite partial c score min(g, h)
-    fragment_annotation = dict()
-    for i, row in tqdm(spectronaut.iterrows(), total = spectronaut.shape[0], desc = "Generating fragment ion index..."):
-        key = get_key_spectronaut(row)
-        ion = float(row["F.MeasuredMz"])
-        ions = index[key]["ions"]
-        for current_ion_mz in ions.keys():
-            if current_ion_mz > ion - SPECTRONAUT_MATCH_TOLERANCE and current_ion_mz < ion + SPECTRONAUT_MATCH_TOLERANCE:
-                if key not in fragment_annotation:
-                    fragment_annotation[key] = {"matched_number_ions_a": 0,
-                                                "matched_number_ions_b": 0}
-                for current_ion in ions[current_ion_mz]:
-                    if current_ion["FragmentPepId"] == 0:
-                        fragment_annotation[key]["matched_number_ions_a"] += 1
-                    else:
-                        fragment_annotation[key]["matched_number_ions_b"] += 1
+    fragment_annotation = generate_fragment_index(spectronaut, index)
 
     # a
     def annotate_MatchedIonsA(row: pd.Series, fragment_annotation: dict) -> int:
