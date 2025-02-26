@@ -211,7 +211,7 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     def annotate_PartialCscoreA(row: pd.Series) -> float:
         cscore = row[SPECTRONAUT_CSCORE_COLUMN_NAME]
         partial = row["MatchedIonsA"] / (row["MatchedIonsA"] + row["MatchedIonsB"])
-        return csore * partial
+        return cscore * partial
 
     tqdm.pandas(desc = "Annotating partial Cscore A...")
     spectronaut["PartialCscoreA"] = spectronaut.progress_apply(lambda row: annotate_PartialCscoreA(row), axis = 1)
@@ -220,7 +220,7 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     def annotate_PartialCscoreB(row: pd.Series) -> float:
         cscore = row[SPECTRONAUT_CSCORE_COLUMN_NAME]
         partial = row["MatchedIonsB"] / (row["MatchedIonsA"] + row["MatchedIonsB"])
-        return csore * partial
+        return cscore * partial
 
     tqdm.pandas(desc = "Annotating partial Cscore B...")
     spectronaut["PartialCscoreB"] = spectronaut.progress_apply(lambda row: annotate_PartialCscoreB(row), axis = 1)
