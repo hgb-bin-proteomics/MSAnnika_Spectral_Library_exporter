@@ -5,6 +5,13 @@
 # https://github.com/michabirklbauer/
 # micha.birklbauer@gmail.com
 
+# TODO
+# use argparse
+# clarify how to handle parameters, put in config.py?
+# what else to annotate?
+# update docs
+# do other TODOs (ctrl + f)
+
 # version tracking
 __version = "1.0.0"
 __date = "2025-02-20"
@@ -88,7 +95,8 @@ def read_spectral_library(filename: str) -> Dict[str, Dict[str, Any]]:
     return index
 
 def generate_fragment_index(spectronaut: pd.DataFrame, index: dict) -> Dict[str, Dict[str, int]]:
-
+    # TODO: Check if this is logically correct
+    # TODO: Write some docs
     fragment_annotation = dict()
     for i, row in tqdm(spectronaut.iterrows(), total = spectronaut.shape[0], desc = "Generating fragment ion index..."):
         key = get_key_spectronaut(row)
