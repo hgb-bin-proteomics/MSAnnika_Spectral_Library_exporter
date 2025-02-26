@@ -95,15 +95,23 @@ def generate_fragment_index(spectronaut: pd.DataFrame, index: dict) -> Dict[str,
         ion = float(row[SPECTRONAUT_FRAGMENT_MZ_COLUMN_NAME])
         ions = index[key]["ions"]
         for current_ion_mz in ions.keys():
-            if current_ion_mz > ion - SPECTRONAUT_MATCH_TOLERANCE and current_ion_mz < ion + SPECTRONAUT_MATCH_TOLERANCE:
+            fragment_key_part = get_fragment_key(current_ion_mz)
+            if round(current_ion_mz, 4) > round(ion - SPECTRONAUT_MATCH_TOLERANCE, 4) and round(current_ion_mz, 4) < round(ion + SPECTRONAUT_MATCH_TOLERANCE, 4):
                 if key not in fragment_annotation:
                     fragment_annotation[key] = {"matched_number_ions_a": 0,
-                                                "matched_number_ions_b": 0}
+                                                "matched_number_ions_b": 0,
+                                                "fragments": []}
                 for current_ion in ions[current_ion_mz]:
                     if current_ion["FragmentPepId"] == 0:
-                        fragment_annotation[key]["matched_number_ions_a"] += 1
+                        fragment_key = fragment_key_part + "_0"
+                        if fragment_key not in fragment_annotation[key]["fragments"]:
+                            fragment_annotation[key]["matched_number_ions_a"] += 1
+                            fragment_annotation[key]["fragments"].append(fragment_key)
                     else:
-                        fragment_annotation[key]["matched_number_ions_b"] += 1
+                        fragment_key = fragment_key_part + "_1"
+                        if fragment_key not in fragment_annotation[key]["fragments"]:
+                            fragment_annotation[key]["matched_number_ions_b"] += 1
+                            fragment_annotation[key]["fragments"].append(fragment_key)
 
     return fragment_annotation
 
