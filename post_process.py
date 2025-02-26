@@ -30,7 +30,7 @@ from typing import List
 
 ##################### POST PROCESS #####################
 
-def get_mz_key(mz: float) -> str:
+def get_mz_key(mz: float) -> float:
     #return str(int(mz * 1000))
     return mz
 
