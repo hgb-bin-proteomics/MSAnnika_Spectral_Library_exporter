@@ -92,7 +92,7 @@ def generate_fragment_index(spectronaut: pd.DataFrame, index: dict) -> Dict[str,
     fragment_annotation = dict()
     for i, row in tqdm(spectronaut.iterrows(), total = spectronaut.shape[0], desc = "Generating fragment ion index..."):
         key = get_key_spectronaut(row)
-        ion = float(row["F.MeasuredMz"])
+        ion = float(row[SPECTRONAUT_FRAGMENT_MZ_COLUMN_NAME])
         ions = index[key]["ions"]
         for current_ion_mz in ions.keys():
             if current_ion_mz > ion - SPECTRONAUT_MATCH_TOLERANCE and current_ion_mz < ion + SPECTRONAUT_MATCH_TOLERANCE:
