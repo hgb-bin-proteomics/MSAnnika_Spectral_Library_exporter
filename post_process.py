@@ -33,6 +33,9 @@ from typing import List
 def get_mz_key(mz: float) -> float:
     #return str(int(mz * 1000))
     return mz
+    
+def get_fragment_key(mz: float) -> str:
+    return f"{round(mz, 4):.4f}"
 
 def get_key_spec_lib(row: pd.Series) -> str:
     # ModifiedPeptide
