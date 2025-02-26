@@ -236,7 +236,7 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     # annotation of other properties
     def annotate_DecoyType(row: pd.Series, index: dict) -> str:
         key = get_key_spectronaut(row)
-        return str(index[key][0]["DecoyType"]).strip()
+        return str(index[key]["rows"][0]["DecoyType"]).strip()
 
     tqdm.pandas(desc = "Annotating DecoyType...")
     spectronaut["DecoyType"] = spectronaut.progress_apply(lambda row: annotate_DecoyType(row, index), axis = 1)
