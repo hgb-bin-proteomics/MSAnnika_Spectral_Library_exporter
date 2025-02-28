@@ -170,6 +170,7 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     # LossyFragment                                     False
     # isDecoy                                           False
     # DecoyType                                         TT
+    # PeptidePositions                                  503_497
 
     # for rescoring
     # a: matched number ions a
