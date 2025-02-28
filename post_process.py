@@ -7,7 +7,7 @@
 
 
 # version tracking
-__version = "1.1.0"
+__version = "1.1.1"
 __date = "2025-02-28"
 
 # PARAMETERS
