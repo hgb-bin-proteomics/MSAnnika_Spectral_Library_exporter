@@ -386,6 +386,42 @@ def group_by_residue_pair(data: pd.DataFrame) -> pd.DataFrame:
 
     return pd.concat(rows, axis = 1).T
 
+def export_to_xiFDR(data: pd.DataFrame) -> pd.DataFrame:
+    # col matching
+    # run <- R.Condition, R.FileName
+    # scan <- PP.PseudoScanNumber
+    # peptide1 <- PP.PeptideA
+    # peptide2 <- PP.PeptideB
+    # peptide link 1 <- PP.CrosslinkPositionPeptideA
+    # peptide link 2 <- PP.CrosslinkPositionPeptideB
+    # is decoy 1 <- PP.IsDecoyA (-> "true", "false")
+    # is decoy 2 <- PP.IsDecoyB (-> "true", "false")
+    # precursor charge <- FG.Charge
+    # accession1 <- PP.ProteinA
+    # accession2 <- PP.ProteinB
+    # peptide position 1 <- PP.PeptidePositionProteinA
+    # peptide position 2 <- PP.PeptidePositionProteinB
+    # score <- PP.CompositeRelativeMatchScore || PP.CompositePartialCscore
+
+    data["run"] = data.apply(lambda row: f"{row['R.Condition'].strip()}:{row['R.FileName'].strip()}", axis = 1)
+    data.rename(columns = {"PP.PseudoScanNumber": "scan"}, inplace = True)
+    data.rename(columns = {"PP.PeptideA": "peptide1"}, inplace = True)
+    data.rename(columns = {"PP.PeptideB": "peptide2"}, inplace = True)
+    data.rename(columns = {"PP.CrosslinkPositionPeptideA": "peptide link 1"}, inplace = True)
+    data.rename(columns = {"PP.CrosslinkPositionPeptideB": "peptide link 2"}, inplace = True)
+    data["is decoy 1"] = data.apply(lambda row: "true" if bool(row["PP.IsDecoyA"]) else "false", axis = 1)
+    data["is decoy 2"] = data.apply(lambda row: "true" if bool(row["PP.IsDecoyB"]) else "false", axis = 1)
+    data["precursor charge"] = data.apply(lambda row: int(row["FG.Charge"]), axis = 1)
+    data.rename(columns = {"PP.ProteinA": "accession1"}, inplace = True)
+    data.rename(columns = {"PP.ProteinB": "accession2"}, inplace = True)
+    data.rename(columns = {"PP.PeptidePositionProteinA": "peptide position 1"}, inplace = True)
+    data.rename(columns = {"PP.PeptidePositionProteinB": "peptide position 2"}, inplace = True)
+
+    cols_to_keep = ["run", "scan", "peptide1", "peptide2", "peptide link 1", "peptide link 2",
+                    "is decoy 1", "is decoy 2", "precursor charge", "accession1", "accession2",
+                    "peptide position 1", "peptide position 2", "PP.CompositeRelativeMatchScore", "PP.CompositePartialCscore"]
+    return data[cols_to_keep]
+
 def main(argv = None) -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(metavar = "f",
