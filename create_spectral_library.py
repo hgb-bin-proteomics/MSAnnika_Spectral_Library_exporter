@@ -523,6 +523,17 @@ def get_positions_in_protein(row: pd.Series) -> Dict[str, int]:
 
     return {"A": pep_pos_A + xl_pos_A, "B": pep_pos_B + xl_pos_B}
 
+# get peptide positions in proteins
+def get_positions_in_protein_peptides(row: pd.Series) -> Dict[str, int]:
+    """
+    Returns the peptide positions of the first protein of peptide alpha and the first protein of peptide beta.
+    """
+
+    pep_pos_A = int(row["A in protein"]) if ";" not in str(row["A in protein"]) else int(row["A in protein"].split(";")[0])
+    pep_pos_B = int(row["B in protein"]) if ";" not in str(row["B in protein"]) else int(row["B in protein"].split(";")[0])
+
+    return {"A": pep_pos_A + 1, "B": pep_pos_B + 1}
+
 ##### DECOY GENERATION #####
 # decoy generation implemented as described by Zhang et al. here: https://doi.org/10.1021/acs.jproteome.7b00614
 
@@ -1097,6 +1108,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     LossyFragment_s = list()
     Is_Decoy_s = list()
     Decoy_Type_s = list()
+    Peptide_Positions_s = list()
 
     # decoy dd columns
     linkId_s_decoy = list()
@@ -1129,6 +1141,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     LossyFragment_s_decoy = list()
     Is_Decoy_s_decoy = list()
     Decoy_Type_s_decoy = list()
+    Peptide_Positions_s_decoy = list()
 
     # decoy dt columns
     linkId_s_decoy_dt = list()
@@ -1161,6 +1174,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     LossyFragment_s_decoy_dt = list()
     Is_Decoy_s_decoy_dt = list()
     Decoy_Type_s_decoy_dt = list()
+    Peptide_Positions_s_decoy_dt = list()
 
     # decoy td columns
     linkId_s_decoy_td = list()
@@ -1193,6 +1207,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     LossyFragment_s_decoy_td = list()
     Is_Decoy_s_decoy_td = list()
     Decoy_Type_s_decoy_td = list()
+    Peptide_Positions_s_decoy_td = list()
 
     # process CSMs
     for i, row in csms.iterrows():
@@ -1217,6 +1232,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         CCS = get_CCS()
         IonMobility = get_IonMobility(row)
         fragments = get_fragment_values(row, spectra, crosslinker, modifications, ion_types, max_charge, match_tolerance)
+        peptide_positions = get_positions_in_protein_peptides(row)
+        peptide_positions_str = f"{peptide_positions['A']}_{peptide_positions['B']}"
 
         for k in fragments.keys():
             pep = fragments[k]
@@ -1251,6 +1268,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 LossyFragment_s.append(frag["LossyFragment"])
                 Is_Decoy_s.append(False)
                 Decoy_Type_s.append("TT")
+                Peptide_Positions_s.append(peptide_positions_str)
 
         # decoy dd
         decoy_csm = generate_decoy_csm_dd(row, crosslinker)
@@ -1312,6 +1330,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 LossyFragment_s_decoy.append(decoy_frag["LossyFragment"])
                 Is_Decoy_s_decoy.append(True)
                 Decoy_Type_s_decoy.append("DD")
+                Peptide_Positions_s_decoy.append(peptide_positions_str)
                 decoy_frag_mzs.append(decoy_frag["FragmentMz"])
 
         # decoy dt
@@ -1374,6 +1393,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 LossyFragment_s_decoy_dt.append(decoy_frag_dt["LossyFragment"])
                 Is_Decoy_s_decoy_dt.append(True)
                 Decoy_Type_s_decoy_dt.append("DT")
+                Peptide_Positions_s_decoy_dt.append(peptide_positions_str)
                 decoy_frag_mzs_dt.append(decoy_frag_dt["FragmentMz"])
 
         # decoy td
@@ -1436,6 +1456,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 LossyFragment_s_decoy_td.append(decoy_frag_td["LossyFragment"])
                 Is_Decoy_s_decoy_td.append(True)
                 Decoy_Type_s_decoy_td.append("TD")
+                Peptide_Positions_s_decoy_td.append(peptide_positions_str)
                 decoy_frag_mzs_td.append(decoy_frag_td["FragmentMz"])
 
         if (i + 1) % 100 == 0:
@@ -1471,7 +1492,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "CLContainingFragment": CLContainingFragment_s,
                "LossyFragment": LossyFragment_s,
                "IsDecoy": Is_Decoy_s,
-               "DecoyType": Decoy_Type_s}
+               "DecoyType": Decoy_Type_s,
+               "PeptidePositions": Peptide_Positions_s}
 
     spectral_library = pd.DataFrame(tt_dict)
 
@@ -1504,7 +1526,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "CLContainingFragment": CLContainingFragment_s_decoy,
                "LossyFragment": LossyFragment_s_decoy,
                "IsDecoy": Is_Decoy_s_decoy,
-               "DecoyType": Decoy_Type_s_decoy}
+               "DecoyType": Decoy_Type_s_decoy,
+               "PeptidePositions": Peptide_Positions_s_decoy}
 
     spectral_library_decoy_dd = pd.DataFrame(dd_dict)
 
@@ -1537,7 +1560,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "CLContainingFragment": CLContainingFragment_s_decoy_dt,
                "LossyFragment": LossyFragment_s_decoy_dt,
                "IsDecoy": Is_Decoy_s_decoy_dt,
-               "DecoyType": Decoy_Type_s_decoy_dt}
+               "DecoyType": Decoy_Type_s_decoy_dt,
+               "PeptidePositions": Peptide_Positions_s_decoy_dt}
 
     spectral_library_decoy_dt = pd.DataFrame(dt_dict)
 
@@ -1570,7 +1594,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "CLContainingFragment": CLContainingFragment_s_decoy_td,
                "LossyFragment": LossyFragment_s_decoy_td,
                "IsDecoy": Is_Decoy_s_decoy_td,
-               "DecoyType": Decoy_Type_s_decoy_td}
+               "DecoyType": Decoy_Type_s_decoy_td,
+               "PeptidePositions": Peptide_Positions_s_decoy_td}
 
     spectral_library_decoy_td = pd.DataFrame(td_dict)
 
