@@ -360,7 +360,7 @@ def main(argv = None) -> None:
                         dest = "non_interactive",
                         action = "store_true",
                         default = False,
-                        help = "Skip inforamtion check.")
+                        help = "Skip information check.")
     parser.add_argument("--version",
                         action = "version",
                         version = __version)
