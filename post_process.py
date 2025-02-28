@@ -366,16 +366,18 @@ def main(argv = None) -> None:
                         version = __version)
     args = parser.parse_args(argv)
 
+    filename = args.file[0]
+
     if args.non_interactive:
-        r = annotate_spectronaut_result(args.file)
+        r = annotate_spectronaut_result(filename)
     else:
         y = input("Some Spectronaut specific parameters have to be set in the python script. " +
                   "Please refer to the documentation and confirm that you set the parameters accordingly [y/n]:")
         if y.lower().strip() not in ["y", "yes"]:
             raise RuntimeError("Post processing was terminated because of missing confirmation!")
-        r = annotate_spectronaut_result(args.file)
+        r = annotate_spectronaut_result(filename)
 
-    output_1 = args.file + "_annotated.csv"
+    output_1 = filename + "_annotated.csv"
     output_2 = output_1 + "_grouped_by_residue_pair.csv"
 
     print("Writing annotated Spectronaut result to file...")
