@@ -16,7 +16,7 @@ __date = "2025-02-28"
 SPECTRONAUT_DELIM = "," # delimiter in Spectronaut output file, e.g. "," for comma delimited files, "\t" for tab delimited files
 SPECTRONAUT_MATCH_TOLERANCE = 0.05 # match tolerance in Da
 SPECTRONAUT_FRAGMENT_MZ_COLUMN_NAME = "F.CalibratedMz" # which F Mz to use for matching
-SPECTRONAUT_CSCORE_COLUMN_NAME = "PG.Cscore (Run-Wise)" # which Cscore to use for re-soring
+SPECTRONAUT_CSCORE_COLUMN_NAME = "EG.Cscore" # which Cscore to use for re-soring
 
 # REQUIREMENTS
 # pip install tqdm
