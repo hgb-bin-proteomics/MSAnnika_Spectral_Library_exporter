@@ -65,7 +65,7 @@ def test1_spectral_library_exporter():
     sl = main()
     sl = sl["TargetLib"]
 
-    assert sl.shape[0] == 55 and sl.shape[1] == 30
+    assert sl.shape[0] == 55 and sl.shape[1] == 31
 
 # check values target
 def test2_spectral_library_exporter():
@@ -101,7 +101,7 @@ def test3_spectral_library_exporter():
     sl = main()
     sl = sl["DecoyLib"]
 
-    assert sl.shape[0] == 54 and sl.shape[1] == 30
+    assert sl.shape[0] == 54 and sl.shape[1] == 31
 
 # check values decoy dd
 def test4_spectral_library_exporter():
@@ -137,8 +137,8 @@ def test5_spectral_library_exporter():
     sl = main()
     sl = sl["DecoyLib_DT"]
 
-    assert sl.shape[0] == 54 and sl.shape[1] == 30
-    
+    assert sl.shape[0] == 54 and sl.shape[1] == 31
+
 # check values decoy dt
 def test6_spectral_library_exporter():
 
@@ -173,8 +173,8 @@ def test7_spectral_library_exporter():
     sl = main()
     sl = sl["DecoyLib_TD"]
 
-    assert sl.shape[0] == 55 and sl.shape[1] == 30
-    
+    assert sl.shape[0] == 55 and sl.shape[1] == 31
+
 # check values decoy td
 def test8_spectral_library_exporter():
 
@@ -209,12 +209,12 @@ def test9_spectral_library_exporter():
     sl = main()
     sl = sl["FullLib"]
 
-    assert sl.shape[0] == 218 and sl.shape[1] == 30
+    assert sl.shape[0] == 218 and sl.shape[1] == 31
     assert sl["DecoyType"].value_counts()["TT"] == 55
     assert sl["DecoyType"].value_counts()["TD"] == 55
     assert sl["DecoyType"].value_counts()["DD"] == 54
     assert sl["DecoyType"].value_counts()["DT"] == 54
-    
+
 # check values full
 def test10_spectral_library_exporter():
 
@@ -231,7 +231,7 @@ def test10_spectral_library_exporter():
     assert str(sl.loc[0, "CLContainingFragment"]) == "False"
     assert str(sl.loc[0, "IsDecoy"]) == "False"
     assert str(sl.loc[0, "DecoyType"]) == "TT"
-    
+
     assert str(sl.loc[217, "ModifiedPeptide"]) == "MIAKSEQEIGK_VKYFQFDR"
     assert str(sl.loc[217, "FragmentCharge"]) == "1"
     assert str(sl.loc[217, "FragmentType"]) == "b"
