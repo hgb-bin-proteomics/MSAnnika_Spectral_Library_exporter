@@ -5,12 +5,6 @@
 # https://github.com/michabirklbauer/
 # micha.birklbauer@gmail.com
 
-# TODO
-# use argparse
-# clarify how to handle parameters, put in config.py?
-# what else to annotate?
-# update docs
-# do other TODOs (ctrl + f)
 
 # version tracking
 __version = "1.0.0"
@@ -42,7 +36,7 @@ from typing import List
 def get_mz_key(mz: float) -> float:
     #return str(int(mz * 1000))
     return mz
-    
+
 def get_fragment_key(mz: float) -> str:
     return f"{round(mz, 4):.4f}"
 
