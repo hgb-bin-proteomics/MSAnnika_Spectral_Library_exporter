@@ -255,84 +255,84 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
         key = get_key_spectronaut(row)
         return str(index[key]["rows"][0]["DecoyType"]).strip()
 
-    tqdm.pandas(desc = "Annotating DecoyType...")
+    tqdm.pandas(desc = "Annotating decoy type...")
     spectronaut["PP.DecoyType"] = spectronaut.progress_apply(lambda row: annotate_DecoyType(row, index), axis = 1)
 
     def annotate_ProteinA(row: pd.Series, index: dict) -> str:
         key = get_key_spectronaut(row)
         return str(index[key]["rows"][0]["ProteinID"].split("_")[0]).strip()
 
-    tqdm.pandas(desc = "Annotating ProteinA...")
+    tqdm.pandas(desc = "Annotating protein A...")
     spectronaut["PP.ProteinA"] = spectronaut.progress_apply(lambda row: annotate_ProteinA(row, index), axis = 1)
 
     def annotate_ProteinB(row: pd.Series, index: dict) -> str:
         key = get_key_spectronaut(row)
         return str(index[key]["rows"][0]["ProteinID"].split("_")[1]).strip()
 
-    tqdm.pandas(desc = "Annotating ProteinB...")
+    tqdm.pandas(desc = "Annotating protein B...")
     spectronaut["PP.ProteinB"] = spectronaut.progress_apply(lambda row: annotate_ProteinB(row, index), axis = 1)
 
     def annotate_CrosslinkPositionProteinA(row: pd.Series, index: dict) -> int:
         key = get_key_spectronaut(row)
         return int(index[key]["rows"][0]["linkId"].split("-")[1].split("_")[0])
 
-    tqdm.pandas(desc = "Annotating CrosslinkPositionProteinA...")
+    tqdm.pandas(desc = "Annotating crosslink position in protein A...")
     spectronaut["PP.CrosslinkPositionProteinA"] = spectronaut.progress_apply(lambda row: annotate_CrosslinkPositionProteinA(row, index), axis = 1)
 
     def annotate_CrosslinkPositionProteinB(row: pd.Series, index: dict) -> int:
         key = get_key_spectronaut(row)
         return int(index[key]["rows"][0]["linkId"].split("-")[1].split("_")[1])
 
-    tqdm.pandas(desc = "Annotating CrosslinkPositionProteinB...")
+    tqdm.pandas(desc = "Annotating crosslink position in protein B...")
     spectronaut["PP.CrosslinkPositionProteinB"] = spectronaut.progress_apply(lambda row: annotate_CrosslinkPositionProteinB(row, index), axis = 1)
 
     def annotate_PeptideA(row: pd.Series, index: dict) -> str:
         key = get_key_spectronaut(row)
         return str(index[key]["rows"][0]["FragmentGroupId"].split("-")[0].split("_")[0]).strip()
 
-    tqdm.pandas(desc = "Annotating PeptideA...")
+    tqdm.pandas(desc = "Annotating peptide sequence A...")
     spectronaut["PP.PeptideA"] = spectronaut.progress_apply(lambda row: annotate_PeptideA(row, index), axis = 1)
 
     def annotate_PeptideB(row: pd.Series, index: dict) -> str:
         key = get_key_spectronaut(row)
         return str(index[key]["rows"][0]["FragmentGroupId"].split("-")[0].split("_")[1]).strip()
 
-    tqdm.pandas(desc = "Annotating PeptideB...")
+    tqdm.pandas(desc = "Annotating peptide sequence B...")
     spectronaut["PP.PeptideB"] = spectronaut.progress_apply(lambda row: annotate_PeptideB(row, index), axis = 1)
 
     def annotate_CrosslinkPositionPeptideA(row: pd.Series, index: dict) -> int:
         key = get_key_spectronaut(row)
         return int(index[key]["rows"][0]["FragmentGroupId"].split("-")[1].split(":")[0].split("_")[0])
 
-    tqdm.pandas(desc = "Annotating CrosslinkPositionPeptideA...")
+    tqdm.pandas(desc = "Annotating crosslink position in peptide A...")
     spectronaut["PP.CrosslinkPositionPeptideA"] = spectronaut.progress_apply(lambda row: annotate_CrosslinkPositionPeptideA(row, index), axis = 1)
 
     def annotate_CrosslinkPositionPeptideB(row: pd.Series, index: dict) -> int:
         key = get_key_spectronaut(row)
         return int(index[key]["rows"][0]["FragmentGroupId"].split("-")[1].split(":")[0].split("_")[1])
 
-    tqdm.pandas(desc = "Annotating CrosslinkPositionPeptideB...")
+    tqdm.pandas(desc = "Annotating crosslink position in peptide B...")
     spectronaut["PP.CrosslinkPositionPeptideB"] = spectronaut.progress_apply(lambda row: annotate_CrosslinkPositionPeptideB(row, index), axis = 1)
 
     def annotate_PeptidoformA(row: pd.Series, index: dict) -> str:
         key = get_key_spectronaut(row)
         return str(index[key]["rows"][0]["ModifiedPeptide"].split("_")[0]).strip()
 
-    tqdm.pandas(desc = "Annotating PeptidoformA...")
+    tqdm.pandas(desc = "Annotating peptidoform sequence A...")
     spectronaut["PP.PeptidoformA"] = spectronaut.progress_apply(lambda row: annotate_PeptidoformA(row, index), axis = 1)
 
     def annotate_PeptidoformB(row: pd.Series, index: dict) -> str:
         key = get_key_spectronaut(row)
         return str(index[key]["rows"][0]["ModifiedPeptide"].split("_")[1]).strip()
 
-    tqdm.pandas(desc = "Annotating PeptidoformB...")
+    tqdm.pandas(desc = "Annotating peptidoform sequence B...")
     spectronaut["PP.PeptidoformB"] = spectronaut.progress_apply(lambda row: annotate_PeptidoformB(row, index), axis = 1)
 
     def annotate_SourceScanID(row: pd.Series, index: dict) -> int:
         key = get_key_spectronaut(row)
         return int(index[key]["rows"][0]["scanID"])
 
-    tqdm.pandas(desc = "Annotating SourceScanID...")
+    tqdm.pandas(desc = "Annotating spectral library source scan ID...")
     spectronaut["PP.SourceScanID"] = spectronaut.progress_apply(lambda row: annotate_SourceScanID(row, index), axis = 1)
 
     return spectronaut
