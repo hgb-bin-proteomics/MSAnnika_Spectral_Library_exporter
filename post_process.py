@@ -96,32 +96,45 @@ def read_spectral_library(filename: str) -> Dict[str, Dict[str, Any]]:
 
     return index
 
-def generate_fragment_index(spectronaut: pd.DataFrame, index: dict) -> Dict[str, Dict[str, int]]:
-    # TODO: Check if this is logically correct
-    # TODO: Write some docs
+def generate_fragment_index(spectronaut: pd.DataFrame, index: dict) -> Dict[str, Dict[str, Any]]:
+    # dict keeping track of annotated fragments for every unique crosslink id
     fragment_annotation = dict()
     for i, row in tqdm(spectronaut.iterrows(), total = spectronaut.shape[0], desc = "Generating fragment ion index..."):
+        # unique crosslink id
         key = get_key_spectronaut(row)
+        # current fragment ion from spectronaut row
         ion = float(row[SPECTRONAUT_FRAGMENT_MZ_COLUMN_NAME])
+        # all spectral library ions for the crosslink id
+        # this is a dict that matches ion mass -> list(fragments_with_that_mass[pd.Series])
         ions = index[key]["ions"]
+        # for every ion mass of the crosslink id in the spec lib, do:
         for current_ion_mz in ions.keys():
             fragment_key_part = get_fragment_key(current_ion_mz)
+            # check if spectronaut fragment is within tolerance bounds of spec lib ion
             if round(current_ion_mz, 4) > round(ion - SPECTRONAUT_MATCH_TOLERANCE, 4) and round(current_ion_mz, 4) < round(ion + SPECTRONAUT_MATCH_TOLERANCE, 4):
+                # if fragment annotation struct does not have entry for crosslink id, create one that is empty
                 if key not in fragment_annotation:
                     fragment_annotation[key] = {"matched_number_ions_a": 0,
                                                 "matched_number_ions_b": 0,
                                                 "fragments": []}
+                # for all ions that match mass, do:
                 for current_ion in ions[current_ion_mz]:
+                    # if ion of peptide a
                     if current_ion["FragmentPepId"] == 0:
+                        # generate a unique fragment key
                         fragment_key = fragment_key_part + "_0"
+                        # check if a fragment of this type has not already been annotated, we don't want to annotate the same ion twice
                         if fragment_key not in fragment_annotation[key]["fragments"]:
                             fragment_annotation[key]["matched_number_ions_a"] += 1
                             fragment_annotation[key]["fragments"].append(fragment_key)
                     else:
+                        # same for peptide b
                         fragment_key = fragment_key_part + "_1"
                         if fragment_key not in fragment_annotation[key]["fragments"]:
                             fragment_annotation[key]["matched_number_ions_b"] += 1
                             fragment_annotation[key]["fragments"].append(fragment_key)
+            # we do not break here, because we want to check the rest of the spec lib ions in case the spectronaut ion matches
+            # for both peptide a and peptide b
 
     return fragment_annotation
 
