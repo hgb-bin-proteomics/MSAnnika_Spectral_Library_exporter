@@ -1,26 +1,44 @@
 #!/usr/bin/env python3
 
 # SPECTRONAUT POST PROCESSING
-# 2023 (c) Micha Johannes Birklbauer
+# 2025 (c) Micha Johannes Birklbauer
 # https://github.com/michabirklbauer/
 # micha.birklbauer@gmail.com
 
+
 # version tracking
-__version = "1.0.0"
-__date = "2025-02-20"
+__version = "1.1.1"
+__date = "2025-02-28"
+
+# PARAMETERS
+
+# these parameters should be set accordingly
+SPECTRONAUT_DELIM = "," # delimiter in Spectronaut output file, e.g. "," for comma delimited files, "\t" for tab delimited files
+SPECTRONAUT_MATCH_TOLERANCE = 0.05 # match tolerance in Da
+SPECTRONAUT_FRAGMENT_MZ_COLUMN_NAME = "F.CalibratedMz" # which F Mz to use for matching
+SPECTRONAUT_CSCORE_COLUMN_NAME = "PG.Cscore (Run-Wise)" # which Cscore to use for re-soring
 
 # REQUIREMENTS
 # pip install tqdm
 # pip install pandas
 
 # import packages
-from tqdm import tqdm
+import argparse
 import pandas as pd
+from tqdm import tqdm
 
+from typing import Any
 from typing import Dict
 from typing import List
 
 ##################### POST PROCESS #####################
+
+def get_mz_key(mz: float) -> float:
+    #return str(int(mz * 1000))
+    return mz
+
+def get_fragment_key(mz: float) -> str:
+    return f"{round(mz, 4):.4f}"
 
 def get_key_spec_lib(row: pd.Series) -> str:
     # ModifiedPeptide
@@ -36,9 +54,15 @@ def get_key_spectronaut(row: pd.Series) -> str:
     # AAHHADGLAKGLHETC[Carbamidomethyl]K_M[Oxidation]FIPKSHTK.5
     # PG.ProteinNames
     # P10771_P10771-113_46
-    return f"{str(row['EG.PrecursorId']).strip()}:{str(row['PG.ProteinNames']).strip()}"
+    # ---> if PG.ProteinNames
+    # P10771_P10771
+    # use FG.Comment
+    # 113_46
+    if "-" in str(row["PG.ProteinNames"]):
+        return f"{str(row['EG.PrecursorId']).strip()}:{str(row['PG.ProteinNames']).strip()}"
+    return f"{str(row['EG.PrecursorId']).strip()}:{str(row['PG.ProteinNames']).strip()}-{str(row['FG.Comment']).strip()}"
 
-def read_spectral_library(filename: str) -> Dict[str, List[pd.Series]]:
+def read_spectral_library(filename: str) -> Dict[str, Dict[str, Any]]:
 
     spec_lib = pd.read_csv(filename, low_memory = False)
 
@@ -46,15 +70,71 @@ def read_spectral_library(filename: str) -> Dict[str, List[pd.Series]]:
     for i, row in tqdm(spec_lib.iterrows(), total = spec_lib.shape[0], desc = "Creating index..."):
         key = get_key_spec_lib(row)
         if key in index:
-            index[key].append(row)
+            index[key]["rows"].append(row)
+
+            if int(row["FragmentPepId"]) == 0:
+                index[key]["total_ions_a"] += 1
+            else:
+                index[key]["total_ions_b"] += 1
+
+            ion_mz = get_mz_key(float(row["FragmentMz"]))
+            if ion_mz in index[key]["ions"]:
+                index[key]["ions"][ion_mz].append(row)
+            else:
+                index[key]["ions"][ion_mz] = [row]
         else:
-            index[key] = [row]
+            index[key] = {"rows": [row],
+                          "total_ions_a": 1 if int(row["FragmentPepId"]) == 0 else 0,
+                          "total_ions_b": 1 if int(row["FragmentPepId"]) == 1 else 0,
+                          "ions": {get_mz_key(float(row["FragmentMz"])): [row]}}
 
     return index
 
+def generate_fragment_index(spectronaut: pd.DataFrame, index: dict) -> Dict[str, Dict[str, Any]]:
+    # dict keeping track of annotated fragments for every unique crosslink id
+    fragment_annotation = dict()
+    for i, row in tqdm(spectronaut.iterrows(), total = spectronaut.shape[0], desc = "Generating fragment ion index..."):
+        # unique crosslink id
+        key = get_key_spectronaut(row)
+        # current fragment ion from spectronaut row
+        ion = float(row[SPECTRONAUT_FRAGMENT_MZ_COLUMN_NAME])
+        # all spectral library ions for the crosslink id
+        # this is a dict that matches ion mass -> list(fragments_with_that_mass[pd.Series])
+        ions = index[key]["ions"]
+        # for every ion mass of the crosslink id in the spec lib, do:
+        for current_ion_mz in ions.keys():
+            fragment_key_part = get_fragment_key(current_ion_mz)
+            # check if spectronaut fragment is within tolerance bounds of spec lib ion
+            if round(current_ion_mz, 4) > round(ion - SPECTRONAUT_MATCH_TOLERANCE, 4) and round(current_ion_mz, 4) < round(ion + SPECTRONAUT_MATCH_TOLERANCE, 4):
+                # if fragment annotation struct does not have entry for crosslink id, create one that is empty
+                if key not in fragment_annotation:
+                    fragment_annotation[key] = {"matched_number_ions_a": 0,
+                                                "matched_number_ions_b": 0,
+                                                "fragments": []}
+                # for all ions that match mass, do:
+                for current_ion in ions[current_ion_mz]:
+                    # if ion of peptide a
+                    if current_ion["FragmentPepId"] == 0:
+                        # generate a unique fragment key
+                        fragment_key = fragment_key_part + "_0"
+                        # check if a fragment of this type has not already been annotated, we don't want to annotate the same ion twice
+                        if fragment_key not in fragment_annotation[key]["fragments"]:
+                            fragment_annotation[key]["matched_number_ions_a"] += 1
+                            fragment_annotation[key]["fragments"].append(fragment_key)
+                    else:
+                        # same for peptide b
+                        fragment_key = fragment_key_part + "_1"
+                        if fragment_key not in fragment_annotation[key]["fragments"]:
+                            fragment_annotation[key]["matched_number_ions_b"] += 1
+                            fragment_annotation[key]["fragments"].append(fragment_key)
+            # we do not break here, because we want to check the rest of the spec lib ions in case the spectronaut ion matches
+            # for both peptide a and peptide b
+
+    return fragment_annotation
+
 def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
 
-    spectronaut = pd.read_csv(filename, sep = "\t", low_memory = False)
+    spectronaut = pd.read_csv(filename, sep = SPECTRONAUT_DELIM, low_memory = False)
     filename_spec_lib = str(spectronaut["EG.Library"].at[0])
     index = read_spectral_library(filename_spec_lib)
 
@@ -91,11 +171,226 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     # isDecoy                                           False
     # DecoyType                                         TT
 
+    # for rescoring
+    # a: matched number ions a
+    # b: total number ions a
+    # c: matched number ions b
+    # d: total number ions b
+    # e: relative match score a (a / b)
+    # f: relative match score b (c / d)
+    # g: partial c score a (c score * (a / a + c))
+    # h: partial c score b (c score * (c / a + c))
+    # i: composite relative match score min(e, f)
+    # j: composite partial c score min(g, h)
+    fragment_annotation = generate_fragment_index(spectronaut, index)
+
+    # a
+    def annotate_MatchedIonsA(row: pd.Series, fragment_annotation: dict) -> int:
+        key = get_key_spectronaut(row)
+        return fragment_annotation[key]["matched_number_ions_a"]
+
+    tqdm.pandas(desc = "Annotating number of matched ions A...")
+    spectronaut["PP.MatchedIonsA"] = spectronaut.progress_apply(lambda row: annotate_MatchedIonsA(row, fragment_annotation), axis = 1)
+
+    # b
+    def annotate_TotalIonsA(row: pd.Series, index: dict) -> int:
+        key = get_key_spectronaut(row)
+        return index[key]["total_ions_a"]
+
+    tqdm.pandas(desc = "Annotating number of total ions A...")
+    spectronaut["PP.TotalIonsA"] = spectronaut.progress_apply(lambda row: annotate_TotalIonsA(row, index), axis = 1)
+
+    # c
+    def annotate_MatchedIonsB(row: pd.Series, fragment_annotation: dict) -> int:
+        key = get_key_spectronaut(row)
+        return fragment_annotation[key]["matched_number_ions_b"]
+
+    tqdm.pandas(desc = "Annotating number of matched ions B...")
+    spectronaut["PP.MatchedIonsB"] = spectronaut.progress_apply(lambda row: annotate_MatchedIonsB(row, fragment_annotation), axis = 1)
+
+    # d
+    def annotate_TotalIonsB(row: pd.Series, index: dict) -> int:
+        key = get_key_spectronaut(row)
+        return index[key]["total_ions_b"]
+
+    tqdm.pandas(desc = "Annotating number of total ions B...")
+    spectronaut["PP.TotalIonsB"] = spectronaut.progress_apply(lambda row: annotate_TotalIonsB(row, index), axis = 1)
+
+    # e
+    tqdm.pandas(desc = "Annotating relative match score A...")
+    spectronaut["PP.RelativeMatchScoreA"] = spectronaut.progress_apply(lambda row: row["PP.MatchedIonsA"] / row["PP.TotalIonsA"], axis = 1)
+
+    # f
+    tqdm.pandas(desc = "Annotating relative match score B...")
+    spectronaut["PP.RelativeMatchScoreB"] = spectronaut.progress_apply(lambda row: row["PP.MatchedIonsB"] / row["PP.TotalIonsB"], axis = 1)
+
+    # g
+    def annotate_PartialCscoreA(row: pd.Series) -> float:
+        cscore = row[SPECTRONAUT_CSCORE_COLUMN_NAME]
+        partial = row["PP.MatchedIonsA"] / (row["PP.MatchedIonsA"] + row["PP.MatchedIonsB"])
+        return cscore * partial
+
+    tqdm.pandas(desc = "Annotating partial Cscore A...")
+    spectronaut["PP.PartialCscoreA"] = spectronaut.progress_apply(lambda row: annotate_PartialCscoreA(row), axis = 1)
+
+    # h
+    def annotate_PartialCscoreB(row: pd.Series) -> float:
+        cscore = row[SPECTRONAUT_CSCORE_COLUMN_NAME]
+        partial = row["PP.MatchedIonsB"] / (row["PP.MatchedIonsA"] + row["PP.MatchedIonsB"])
+        return cscore * partial
+
+    tqdm.pandas(desc = "Annotating partial Cscore B...")
+    spectronaut["PP.PartialCscoreB"] = spectronaut.progress_apply(lambda row: annotate_PartialCscoreB(row), axis = 1)
+
+    # i
+    tqdm.pandas(desc = "Annotating composite relative match score...")
+    spectronaut["PP.CompositeRelativeMatchScore"] = spectronaut.progress_apply(lambda row: min(row["PP.RelativeMatchScoreA"], row["PP.RelativeMatchScoreB"]), axis = 1)
+
+    # j
+    tqdm.pandas(desc = "Annotating composite partial Cscore...")
+    spectronaut["PP.CompositePartialCscore"] = spectronaut.progress_apply(lambda row: min(row["PP.PartialCscoreA"], row["PP.PartialCscoreB"]), axis = 1)
+
+    # annotation of other properties
     def annotate_DecoyType(row: pd.Series, index: dict) -> str:
         key = get_key_spectronaut(row)
-        return str(index[key][0]["DecoyType"]).strip()
+        return str(index[key]["rows"][0]["DecoyType"]).strip()
 
-    tqdm.pandas(desc = "Annotating DecoyType...")
-    spectronaut["DecoyType"] = spectronaut.progress_apply(lambda row: annotate_DecoyType(row, index), axis = 1)
+    tqdm.pandas(desc = "Annotating decoy type...")
+    spectronaut["PP.DecoyType"] = spectronaut.progress_apply(lambda row: annotate_DecoyType(row, index), axis = 1)
+
+    def annotate_ProteinA(row: pd.Series, index: dict) -> str:
+        key = get_key_spectronaut(row)
+        return str(index[key]["rows"][0]["ProteinID"].split("_")[0]).strip()
+
+    tqdm.pandas(desc = "Annotating protein A...")
+    spectronaut["PP.ProteinA"] = spectronaut.progress_apply(lambda row: annotate_ProteinA(row, index), axis = 1)
+
+    def annotate_ProteinB(row: pd.Series, index: dict) -> str:
+        key = get_key_spectronaut(row)
+        return str(index[key]["rows"][0]["ProteinID"].split("_")[1]).strip()
+
+    tqdm.pandas(desc = "Annotating protein B...")
+    spectronaut["PP.ProteinB"] = spectronaut.progress_apply(lambda row: annotate_ProteinB(row, index), axis = 1)
+
+    def annotate_CrosslinkPositionProteinA(row: pd.Series, index: dict) -> int:
+        key = get_key_spectronaut(row)
+        return int(index[key]["rows"][0]["linkId"].split("-")[1].split("_")[0])
+
+    tqdm.pandas(desc = "Annotating crosslink position in protein A...")
+    spectronaut["PP.CrosslinkPositionProteinA"] = spectronaut.progress_apply(lambda row: annotate_CrosslinkPositionProteinA(row, index), axis = 1)
+
+    def annotate_CrosslinkPositionProteinB(row: pd.Series, index: dict) -> int:
+        key = get_key_spectronaut(row)
+        return int(index[key]["rows"][0]["linkId"].split("-")[1].split("_")[1])
+
+    tqdm.pandas(desc = "Annotating crosslink position in protein B...")
+    spectronaut["PP.CrosslinkPositionProteinB"] = spectronaut.progress_apply(lambda row: annotate_CrosslinkPositionProteinB(row, index), axis = 1)
+
+    def annotate_PeptideA(row: pd.Series, index: dict) -> str:
+        key = get_key_spectronaut(row)
+        return str(index[key]["rows"][0]["FragmentGroupId"].split("-")[0].split("_")[0]).strip()
+
+    tqdm.pandas(desc = "Annotating peptide sequence A...")
+    spectronaut["PP.PeptideA"] = spectronaut.progress_apply(lambda row: annotate_PeptideA(row, index), axis = 1)
+
+    def annotate_PeptideB(row: pd.Series, index: dict) -> str:
+        key = get_key_spectronaut(row)
+        return str(index[key]["rows"][0]["FragmentGroupId"].split("-")[0].split("_")[1]).strip()
+
+    tqdm.pandas(desc = "Annotating peptide sequence B...")
+    spectronaut["PP.PeptideB"] = spectronaut.progress_apply(lambda row: annotate_PeptideB(row, index), axis = 1)
+
+    def annotate_CrosslinkPositionPeptideA(row: pd.Series, index: dict) -> int:
+        key = get_key_spectronaut(row)
+        return int(index[key]["rows"][0]["FragmentGroupId"].split("-")[1].split(":")[0].split("_")[0])
+
+    tqdm.pandas(desc = "Annotating crosslink position in peptide A...")
+    spectronaut["PP.CrosslinkPositionPeptideA"] = spectronaut.progress_apply(lambda row: annotate_CrosslinkPositionPeptideA(row, index), axis = 1)
+
+    def annotate_CrosslinkPositionPeptideB(row: pd.Series, index: dict) -> int:
+        key = get_key_spectronaut(row)
+        return int(index[key]["rows"][0]["FragmentGroupId"].split("-")[1].split(":")[0].split("_")[1])
+
+    tqdm.pandas(desc = "Annotating crosslink position in peptide B...")
+    spectronaut["PP.CrosslinkPositionPeptideB"] = spectronaut.progress_apply(lambda row: annotate_CrosslinkPositionPeptideB(row, index), axis = 1)
+
+    def annotate_PeptidoformA(row: pd.Series, index: dict) -> str:
+        key = get_key_spectronaut(row)
+        return str(index[key]["rows"][0]["ModifiedPeptide"].split("_")[0]).strip()
+
+    tqdm.pandas(desc = "Annotating peptidoform sequence A...")
+    spectronaut["PP.PeptidoformA"] = spectronaut.progress_apply(lambda row: annotate_PeptidoformA(row, index), axis = 1)
+
+    def annotate_PeptidoformB(row: pd.Series, index: dict) -> str:
+        key = get_key_spectronaut(row)
+        return str(index[key]["rows"][0]["ModifiedPeptide"].split("_")[1]).strip()
+
+    tqdm.pandas(desc = "Annotating peptidoform sequence B...")
+    spectronaut["PP.PeptidoformB"] = spectronaut.progress_apply(lambda row: annotate_PeptidoformB(row, index), axis = 1)
+
+    def annotate_SourceScanID(row: pd.Series, index: dict) -> int:
+        key = get_key_spectronaut(row)
+        return int(index[key]["rows"][0]["scanID"])
+
+    tqdm.pandas(desc = "Annotating spectral library source scan ID...")
+    spectronaut["PP.SourceScanID"] = spectronaut.progress_apply(lambda row: annotate_SourceScanID(row, index), axis = 1)
 
     return spectronaut
+
+def group_by_residue_pair(data: pd.DataFrame) -> pd.DataFrame:
+    rows = list()
+    seen_residue_pairs = set()
+
+    for i, row in tqdm(data.iterrows(), total = data.shape[0], desc = "Grouping results by residue pairs..."):
+        key = get_key_spectronaut(row)
+        if key not in seen_residue_pairs:
+            seen_residue_pairs.add(key)
+            rows.append(row)
+
+    return pd.concat(rows, axis = 1).T
+
+def main(argv = None) -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(metavar = "f",
+                        dest = "file",
+                        help = "Name/Path of the Spectronaut result file to process.",
+                        type = str,
+                        nargs = 1)
+    parser.add_argument("-y", "--non-interactive",
+                        dest = "non_interactive",
+                        action = "store_true",
+                        default = False,
+                        help = "Skip information check.")
+    parser.add_argument("--version",
+                        action = "version",
+                        version = __version)
+    args = parser.parse_args(argv)
+
+    filename = args.file[0]
+
+    if args.non_interactive:
+        r = annotate_spectronaut_result(filename)
+    else:
+        y = input("Some Spectronaut specific parameters have to be set in the python script. " +
+                  "Please refer to the documentation and confirm that you set the parameters accordingly [y/n]:")
+        if y.lower().strip() not in ["y", "yes"]:
+            raise RuntimeError("Post processing was terminated because of missing confirmation!")
+        r = annotate_spectronaut_result(filename)
+
+    output_1 = filename + "_annotated.csv"
+    output_2 = output_1 + "_grouped_by_residue_pair.csv"
+
+    print("Writing annotated Spectronaut result to file...")
+    r.to_csv(output_1, index = False)
+    print(f"Finished writing {output_1}.")
+    print("Writing grouped Spectronaut result to file...")
+    g = group_by_residue_pair(r)
+    g.to_csv(output_2, index = False)
+    print(f"Finished writing {output_2}.")
+    print("Finished post processing!")
+
+    return 0
+
+if __name__ == "__main__":
+
+    print(main())
