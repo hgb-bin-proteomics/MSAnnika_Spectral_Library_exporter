@@ -452,6 +452,7 @@ def main(argv = None) -> None:
 
     output_1 = filename + "_annotated.csv"
     output_2 = output_1 + "_grouped_by_residue_pair.csv"
+    output_3 = output_2 + "_xiFDR.csv"
 
     print("Writing annotated Spectronaut result to file...")
     r.to_csv(output_1, index = False)
@@ -460,6 +461,10 @@ def main(argv = None) -> None:
     g = group_by_residue_pair(r)
     g.to_csv(output_2, index = False)
     print(f"Finished writing {output_2}.")
+    print("Writing grouped Spectronaut result in xiFDR format to file...")
+    x = export_to_xiFDR(g)
+    x.to_csv(output_3, index = False)
+    print(f"Finished writing {output_3}.")
     print("Finished post processing!")
 
     return 0
