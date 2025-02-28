@@ -386,6 +386,7 @@ def main(argv = None) -> None:
     print("Writing grouped Spectronaut result to file...")
     g = group_by_residue_pair(r)
     g.to_csv(output_2, index = False)
+    print(f"Finished writing {output_2}.")
     print("Finished post processing!")
 
     return 0
