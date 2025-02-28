@@ -343,6 +343,26 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     tqdm.pandas(desc = "Annotating peptide B position in protein B...")
     spectronaut["PP.PeptidePositionProteinB"] = spectronaut.progress_apply(lambda row: annotate_PeptidePositionB(row, index), axis = 1)
 
+    def annotate_DecoyA(row: pd.Series, index: dict) -> bool:
+        key = get_key_spectronaut(row)
+        d = str(index[key]["rows"][0]["DecoyType"]).strip()[0]
+        if d not in ["T", "D"]:
+            raise ValueError(f"DecoyType not recognized: {d}")
+        return d == "D"
+
+    tqdm.pandas(desc = "Annotating decoy type for peptide A...")
+    spectronaut["PP.IsDecoyA"] = spectronaut.progress_apply(lambda row: annotate_DecoyA(row, index), axis = 1)
+
+    def annotate_DecoyB(row: pd.Series, index: dict) -> bool:
+        key = get_key_spectronaut(row)
+        d = str(index[key]["rows"][0]["DecoyType"]).strip()[1]
+        if d not in ["T", "D"]:
+            raise ValueError(f"DecoyType not recognized: {d}")
+        return d == "D"
+
+    tqdm.pandas(desc = "Annotating decoy type for peptide B...")
+    spectronaut["PP.IsDecoyB"] = spectronaut.progress_apply(lambda row: annotate_DecoyB(row, index), axis = 1)
+
     def annotate_SourceScanID(row: pd.Series, index: dict) -> int:
         key = get_key_spectronaut(row)
         return int(index[key]["rows"][0]["scanID"])
