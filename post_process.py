@@ -264,18 +264,136 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     tqdm.pandas(desc = "Annotating DecoyType...")
     spectronaut["PP.DecoyType"] = spectronaut.progress_apply(lambda row: annotate_DecoyType(row, index), axis = 1)
 
+    def annotate_ProteinA(row: pd.Series, index: dict) -> str:
+        key = get_key_spectronaut(row)
+        return str(index[key]["rows"][0]["ProteinID"].split("_")[0]).strip()
+
+    tqdm.pandas(desc = "Annotating ProteinA...")
+    spectronaut["PP.ProteinA"] = spectronaut.progress_apply(lambda row: annotate_ProteinA(row, index), axis = 1)
+
+    def annotate_ProteinB(row: pd.Series, index: dict) -> str:
+        key = get_key_spectronaut(row)
+        return str(index[key]["rows"][0]["ProteinID"].split("_")[1]).strip()
+
+    tqdm.pandas(desc = "Annotating ProteinB...")
+    spectronaut["PP.ProteinB"] = spectronaut.progress_apply(lambda row: annotate_ProteinB(row, index), axis = 1)
+
+    def annotate_CrosslinkPositionProteinA(row: pd.Series, index: dict) -> int:
+        key = get_key_spectronaut(row)
+        return int(index[key]["rows"][0]["linkId"].split("-")[1].split("_")[0])
+
+    tqdm.pandas(desc = "Annotating CrosslinkPositionProteinA...")
+    spectronaut["PP.CrosslinkPositionProteinA"] = spectronaut.progress_apply(lambda row: annotate_CrosslinkPositionProteinA(row, index), axis = 1)
+
+    def annotate_CrosslinkPositionProteinB(row: pd.Series, index: dict) -> int:
+        key = get_key_spectronaut(row)
+        return int(index[key]["rows"][0]["linkId"].split("-")[1].split("_")[1])
+
+    tqdm.pandas(desc = "Annotating CrosslinkPositionProteinB...")
+    spectronaut["PP.CrosslinkPositionProteinB"] = spectronaut.progress_apply(lambda row: annotate_CrosslinkPositionProteinB(row, index), axis = 1)
+
+    def annotate_PeptideA(row: pd.Series, index: dict) -> str:
+        key = get_key_spectronaut(row)
+        return str(index[key]["rows"][0]["FragmentGroupId"].split("-")[0].split("_")[0]).strip()
+
+    tqdm.pandas(desc = "Annotating PeptideA...")
+    spectronaut["PP.PeptideA"] = spectronaut.progress_apply(lambda row: annotate_PeptideA(row, index), axis = 1)
+
+    def annotate_PeptideB(row: pd.Series, index: dict) -> str:
+        key = get_key_spectronaut(row)
+        return str(index[key]["rows"][0]["FragmentGroupId"].split("-")[0].split("_")[1]).strip()
+
+    tqdm.pandas(desc = "Annotating PeptideB...")
+    spectronaut["PP.PeptideB"] = spectronaut.progress_apply(lambda row: annotate_PeptideB(row, index), axis = 1)
+
+    def annotate_CrosslinkPositionPeptideA(row: pd.Series, index: dict) -> int:
+        key = get_key_spectronaut(row)
+        return int(index[key]["rows"][0]["FragmentGroupId"].split("-")[1].split(":")[0].split("_")[0])
+
+    tqdm.pandas(desc = "Annotating CrosslinkPositionPeptideA...")
+    spectronaut["PP.CrosslinkPositionPeptideA"] = spectronaut.progress_apply(lambda row: annotate_CrosslinkPositionPeptideA(row, index), axis = 1)
+
+    def annotate_CrosslinkPositionPeptideB(row: pd.Series, index: dict) -> int:
+        key = get_key_spectronaut(row)
+        return int(index[key]["rows"][0]["FragmentGroupId"].split("-")[1].split(":")[0].split("_")[1])
+
+    tqdm.pandas(desc = "Annotating CrosslinkPositionPeptideB...")
+    spectronaut["PP.CrosslinkPositionPeptideB"] = spectronaut.progress_apply(lambda row: annotate_CrosslinkPositionPeptideB(row, index), axis = 1)
+
+    def annotate_PeptidoformA(row: pd.Series, index: dict) -> str:
+        key = get_key_spectronaut(row)
+        return str(index[key]["rows"][0]["ModifiedPeptide"].split("_")[0]).strip()
+
+    tqdm.pandas(desc = "Annotating PeptidoformA...")
+    spectronaut["PP.PeptidoformA"] = spectronaut.progress_apply(lambda row: annotate_PeptidoformA(row, index), axis = 1)
+
+    def annotate_PeptidoformB(row: pd.Series, index: dict) -> str:
+        key = get_key_spectronaut(row)
+        return str(index[key]["rows"][0]["ModifiedPeptide"].split("_")[1]).strip()
+
+    tqdm.pandas(desc = "Annotating PeptidoformB...")
+    spectronaut["PP.PeptidoformB"] = spectronaut.progress_apply(lambda row: annotate_PeptidoformB(row, index), axis = 1)
+
+    def annotate_SourceScanID(row: pd.Series, index: dict) -> int:
+        key = get_key_spectronaut(row)
+        return int(index[key]["rows"][0]["scanID"])
+
+    tqdm.pandas(desc = "Annotating SourceScanID...")
+    spectronaut["PP.SourceScanID"] = spectronaut.progress_apply(lambda row: annotate_SourceScanID(row, index), axis = 1)
+
     return spectronaut
 
-if __name__ == "__main__":
-    import sys
+def group_by_residue_pair(data: pd.DataFrame) -> pd.DataFrame:
+    rows = list()
+    seen_residue_pairs = set()
 
-    if len(sys.argv) < 2:
-        raise RuntimeError("No Spectronaut file was given!")
+    for i, row in tqdm(data.iterrows(), total = data.shape[0], desc = "Grouping results by residue pairs..."):
+        key = get_key_spectronaut(row)
+        if key not in seen_residue_pairs:
+            seen_residue_pairs.add(key)
+            rows.append(row)
 
-    filename = sys.argv[1]
-    filename_o = filename + "_annotated.csv"
+    return pd.concat(rows, axis = 1).T
 
-    df = annotate_spectronaut_result(filename)
+def main(argv = None) -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(metavar = "f",
+                        dest = "file",
+                        help = "Name/Path of the Spectronaut result file to process.",
+                        type = str,
+                        nargs = 1)
+    parser.add_argument("-y", "--non-interactive",
+                        dest = "non_interactive",
+                        action = "store_true",
+                        default = False,
+                        help = "Skip inforamtion check.")
+    parser.add_argument("--version",
+                        action = "version",
+                        version = __version)
+    args = parser.parse_args(argv)
+
+    if args.non_interactive:
+        r = annotate_spectronaut_result(args.file)
+    else:
+        y = input("Some Spectronaut specific parameters have to be set in the python script. " +
+                  "Please refer to the documentation and confirm that you set the parameters accordingly [y/n]:")
+        if y.lower().strip() not in ["y", "yes"]:
+            raise RuntimeError("Post processing was terminated because of missing confirmation!")
+        r = annotate_spectronaut_result(args.file)
+
+    output_1 = args.file + "_annotated.csv"
+    output_2 = output_1 + "_grouped_by_residue_pair.csv"
+
     print("Writing annotated Spectronaut result to file...")
-    df.to_csv(filename_o, index = False)
-    print("Finished annotation!")
+    r.to_csv(output_1, index = False)
+    print(f"Finished writing {output_1}.")
+    print("Writing grouped Spectronaut result to file...")
+    g = group_by_residue_pair(r)
+    g.to_csv(output_2, index = False)
+    print("Finished post processing!")
+
+    return 0
+
+if __name__ == "__main__":
+
+    print(main())
