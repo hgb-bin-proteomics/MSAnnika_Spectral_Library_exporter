@@ -329,10 +329,6 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     tqdm.pandas(desc = "Annotating peptidoform sequence B...")
     spectronaut["PP.PeptidoformB"] = spectronaut.progress_apply(lambda row: annotate_PeptidoformB(row, index), axis = 1)
 
-    def annotate_SourceScanID(row: pd.Series, index: dict) -> int:
-        key = get_key_spectronaut(row)
-        return int(index[key]["rows"][0]["scanID"])
-
     def annotate_PeptidePositionA(row: pd.Series, index: dict) -> int:
         key = get_key_spectronaut(row)
         return int(index[key]["rows"][0]["PeptidePositions"].split("_")[0])
@@ -346,6 +342,10 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
 
     tqdm.pandas(desc = "Annotating peptide B position in protein B...")
     spectronaut["PP.PeptidePositionProteinB"] = spectronaut.progress_apply(lambda row: annotate_PeptidePositionB(row, index), axis = 1)
+
+    def annotate_SourceScanID(row: pd.Series, index: dict) -> int:
+        key = get_key_spectronaut(row)
+        return int(index[key]["rows"][0]["scanID"])
 
     tqdm.pandas(desc = "Annotating spectral library source scan ID...")
     spectronaut["PP.SourceScanID"] = spectronaut.progress_apply(lambda row: annotate_SourceScanID(row, index), axis = 1)
