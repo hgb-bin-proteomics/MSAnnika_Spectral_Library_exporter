@@ -196,7 +196,7 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
         return fragment_annotation[key]["matched_number_ions_a"]
 
     tqdm.pandas(desc = "Annotating number of matched ions A...")
-    spectronaut["MatchedIonsA"] = spectronaut.progress_apply(lambda row: annotate_MatchedIonsA(row, fragment_annotation), axis = 1)
+    spectronaut["PP.MatchedIonsA"] = spectronaut.progress_apply(lambda row: annotate_MatchedIonsA(row, fragment_annotation), axis = 1)
 
     # b
     def annotate_TotalIonsA(row: pd.Series, index: dict) -> int:
@@ -204,7 +204,7 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
         return index[key]["total_ions_a"]
 
     tqdm.pandas(desc = "Annotating number of total ions A...")
-    spectronaut["TotalIonsA"] = spectronaut.progress_apply(lambda row: annotate_TotalIonsA(row, index), axis = 1)
+    spectronaut["PP.TotalIonsA"] = spectronaut.progress_apply(lambda row: annotate_TotalIonsA(row, index), axis = 1)
 
     # c
     def annotate_MatchedIonsB(row: pd.Series, fragment_annotation: dict) -> int:
@@ -212,7 +212,7 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
         return fragment_annotation[key]["matched_number_ions_b"]
 
     tqdm.pandas(desc = "Annotating number of matched ions B...")
-    spectronaut["MatchedIonsB"] = spectronaut.progress_apply(lambda row: annotate_MatchedIonsB(row, fragment_annotation), axis = 1)
+    spectronaut["PP.MatchedIonsB"] = spectronaut.progress_apply(lambda row: annotate_MatchedIonsB(row, fragment_annotation), axis = 1)
 
     # d
     def annotate_TotalIonsB(row: pd.Series, index: dict) -> int:
@@ -220,41 +220,41 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
         return index[key]["total_ions_b"]
 
     tqdm.pandas(desc = "Annotating number of total ions B...")
-    spectronaut["TotalIonsB"] = spectronaut.progress_apply(lambda row: annotate_TotalIonsB(row, index), axis = 1)
+    spectronaut["PP.TotalIonsB"] = spectronaut.progress_apply(lambda row: annotate_TotalIonsB(row, index), axis = 1)
 
     # e
     tqdm.pandas(desc = "Annotating relative match score A...")
-    spectronaut["RelativeMatchScoreA"] = spectronaut.progress_apply(lambda row: row["MatchedIonsA"] / row["TotalIonsA"], axis = 1)
+    spectronaut["PP.RelativeMatchScoreA"] = spectronaut.progress_apply(lambda row: row["PP.MatchedIonsA"] / row["PP.TotalIonsA"], axis = 1)
 
     # f
     tqdm.pandas(desc = "Annotating relative match score B...")
-    spectronaut["RelativeMatchScoreB"] = spectronaut.progress_apply(lambda row: row["MatchedIonsB"] / row["TotalIonsB"], axis = 1)
+    spectronaut["PP.RelativeMatchScoreB"] = spectronaut.progress_apply(lambda row: row["PP.MatchedIonsB"] / row["PP.TotalIonsB"], axis = 1)
 
     # g
     def annotate_PartialCscoreA(row: pd.Series) -> float:
         cscore = row[SPECTRONAUT_CSCORE_COLUMN_NAME]
-        partial = row["MatchedIonsA"] / (row["MatchedIonsA"] + row["MatchedIonsB"])
+        partial = row["PP.MatchedIonsA"] / (row["PP.MatchedIonsA"] + row["PP.MatchedIonsB"])
         return cscore * partial
 
     tqdm.pandas(desc = "Annotating partial Cscore A...")
-    spectronaut["PartialCscoreA"] = spectronaut.progress_apply(lambda row: annotate_PartialCscoreA(row), axis = 1)
+    spectronaut["PP.PartialCscoreA"] = spectronaut.progress_apply(lambda row: annotate_PartialCscoreA(row), axis = 1)
 
     # h
     def annotate_PartialCscoreB(row: pd.Series) -> float:
         cscore = row[SPECTRONAUT_CSCORE_COLUMN_NAME]
-        partial = row["MatchedIonsB"] / (row["MatchedIonsA"] + row["MatchedIonsB"])
+        partial = row["PP.MatchedIonsB"] / (row["PP.MatchedIonsA"] + row["PP.MatchedIonsB"])
         return cscore * partial
 
     tqdm.pandas(desc = "Annotating partial Cscore B...")
-    spectronaut["PartialCscoreB"] = spectronaut.progress_apply(lambda row: annotate_PartialCscoreB(row), axis = 1)
+    spectronaut["PP.PartialCscoreB"] = spectronaut.progress_apply(lambda row: annotate_PartialCscoreB(row), axis = 1)
 
     # i
     tqdm.pandas(desc = "Annotating composite relative match score...")
-    spectronaut["CompositeRelativeMatchScore"] = spectronaut.progress_apply(lambda row: min(row["RelativeMatchScoreA"], row["RelativeMatchScoreB"]), axis = 1)
+    spectronaut["PP.CompositeRelativeMatchScore"] = spectronaut.progress_apply(lambda row: min(row["PP.RelativeMatchScoreA"], row["PP.RelativeMatchScoreB"]), axis = 1)
 
     # j
     tqdm.pandas(desc = "Annotating composite partial Cscore...")
-    spectronaut["CompositePartialCscore"] = spectronaut.progress_apply(lambda row: min(row["PartialCscoreA"], row["PartialCscoreB"]), axis = 1)
+    spectronaut["PP.CompositePartialCscore"] = spectronaut.progress_apply(lambda row: min(row["PP.PartialCscoreA"], row["PP.PartialCscoreB"]), axis = 1)
 
     # annotation of other properties
     def annotate_DecoyType(row: pd.Series, index: dict) -> str:
@@ -262,7 +262,7 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
         return str(index[key]["rows"][0]["DecoyType"]).strip()
 
     tqdm.pandas(desc = "Annotating DecoyType...")
-    spectronaut["DecoyType"] = spectronaut.progress_apply(lambda row: annotate_DecoyType(row, index), axis = 1)
+    spectronaut["PP.DecoyType"] = spectronaut.progress_apply(lambda row: annotate_DecoyType(row, index), axis = 1)
 
     return spectronaut
 
