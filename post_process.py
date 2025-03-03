@@ -7,8 +7,8 @@
 
 
 # version tracking
-__version = "1.1.3"
-__date = "2025-02-28"
+__version = "1.1.4"
+__date = "2025-03-03"
 
 # PARAMETERS
 
@@ -419,7 +419,8 @@ def export_to_xiFDR(data: pd.DataFrame) -> pd.DataFrame:
 
     cols_to_keep = ["run", "scan", "peptide1", "peptide2", "peptide link 1", "peptide link 2",
                     "is decoy 1", "is decoy 2", "precursor charge", "accession1", "accession2",
-                    "peptide position 1", "peptide position 2", "PP.CompositeRelativeMatchScore", "PP.CompositePartialCscore"]
+                    "peptide position 1", "peptide position 2", "PP.CompositeRelativeMatchScore", "PP.CompositePartialCscore",
+                    SPECTRONAUT_CSCORE_COLUMN_NAME]
     return data[cols_to_keep]
 
 def main(argv = None) -> None:
