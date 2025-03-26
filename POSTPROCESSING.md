@@ -40,3 +40,39 @@ used with [xiFDR](https://www.rappsilberlab.org/software/xifdr/) for validation.
 > The spectral library file name is directly parsed from the Spectronaut result
 > file from the column `EG.Library`. Make sure that this matches up with the
 > filename of the spectral library in the current directory!
+
+## Annotated columns
+
+The following additional columns are annotated:
+- `PP.MatchedIonsA`: Number of matched ions for peptide A
+- `PP.MatchedIonsB`: Number of matched ions for peptide B
+- `PP.TotalIonsA`: Number of total ions for peptide A
+- `PP.TotalIonsB`: Number of total ions for peptide B
+- `PP.RelativeMatchScoreA`: Relative match score for peptide A
+- `PP.RelativeMatchScoreB`: Relative match score for peptide B
+- `PP.PartialCscoreA`: Partial Cscore for peptide A
+- `PP.PartialCscoreB`: Partial Cscore for peptide B
+- `PP.CompositeRelativeMatchScore`: Relative match score for the CSM
+- `PP.CompositePartialCscore`: Partial Cscore for the CSM
+- `PP.DecoyType`: Decoy type, e.g. one of `TT, TD, DT, DD`
+- `PP.ProteinA`: Accession for protein A
+- `PP.ProteinB`: Accession for protein B
+- `PP.CrosslinkPositionProteinA`: Position of the crosslink in protein A (1-based indexing)
+- `PP.CrosslinkPositionProteinB`: Position of the crosslink in protein B (1-based indexing)
+- `PP.PeptideA`: Sequence of peptide A
+- `PP.PeptideB`: Sequence of peptide B
+- `PP.CrosslinkPositionPeptideA`: Position of the crosslink in peptide A (1-based indexing)
+- `PP.CrosslinkPositionPeptideB`: Position of the crosslink in peptide B (1-based indexing)
+- `PP.PeptidoformA`: Annotated sequence of peptide A
+- `PP.PeptidoformB`: Annotated sequence of peptide B
+- `PP.PeptidePositionProteinA`: Position of peptide A in protein A (1-based indexing)
+- `PP.PeptidePositionProteinB`: Position of peptide B in protein B (1-based indexing)
+- `PP.IsDecoyA`: If peptide A is a decoy hit, may be `True` or `False`
+- `PP.IsDecoyB`: If peptide B is a decoy hit, may be `True` or `False`
+- `PP.SourceScanID`: The corresponding scan number in the spectral library
+- `PP.PseudoScanNumber`: An iterative number that acts as an ID to create pseudo CSMs
+- `PP.Crosslinker`: Name of the crosslinker
+- `PP.CrosslinkerMass`: Delta mass of the crosslinker
+
+> [!Note]
+> For ambiguous values the values are delimited by `;`!
