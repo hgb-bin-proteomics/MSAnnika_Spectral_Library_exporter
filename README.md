@@ -11,7 +11,7 @@ Generate a spectral library for [Spectronaut](https://biognosys.com/software/spe
 - Install python 3.7+: [https://www.python.org/downloads/](https://www.python.org/downloads/)
 - Install requirements: `pip install -r requirements.txt`
 - Export MS Annika CSMs from Proteome Discoverer to Microsoft Excel format. Filter out decoys beforehand and filter for high-confidence CSMs (see below).
-- Convert any RAW files to *.mgf format.
+- Convert any RAW files to *.mgf format, e.g. using [ThermoRawFileParser](https://github.com/compomics/ThermoRawFileParser).
 - Set your desired parameters in `config.py` (see below).
 - Run `python create_spectral_library.py`.
 - If the script successfully finishes, the target spectral library should be generated with the extension `_spectralLibrary.csv`.
@@ -33,7 +33,9 @@ xiFDR (e.g. usually ending with extension `CSM_xiFDR*.*.*.csv` where `*` denotes
 
 ![Screenshot](gui/screenshot.png)
 
-**Important: The GUI currently only is supported up to version [1.1.6](https://github.com/hgb-bin-proteomics/MSAnnika_Spectral_Library_exporter/releases/tag/v1.1.6)!**
+> [!Important]
+> **The GUI currently only is supported up to version [1.1.6](https://github.com/hgb-bin-proteomics/MSAnnika_Spectral_Library_exporter/releases/tag/v1.1.6)!**
+>
 
 Alternatively to the commandline-based python script, a GUI is also available via [Docker](https://www.docker.com/):
 - After [installing Docker](https://docs.docker.com/engine/install/) [[Quick Guide here](https://github.com/michabirklbauer/PIA/blob/master/DOCKER.md)] run the following command:
@@ -107,47 +109,18 @@ In case you have more than one `SPECTRA_FILE` you can specify that like this:
 SPECTRA_FILE = ["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf",
                 "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_002.mgf"]
 # name of the CSM file exported from Proteome Discoverer
-CSMS_FILE = "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.xlsx"
-# name of the experiment / run (any descriptive text is allowed)
-RUN_NAME = "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001-(1)"
-# name of the sample organism that should be reported in the spectral library
-ORGANISM = "Homo sapiens"
-# name of the crosslink modification
-CROSSLINKER = "DSSO"
-# possible modifications and their monoisotopic masses
-MODIFICATIONS = \
-    {"Oxidation": [15.994915],
-     "Carbamidomethyl": [57.021464],
-     "DSSO": [54.01056, 85.98264, 103.99320]}
-# modifications mapping for xiFDR sequences
-MODIFICATIONS_XI = \
-    {"Ccm": ["C", "Carbamidomethyl"],
-     "Mox": ["M", "Oxidation"]}
-# expected ion types (any of a, b, c, x, y, z)
-ION_TYPES = ("b", "y")
-# maximum expected charge of fragment ions
-MAX_CHARGE = 4
-# tolerance for matching peaks
-MATCH_TOLERANCE = 0.02
-# parameters for calculating iRT
-iRT_PARAMS = {"iRT_m": 1.3066, "iRT_t": 29.502}
-# regex pattern used for parsing scan number from the spectrum title
-PARSER_PATTERN = "\\.\\d+\\."
+## <code omitted> ##
 ```
+
+## Post processing
+
+For post processing and validation of Spectronaut result files, please read further [here](POSTPROCESSING.md).
 
 ## Known Issues
 
 [List of known issues](https://github.com/hgb-bin-proteomics/MSAnnika_Spectral_Library_exporter/issues)
 
 ## Citing
-
-If you are using the MS Annika Spectral Library exporter script please cite:
-```
-MS Annika 2.0 Identifies Cross-Linked Peptides in MS2–MS3-Based Workflows at High Sensitivity and Specificity
-Micha J. Birklbauer, Manuel Matzinger, Fränze Müller, Karl Mechtler, and Viktoria Dorfer
-Journal of Proteome Research 2023 22 (9), 3009-3021
-DOI: 10.1021/acs.jproteome.3c00325
-```
 
 If you are using MS Annika please cite as described [here](https://github.com/hgb-bin-proteomics/MSAnnika?tab=readme-ov-file#citing).
 
