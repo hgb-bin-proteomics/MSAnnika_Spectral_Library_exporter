@@ -98,30 +98,39 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
                 seq_a += aa
         return seq_a
 
+    def xi_parse_modifications_from_seq(seq: str) -> Dict[int, str]:
+        modifications = dict()
+        pos = 0
+        current_mod = ""
+        for i, aa in enumerate(str(sequence).strip()):
+            if aa.isupper():
+                pos += 1
+                current_mod = aa
+            else:
+                current_mod += aa
+                if i + 1 >= len(sequence):
+                    if pos in modifications:
+                        raise RuntimeError(f"Modification at position {pos} already exists!")
+                    modifications[pos] = current_mod
+                elif sequence[i + 1].isupper():
+                    if pos in modifications:
+                        raise RuntimeError(f"Modification at position {pos} already exists!")
+                    modifications[pos] = current_mod
+        return modifications
+
     def xi_get_modifications(row: pd.Series, alpha: bool = True) -> str:
         seq = str(row["PepSeq1"]).strip() if alpha else str(row["PepSeq2"]).strip()
         clean_seq = xi_get_sequence(row, alpha)
         xl_pos = int(row["LinkPos1"]) if alpha else int(row["LinkPos2"])
-
-        if len(MODIFICATIONS_XI) > 10:
-            msg = "Found more than 10 possible modifications for xi. " + \
-                  "Maximum number of modifications supported is 10. " + \
-                  "Please update MODIFICATIONS_XI in the config file!"
-            raise RuntimeError(msg)
-
-        mod_map = dict()
-        mod_map_rev = dict()
-        for i, key in enumerate(MODIFICATIONS_XI.keys()):
-            mod_map[str(i)] = key
-            mod_map_rev[key] = str(i)
-
-        for mod in MODIFICATIONS_XI.keys():
-            seq = seq.replace(mod, mod_map_rev[mod])
+        mods = xi_parse_modifications_from_seq(seq)
 
         mod_str = ""
-        for i, aa in enumerate(seq):
-            if aa in mod_map:
-                mod_str += f"{MODIFICATIONS_XI[mod_map[aa]][0]}{i+1}({MODIFICATIONS_XI[mod_map[aa]][1]});"
+        for mod in mods.items():
+            mod_pos = mod[0]
+            mod_xi_key = mod[1]
+            mod_aa = MODIFICATIONS_XI[mod_xi_key][0]
+            mod_text = MODIFICATIONS_XI[mod_xi_key][1]
+            mod_str += f"{mod_aa}{mod_pos}({mod_text});"
 
         mod_str += f"{clean_seq[xl_pos-1]}{xl_pos}({str(row['Crosslinker']).strip()})"
 
