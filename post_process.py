@@ -13,8 +13,8 @@ __date = "2025-03-26"
 # PARAMETERS
 
 # these parameters should be set accordingly
-CROSSLINKER = "PhoX"
-CROSSLINKER_MASS = 209.97181
+CROSSLINKER = "PhoX" # name of the crosslinker
+CROSSLINKER_MASS = 209.97181 # delta mass of the crosslinker
 SPECTRONAUT_DELIM = "," # delimiter in Spectronaut output file, e.g. "," for comma delimited files, "\t" for tab delimited files
 SPECTRONAUT_MATCH_TOLERANCE = 0.05 # match tolerance in Da
 SPECTRONAUT_FRAGMENT_MZ_COLUMN_NAME = "F.CalibratedMz" # which F Mz to use for matching
