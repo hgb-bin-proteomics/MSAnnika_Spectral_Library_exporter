@@ -98,7 +98,7 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
                 seq_a += aa
         return seq_a
 
-    def xi_parse_modifications_from_seq(seq: str) -> Dict[int, str]:
+    def xi_parse_modifications_from_seq(sequence: str) -> Dict[int, str]:
         modifications = dict()
         pos = 0
         current_mod = ""
