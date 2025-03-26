@@ -33,7 +33,9 @@ xiFDR (e.g. usually ending with extension `CSM_xiFDR*.*.*.csv` where `*` denotes
 
 ![Screenshot](gui/screenshot.png)
 
-**Important: The GUI currently only is supported up to version [1.1.6](https://github.com/hgb-bin-proteomics/MSAnnika_Spectral_Library_exporter/releases/tag/v1.1.6)!**
+> [!Important]
+> **The GUI currently only is supported up to version [1.1.6](https://github.com/hgb-bin-proteomics/MSAnnika_Spectral_Library_exporter/releases/tag/v1.1.6)!**
+>
 
 Alternatively to the commandline-based python script, a GUI is also available via [Docker](https://www.docker.com/):
 - After [installing Docker](https://docs.docker.com/engine/install/) [[Quick Guide here](https://github.com/michabirklbauer/PIA/blob/master/DOCKER.md)] run the following command:
@@ -140,14 +142,6 @@ PARSER_PATTERN = "\\.\\d+\\."
 [List of known issues](https://github.com/hgb-bin-proteomics/MSAnnika_Spectral_Library_exporter/issues)
 
 ## Citing
-
-If you are using the MS Annika Spectral Library exporter script please cite:
-```
-MS Annika 2.0 Identifies Cross-Linked Peptides in MS2–MS3-Based Workflows at High Sensitivity and Specificity
-Micha J. Birklbauer, Manuel Matzinger, Fränze Müller, Karl Mechtler, and Viktoria Dorfer
-Journal of Proteome Research 2023 22 (9), 3009-3021
-DOI: 10.1021/acs.jproteome.3c00325
-```
 
 If you are using MS Annika please cite as described [here](https://github.com/hgb-bin-proteomics/MSAnnika?tab=readme-ov-file#citing).
 
