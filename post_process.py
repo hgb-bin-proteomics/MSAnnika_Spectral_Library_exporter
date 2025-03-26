@@ -13,6 +13,8 @@ __date = "2025-03-03"
 # PARAMETERS
 
 # these parameters should be set accordingly
+CROSSLINKER = "PhoX"
+CROSSLINKER_MASS = 209.97181
 SPECTRONAUT_DELIM = "," # delimiter in Spectronaut output file, e.g. "," for comma delimited files, "\t" for tab delimited files
 SPECTRONAUT_MATCH_TOLERANCE = 0.05 # match tolerance in Da
 SPECTRONAUT_FRAGMENT_MZ_COLUMN_NAME = "F.CalibratedMz" # which F Mz to use for matching
@@ -371,6 +373,8 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     spectronaut["PP.SourceScanID"] = spectronaut.progress_apply(lambda row: annotate_SourceScanID(row, index), axis = 1)
 
     spectronaut["PP.PseudoScanNumber"] = pd.Series(range(spectronaut.shape[0]))
+    spectronaut["PP.Crosslinker"] = pd.Series([CROSSLINKER for i in range(spectronaut.shape[0])])
+    spectronaut["PP.CrosslinkerMass"] = pd.Series([CROSSLINKER_MASS for i in range(spectronaut.shape[0])])
 
     return spectronaut
 
@@ -416,10 +420,13 @@ def export_to_xiFDR(data: pd.DataFrame) -> pd.DataFrame:
     data.rename(columns = {"PP.ProteinB": "accession2"}, inplace = True)
     data.rename(columns = {"PP.PeptidePositionProteinA": "peptide position 1"}, inplace = True)
     data.rename(columns = {"PP.PeptidePositionProteinB": "peptide position 2"}, inplace = True)
+    data.rename(columns = {"PP.Crosslinker": "Crosslinker"}, inplace = True)
+    data.rename(columns = {"PP.CrosslinkerMass": "CrosslinkerMass"}, inplace = True)
 
     cols_to_keep = ["run", "scan", "peptide1", "peptide2", "peptide link 1", "peptide link 2",
                     "is decoy 1", "is decoy 2", "precursor charge", "accession1", "accession2",
                     "peptide position 1", "peptide position 2", "PP.CompositeRelativeMatchScore", "PP.CompositePartialCscore",
+                    "Crosslinker", "CrosslinkerMass",
                     SPECTRONAUT_CSCORE_COLUMN_NAME]
     return data[cols_to_keep]
 
