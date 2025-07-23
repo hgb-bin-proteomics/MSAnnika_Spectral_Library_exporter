@@ -7,7 +7,7 @@
 
 
 # version tracking
-__version = "1.1.6"
+__version = "1.2.1"
 __date = "2025-07-23"
 
 # PARAMETERS
@@ -396,8 +396,8 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
         ions = list()
         for ion in ion_types:
             pep_id = int(ion.split(";")[2])
-            ion_type = str(ion[0]).strip()
-            ion_number = int(ion[1])
+            ion_type = str(ion.split(";")[0]).strip()
+            ion_number = int(ion.split(";")[1])
             if len(ion_type) != 1:
                 raise RuntimeError(f"Could not parse ion type from ion {ion}!")
             if pep_id == pep_id_lookup and ion_type in ["a", "b", "c"]:
@@ -421,8 +421,8 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
         ions = list()
         for ion in ion_types:
             pep_id = int(ion.split(";")[2])
-            ion_type = str(ion[0]).strip()
-            ion_number = int(ion[1])
+            ion_type = str(ion.split(";")[0]).strip()
+            ion_number = int(ion.split(";")[1])
             if len(ion_type) != 1:
                 raise RuntimeError(f"Could not parse ion type from ion {ion}!")
             if pep_id == pep_id_lookup and ion_type in ["x", "y", "z"]:
@@ -454,8 +454,8 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
         unique_seq_positions = set()
         for ion in ion_types:
             pep_id = int(ion.split(";")[2])
-            ion_type = str(ion[0]).strip()
-            ion_number = int(ion[1])
+            ion_type = str(ion.split(";")[0]).strip()
+            ion_number = int(ion.split(";")[1])
             if len(ion_type) != 1:
                 raise RuntimeError(f"Could not parse ion type from ion {ion}!")
             if pep_id == pep_id_lookup:
