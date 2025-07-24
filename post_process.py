@@ -7,8 +7,8 @@
 
 
 # version tracking
-__version = "1.1.5"
-__date = "2025-03-26"
+__version = "1.2.1"
+__date = "2025-07-23"
 
 # PARAMETERS
 
@@ -95,24 +95,31 @@ def read_spectral_library(filename: str) -> Dict[str, Dict[str, Any]]:
 def generate_fragment_index(spectronaut: pd.DataFrame, index: dict) -> Dict[str, Dict[str, Any]]:
     # dict keeping track of annotated fragments for every unique crosslink id
     fragment_annotation = dict()
+    # nr of spectronaut ions that could not be matched
+    nr_unmatched = 0
     for i, row in tqdm(spectronaut.iterrows(), total = spectronaut.shape[0], desc = "Generating fragment ion index..."):
         # unique crosslink id
         key = get_key_spectronaut(row)
+        # if fragment annotation struct does not have entry for crosslink id, create one that is empty
+        if key not in fragment_annotation:
+            fragment_annotation[key] = {"matched_number_ions_a": 0,
+                                        "matched_number_ions_b": 0,
+                                        "fragments": list(),
+                                        "ion_types": set()}
         # current fragment ion from spectronaut row
         ion = float(row[SPECTRONAUT_FRAGMENT_MZ_COLUMN_NAME])
         # all spectral library ions for the crosslink id
         # this is a dict that matches ion mass -> list(fragments_with_that_mass[pd.Series])
         ions = index[key]["ions"]
+        # has ion been matched?
+        matched = False
         # for every ion mass of the crosslink id in the spec lib, do:
         for current_ion_mz in ions.keys():
             fragment_key_part = get_fragment_key(current_ion_mz)
             # check if spectronaut fragment is within tolerance bounds of spec lib ion
             if round(current_ion_mz, 4) > round(ion - SPECTRONAUT_MATCH_TOLERANCE, 4) and round(current_ion_mz, 4) < round(ion + SPECTRONAUT_MATCH_TOLERANCE, 4):
-                # if fragment annotation struct does not have entry for crosslink id, create one that is empty
-                if key not in fragment_annotation:
-                    fragment_annotation[key] = {"matched_number_ions_a": 0,
-                                                "matched_number_ions_b": 0,
-                                                "fragments": []}
+                # ion has been matched
+                matched = True
                 # for all ions that match mass, do:
                 for current_ion in ions[current_ion_mz]:
                     # if ion of peptide a
@@ -123,15 +130,24 @@ def generate_fragment_index(spectronaut: pd.DataFrame, index: dict) -> Dict[str,
                         if fragment_key not in fragment_annotation[key]["fragments"]:
                             fragment_annotation[key]["matched_number_ions_a"] += 1
                             fragment_annotation[key]["fragments"].append(fragment_key)
+                            fragment_annotation[key]["ion_types"].add(
+                                f"{current_ion['FragmentType']};{current_ion['FragmentNumber']};0"
+                            )
                     else:
                         # same for peptide b
                         fragment_key = fragment_key_part + "_1"
                         if fragment_key not in fragment_annotation[key]["fragments"]:
                             fragment_annotation[key]["matched_number_ions_b"] += 1
                             fragment_annotation[key]["fragments"].append(fragment_key)
+                            fragment_annotation[key]["ion_types"].add(
+                                f"{current_ion['FragmentType']};{current_ion['FragmentNumber']};1"
+                            )
             # we do not break here, because we want to check the rest of the spec lib ions in case the spectronaut ion matches
             # for both peptide a and peptide b
+        if not matched:
+            nr_unmatched += 1
 
+    print(f"[Fragment index] Nr. of unmatched ions: {nr_unmatched} <-> {(nr_unmatched / spectronaut.shape[0]) * 100} %")
     return fragment_annotation
 
 def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
@@ -371,6 +387,94 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
 
     tqdm.pandas(desc = "Annotating spectral library source scan ID...")
     spectronaut["PP.SourceScanID"] = spectronaut.progress_apply(lambda row: annotate_SourceScanID(row, index), axis = 1)
+
+    def annotate_SequenceCoverageNTerm(row: pd.Series, fragment_annotation: dict, alpha: bool) -> float:
+        key = get_key_spectronaut(row)
+        ion_types = fragment_annotation[key]["ion_types"]
+        peptide = str(row["PP.PeptideA"]).strip() if alpha else str(row["PP.PeptideB"]).strip()
+        pep_id_lookup = 0 if alpha else 1
+        ions = list()
+        for ion in ion_types:
+            pep_id = int(ion.split(";")[2])
+            ion_type = str(ion.split(";")[0]).strip()
+            ion_number = int(ion.split(";")[1])
+            if len(ion_type) != 1:
+                raise RuntimeError(f"Could not parse ion type from ion {ion}!")
+            if pep_id == pep_id_lookup and ion_type in ["a", "b", "c"]:
+                ions.append((ion_type, ion_number))
+        return len(ions) / len(peptide)
+
+    tqdm.pandas(desc = "Annotating n-terminal sequence coverage for alpha peptide...")
+    spectronaut["PP.SequenceCoverageNTermAlpha"] = spectronaut.progress_apply(lambda row: annotate_SequenceCoverageNTerm(row, fragment_annotation, True), axis = 1)
+
+    tqdm.pandas(desc = "Annotating n-terminal sequence coverage for beta peptide...")
+    spectronaut["PP.SequenceCoverageNTermBeta"] = spectronaut.progress_apply(lambda row: annotate_SequenceCoverageNTerm(row, fragment_annotation, False), axis = 1)
+
+    tqdm.pandas(desc = "Annotating n-terminal sequence coverage for full crosslink...")
+    spectronaut["PP.SequenceCoverageNTermFull"] = spectronaut.progress_apply(lambda row: (float(row["PP.SequenceCoverageNTermAlpha"]) + float(row["PP.SequenceCoverageNTermBeta"])) / 2.0, axis = 1)
+
+    def annotate_SequenceCoverageCTerm(row: pd.Series, fragment_annotation: dict, alpha: bool) -> float:
+        key = get_key_spectronaut(row)
+        ion_types = fragment_annotation[key]["ion_types"]
+        peptide = str(row["PP.PeptideA"]).strip() if alpha else str(row["PP.PeptideB"]).strip()
+        pep_id_lookup = 0 if alpha else 1
+        ions = list()
+        for ion in ion_types:
+            pep_id = int(ion.split(";")[2])
+            ion_type = str(ion.split(";")[0]).strip()
+            ion_number = int(ion.split(";")[1])
+            if len(ion_type) != 1:
+                raise RuntimeError(f"Could not parse ion type from ion {ion}!")
+            if pep_id == pep_id_lookup and ion_type in ["x", "y", "z"]:
+                ions.append((ion_type, ion_number))
+        return len(ions) / len(peptide)
+
+    tqdm.pandas(desc = "Annotating c-terminal sequence coverage for alpha peptide...")
+    spectronaut["PP.SequenceCoverageCTermAlpha"] = spectronaut.progress_apply(lambda row: annotate_SequenceCoverageCTerm(row, fragment_annotation, True), axis = 1)
+
+    tqdm.pandas(desc = "Annotating c-terminal sequence coverage for beta peptide...")
+    spectronaut["PP.SequenceCoverageCTermBeta"] = spectronaut.progress_apply(lambda row: annotate_SequenceCoverageCTerm(row, fragment_annotation, False), axis = 1)
+
+    tqdm.pandas(desc = "Annotating c-terminal sequence coverage for full crosslink...")
+    spectronaut["PP.SequenceCoverageCTermFull"] = spectronaut.progress_apply(lambda row: (float(row["PP.SequenceCoverageCTermAlpha"]) + float(row["PP.SequenceCoverageCTermBeta"])) / 2.0, axis = 1)
+
+    def annotate_SequenceCoverage(row: pd.Series, fragment_annotation: dict, alpha: bool) -> float:
+        #
+        #    1  2  3  4  5  6  7
+        #    P  E  P  T  I  D  E
+        #    b1 b2 b3 b4 b5 b6
+        #       y6 y5 y4 y3 y2 y1
+        #
+        #    b[x] = y[len+1-x]
+        #
+        key = get_key_spectronaut(row)
+        ion_types = fragment_annotation[key]["ion_types"]
+        peptide = str(row["PP.PeptideA"]).strip() if alpha else str(row["PP.PeptideB"]).strip()
+        pep_id_lookup = 0 if alpha else 1
+        unique_seq_positions = set()
+        for ion in ion_types:
+            pep_id = int(ion.split(";")[2])
+            ion_type = str(ion.split(";")[0]).strip()
+            ion_number = int(ion.split(";")[1])
+            if len(ion_type) != 1:
+                raise RuntimeError(f"Could not parse ion type from ion {ion}!")
+            if pep_id == pep_id_lookup:
+                if ion_type in ["a", "b", "c"]:
+                    unique_seq_positions.add(ion_number)
+                elif ion_type in ["x", "y", "z"]:
+                    unique_seq_positions.add(len(peptide) + 1 - ion_number)
+                else:
+                    raise RuntimeError(f"Found not-suppored ion type: {ion_type}")
+        return len(unique_seq_positions) / len(peptide)
+
+    tqdm.pandas(desc = "Annotating sequence coverage for alpha peptide...")
+    spectronaut["PP.SequenceCoverageAlpha"] = spectronaut.progress_apply(lambda row: annotate_SequenceCoverage(row, fragment_annotation, True), axis = 1)
+
+    tqdm.pandas(desc = "Annotating sequence coverage for beta peptide...")
+    spectronaut["PP.SequenceCoverageBeta"] = spectronaut.progress_apply(lambda row: annotate_SequenceCoverage(row, fragment_annotation, False), axis = 1)
+
+    tqdm.pandas(desc = "Annotating sequence coverage for full crosslink...")
+    spectronaut["PP.SequenceCoverageFull"] = spectronaut.progress_apply(lambda row: (float(row["PP.SequenceCoverageAlpha"]) + float(row["PP.SequenceCoverageBeta"])) / 2.0, axis = 1)
 
     spectronaut["PP.PseudoScanNumber"] = pd.Series(range(spectronaut.shape[0]))
     spectronaut["PP.Crosslinker"] = pd.Series([CROSSLINKER for i in range(spectronaut.shape[0])])
