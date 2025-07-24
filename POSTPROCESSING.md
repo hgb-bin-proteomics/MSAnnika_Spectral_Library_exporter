@@ -70,6 +70,15 @@ The following additional columns are annotated:
 - `PP.IsDecoyA`: If peptide A is a decoy hit, may be `True` or `False`
 - `PP.IsDecoyB`: If peptide B is a decoy hit, may be `True` or `False`
 - `PP.SourceScanID`: The corresponding scan number in the spectral library
+- `PP.SequenceCoverageNTermAlpha`: Sequence coverage of the alpha peptide covered by n-terminal ions (range: 0-1)
+- `PP.SequenceCoverageNTermBeta`: Sequence coverage of the beta peptide covered by n-terminal ions (range: 0-1)
+- `PP.SequenceCoverageNTermFull`: Sequence coverage of the full crosslink covered by n-terminal ions (range: 0-1)
+- `PP.SequenceCoverageCTermAlpha`: Sequence coverage of the alpha peptide covered by c-terminal ions (range: 0-1)
+- `PP.SequenceCoverageCTermBeta`: Sequence coverage of the beta peptide covered by c-terminal ions (range: 0-1)
+- `PP.SequenceCoverageCTermFull`: Sequence coverage of the full crosslink covered by c-terminal ions (range: 0-1)
+- `PP.SequenceCoverageAlpha`: Sequence coverage of the alpha peptide covered by all ions (range: 0-1)
+- `PP.SequenceCoverageBeta`: Sequence coverage of the beta peptide covered by all ions (range: 0-1)
+- `PP.SequenceCoverageFull`: Sequence coverage of the full crosslink covered by all ions (range: 0-1)
 - `PP.PseudoScanNumber`: An iterative number that acts as an ID to create pseudo CSMs
 - `PP.Crosslinker`: Name of the crosslinker
 - `PP.CrosslinkerMass`: Delta mass of the crosslinker
