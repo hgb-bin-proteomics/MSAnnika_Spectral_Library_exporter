@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.7"
+# dependencies = [
+#   "pandas",
+#   "tqdm",
+# ]
+# ///
 
 # SPECTRONAUT POST PROCESSING
 # 2025 (c) Micha Johannes Birklbauer
@@ -20,12 +27,10 @@ SPECTRONAUT_MATCH_TOLERANCE = 0.05 # match tolerance in Da
 SPECTRONAUT_FRAGMENT_MZ_COLUMN_NAME = "F.CalibratedMz" # which F Mz to use for matching
 SPECTRONAUT_CSCORE_COLUMN_NAME = "EG.Cscore" # which Cscore to use for re-soring
 
-# REQUIREMENTS
-# pip install tqdm
-# pip install pandas
-
 # import packages
 import argparse
+import os
+
 import pandas as pd
 from tqdm import tqdm
 
@@ -153,8 +158,11 @@ def generate_fragment_index(spectronaut: pd.DataFrame, index: dict) -> Dict[str,
 def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
 
     spectronaut = pd.read_csv(filename, sep = SPECTRONAUT_DELIM, low_memory = False)
+    filepath = os.path.abspath(os.path.dirname(filename))
+    
     filename_spec_lib = str(spectronaut["EG.Library"].at[0])
-    index = read_spectral_library(filename_spec_lib)
+    filepath_spec_lib = os.path.join(filepath, filename_spec_lib)
+    index = read_spectral_library(filepath_spec_lib)
 
     ## available columns in spec lib
     # COLUMN                                            EXAMPLE
