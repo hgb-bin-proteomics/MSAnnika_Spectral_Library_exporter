@@ -10,12 +10,20 @@ used with [xiFDR](https://www.rappsilberlab.org/software/xifdr/) for validation.
 
 - First you need to set a few parameters in the `post_process.py` script:
   ```python
-  CROSSLINKER = "PhoX" # name of the crosslinker
-  CROSSLINKER_MASS = 209.97181 # delta mass of the crosslinker
-  SPECTRONAUT_DELIM = "," # delimiter in Spectronaut output file, e.g. "," for comma delimited files, "\t" for tab delimited files
-  SPECTRONAUT_MATCH_TOLERANCE = 0.05 # match tolerance in Da
-  SPECTRONAUT_FRAGMENT_MZ_COLUMN_NAME = "F.CalibratedMz" # which F Mz to use for matching
-  SPECTRONAUT_CSCORE_COLUMN_NAME = "EG.Cscore" # which Cscore to use for re-soring
+   # name of the crosslinker
+  CROSSLINKER = "PhoX"
+  # delta mass of the crosslinker
+  CROSSLINKER_MASS = 209.97181
+  # delimiter in Spectronaut output file, e.g. "," for comma delimited files, "\t" for tab delimited files
+  SPECTRONAUT_DELIM = ","
+  # match tolerance in Da
+  SPECTRONAUT_MATCH_TOLERANCE = 0.05
+  # which Spectronaut Fragment Mz to use for matching
+  SPECTRONAUT_FRAGMENT_MZ_COLUMN_NAME = "F.CalibratedMz"
+  # which Cscore to use for re-soring
+  SPECTRONAUT_CSCORE_COLUMN_NAME = "EG.Cscore"
+  # which Spectral Library column to use for fragment matching (change index to 0 or 1)
+  SPECTRAL_LIBRARY_FRAGMENT_MZ_COLUMN_NAME = ["FragmentMz", "FragmentTheoMz"][0]
   ```
 - Make sure that the Spectronaut result file, and the spectral library are in the same
   directory.

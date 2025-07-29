@@ -14,8 +14,8 @@
 
 
 # version tracking
-__version = "1.2.1"
-__date = "2025-07-23"
+__version = "1.2.2"
+__date = "2025-07-29"
 
 # PARAMETERS
 
@@ -26,6 +26,7 @@ SPECTRONAUT_DELIM = "," # delimiter in Spectronaut output file, e.g. "," for com
 SPECTRONAUT_MATCH_TOLERANCE = 0.05 # match tolerance in Da
 SPECTRONAUT_FRAGMENT_MZ_COLUMN_NAME = "F.CalibratedMz" # which F Mz to use for matching
 SPECTRONAUT_CSCORE_COLUMN_NAME = "EG.Cscore" # which Cscore to use for re-soring
+SPECTRAL_LIBRARY_FRAGMENT_MZ_COLUMN_NAME = ["FragmentMz", "FragmentTheoMz"][0] # which Spectral Library column to use for fragment matching
 
 # import packages
 import argparse
@@ -84,7 +85,7 @@ def read_spectral_library(filename: str) -> Dict[str, Dict[str, Any]]:
             else:
                 index[key]["total_ions_b"] += 1
 
-            ion_mz = get_mz_key(float(row["FragmentMz"]))
+            ion_mz = get_mz_key(float(row[SPECTRAL_LIBRARY_FRAGMENT_MZ_COLUMN_NAME]))
             if ion_mz in index[key]["ions"]:
                 index[key]["ions"][ion_mz].append(row)
             else:
@@ -93,7 +94,7 @@ def read_spectral_library(filename: str) -> Dict[str, Dict[str, Any]]:
             index[key] = {"rows": [row],
                           "total_ions_a": 1 if int(row["FragmentPepId"]) == 0 else 0,
                           "total_ions_b": 1 if int(row["FragmentPepId"]) == 1 else 0,
-                          "ions": {get_mz_key(float(row["FragmentMz"])): [row]}}
+                          "ions": {get_mz_key(float(row[SPECTRAL_LIBRARY_FRAGMENT_MZ_COLUMN_NAME])): [row]}}
 
     return index
 
@@ -159,7 +160,7 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
 
     spectronaut = pd.read_csv(filename, sep = SPECTRONAUT_DELIM, low_memory = False)
     filepath = os.path.abspath(os.path.dirname(filename))
-    
+
     filename_spec_lib = str(spectronaut["EG.Library"].at[0])
     filepath_spec_lib = os.path.join(filepath, filename_spec_lib)
     index = read_spectral_library(filepath_spec_lib)

@@ -6,8 +6,8 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.4.10"
-__date = "2025-03-26"
+__version = "1.4.11"
+__date = "2025-07-29"
 
 # REQUIREMENTS
 # pip install pandas
@@ -487,12 +487,14 @@ def get_fragments(row: pd.Series,
     theoretical_fragments = generate_theoretical_fragments(sequence, modifications_processed, ion_types, max_charge)
 
     matched_fragments = dict()
+    matched_fragments_theo = dict()
 
     # match fragments
     for peak_mz in spectrum["peaks"].keys():
         for fragment in theoretical_fragments.keys():
             if round(peak_mz, 4) < round(fragment + match_tolerance, 4) and round(peak_mz, 4) > round(fragment - match_tolerance, 4):
                 matched_fragments[peak_mz] = theoretical_fragments[fragment]
+                matched_fragments_theo[peak_mz] = fragment
                 break
 
     # get annotations
@@ -502,6 +504,7 @@ def get_fragments(row: pd.Series,
         fragment_number = int(matched_fragments[match].split("+")[0][1:])
         fragment_pep_id = 0 if alpha else 1
         fragment_mz = match
+        fragment_theo_mz = matched_fragments_theo[match]
         fragment_rel_intensity = float(spectrum["peaks"][match] / spectrum["max_intensity"])
         fragment_loss_type = ""
         fragment_contains_xl = check_if_xl_in_frag(row, alpha, fragment_type, matched_fragments[match].split(":")[1].strip(), crosslinker)
@@ -511,6 +514,7 @@ def get_fragments(row: pd.Series,
                           "FragmentNumber": fragment_number,
                           "FragmentPepId": fragment_pep_id,
                           "FragmentMz": fragment_mz,
+                          "FragmentTheoMz": fragment_theo_mz,
                           "RelativeIntensity": fragment_rel_intensity,
                           "FragmentLossType": fragment_loss_type,
                           "CLContainingFragment": fragment_contains_xl,
@@ -797,6 +801,7 @@ def get_decoy_fragments(decoy_csm: pd.Series,
                                     "FragmentNumber": fragment_number,
                                     "FragmentPepId": fragment_pep_id,
                                     "FragmentMz": fragment_mz,
+                                    "FragmentTheoMz": fragment_mz,
                                     "RelativeIntensity": fragment_rel_intensity,
                                     "FragmentLossType": fragment_loss_type,
                                     "CLContainingFragment": fragment_contains_xl,
@@ -1111,6 +1116,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     FragmentNumber_s = list()
     FragmentPepId_s = list()
     FragmentMz_s = list()
+    FragmentTheoMz_s = list()
     RelativeIntensity_s = list()
     FragmentLossType_s = list()
     CLContainingFragment_s = list()
@@ -1144,6 +1150,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     FragmentNumber_s_decoy = list()
     FragmentPepId_s_decoy = list()
     FragmentMz_s_decoy = list()
+    FragmentTheoMz_s_decoy = list()
     RelativeIntensity_s_decoy = list()
     FragmentLossType_s_decoy = list()
     CLContainingFragment_s_decoy = list()
@@ -1177,6 +1184,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     FragmentNumber_s_decoy_dt = list()
     FragmentPepId_s_decoy_dt = list()
     FragmentMz_s_decoy_dt = list()
+    FragmentTheoMz_s_decoy_dt = list()
     RelativeIntensity_s_decoy_dt = list()
     FragmentLossType_s_decoy_dt = list()
     CLContainingFragment_s_decoy_dt = list()
@@ -1210,6 +1218,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     FragmentNumber_s_decoy_td = list()
     FragmentPepId_s_decoy_td = list()
     FragmentMz_s_decoy_td = list()
+    FragmentTheoMz_s_decoy_td = list()
     RelativeIntensity_s_decoy_td = list()
     FragmentLossType_s_decoy_td = list()
     CLContainingFragment_s_decoy_td = list()
@@ -1271,6 +1280,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 FragmentNumber_s.append(frag["FragmentNumber"])
                 FragmentPepId_s.append(frag["FragmentPepId"])
                 FragmentMz_s.append(frag["FragmentMz"])
+                FragmentTheoMz_s.append(frag["FragmentTheoMz"])
                 RelativeIntensity_s.append(frag["RelativeIntensity"])
                 FragmentLossType_s.append(frag["FragmentLossType"])
                 CLContainingFragment_s.append(frag["CLContainingFragment"])
@@ -1333,6 +1343,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 FragmentNumber_s_decoy.append(decoy_frag["FragmentNumber"])
                 FragmentPepId_s_decoy.append(decoy_frag["FragmentPepId"])
                 FragmentMz_s_decoy.append(decoy_frag["FragmentMz"])
+                FragmentTheoMz_s_decoy.append(decoy_frag["FragmentTheoMz"])
                 RelativeIntensity_s_decoy.append(decoy_frag["RelativeIntensity"])
                 FragmentLossType_s_decoy.append(decoy_frag["FragmentLossType"])
                 CLContainingFragment_s_decoy.append(decoy_frag["CLContainingFragment"])
@@ -1396,6 +1407,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 FragmentNumber_s_decoy_dt.append(decoy_frag_dt["FragmentNumber"])
                 FragmentPepId_s_decoy_dt.append(decoy_frag_dt["FragmentPepId"])
                 FragmentMz_s_decoy_dt.append(decoy_frag_dt["FragmentMz"])
+                FragmentTheoMz_s_decoy_dt.append(decoy_frag_dt["FragmentTheoMz"])
                 RelativeIntensity_s_decoy_dt.append(decoy_frag_dt["RelativeIntensity"])
                 FragmentLossType_s_decoy_dt.append(decoy_frag_dt["FragmentLossType"])
                 CLContainingFragment_s_decoy_dt.append(decoy_frag_dt["CLContainingFragment"])
@@ -1459,6 +1471,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 FragmentNumber_s_decoy_td.append(decoy_frag_td["FragmentNumber"])
                 FragmentPepId_s_decoy_td.append(decoy_frag_td["FragmentPepId"])
                 FragmentMz_s_decoy_td.append(decoy_frag_td["FragmentMz"])
+                FragmentTheoMz_s_decoy_td.append(decoy_frag_td["FragmentTheoMz"])
                 RelativeIntensity_s_decoy_td.append(decoy_frag_td["RelativeIntensity"])
                 FragmentLossType_s_decoy_td.append(decoy_frag_td["FragmentLossType"])
                 CLContainingFragment_s_decoy_td.append(decoy_frag_td["CLContainingFragment"])
@@ -1496,6 +1509,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "FragmentNumber": FragmentNumber_s,
                "FragmentPepId": FragmentPepId_s,
                "FragmentMz": FragmentMz_s,
+               "FragmentTheoMz": FragmentTheoMz_s,
                "RelativeIntensity": RelativeIntensity_s,
                "FragmentLossType": FragmentLossType_s,
                "CLContainingFragment": CLContainingFragment_s,
@@ -1530,6 +1544,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "FragmentNumber": FragmentNumber_s_decoy,
                "FragmentPepId": FragmentPepId_s_decoy,
                "FragmentMz": FragmentMz_s_decoy,
+               "FragmentTheoMz": FragmentTheoMz_s_decoy,
                "RelativeIntensity": RelativeIntensity_s_decoy,
                "FragmentLossType": FragmentLossType_s_decoy,
                "CLContainingFragment": CLContainingFragment_s_decoy,
@@ -1564,6 +1579,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "FragmentNumber": FragmentNumber_s_decoy_dt,
                "FragmentPepId": FragmentPepId_s_decoy_dt,
                "FragmentMz": FragmentMz_s_decoy_dt,
+               "FragmentTheoMz": FragmentTheoMz_s_decoy_dt,
                "RelativeIntensity": RelativeIntensity_s_decoy_dt,
                "FragmentLossType": FragmentLossType_s_decoy_dt,
                "CLContainingFragment": CLContainingFragment_s_decoy_dt,
@@ -1598,6 +1614,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                "FragmentNumber": FragmentNumber_s_decoy_td,
                "FragmentPepId": FragmentPepId_s_decoy_td,
                "FragmentMz": FragmentMz_s_decoy_td,
+               "FragmentTheoMz": FragmentTheoMz_s_decoy_td,
                "RelativeIntensity": RelativeIntensity_s_decoy_td,
                "FragmentLossType": FragmentLossType_s_decoy_td,
                "CLContainingFragment": CLContainingFragment_s_decoy_td,
