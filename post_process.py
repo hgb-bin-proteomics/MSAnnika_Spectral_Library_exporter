@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#
 # /// script
 # requires-python = ">=3.7"
 # dependencies = [
@@ -484,6 +485,35 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
 
     tqdm.pandas(desc = "Annotating sequence coverage for full crosslink...")
     spectronaut["PP.SequenceCoverageFull"] = spectronaut.progress_apply(lambda row: (float(row["PP.SequenceCoverageAlpha"]) + float(row["PP.SequenceCoverageBeta"])) / 2.0, axis = 1)
+
+    def annotate_UniScore(row: pd.Series, fragment_annotation: dict, alpha: bool) -> float:
+        #
+        #    1  2  3  4  5  6  7
+        #    P  E  P  T  I  D  E
+        #    b1 b2 b3 b4 b5 b6
+        #       y6 y5 y4 y3 y2 y1
+        #
+        #    b[x] = y[len+1-x]
+        #
+        key = get_key_spectronaut(row)
+        ion_types = fragment_annotation[key]["ion_types"]
+        peptide = str(row["PP.PeptideA"]).strip() if alpha else str(row["PP.PeptideB"]).strip()
+        pep_id_lookup = 0 if alpha else 1
+        unique_seq_positions = set()
+        for ion in ion_types:
+            pep_id = int(ion.split(";")[2])
+            ion_type = str(ion.split(";")[0]).strip()
+            ion_number = int(ion.split(";")[1])
+            if len(ion_type) != 1:
+                raise RuntimeError(f"Could not parse ion type from ion {ion}!")
+            if pep_id == pep_id_lookup:
+                if ion_type in ["a", "b", "c"]:
+                    unique_seq_positions.add(ion_number)
+                elif ion_type in ["x", "y", "z"]:
+                    unique_seq_positions.add(len(peptide) + 1 - ion_number)
+                else:
+                    raise RuntimeError(f"Found not-suppored ion type: {ion_type}")
+        return len(unique_seq_positions) / len(peptide)
 
     spectronaut["PP.PseudoScanNumber"] = pd.Series(range(spectronaut.shape[0]))
     spectronaut["PP.Crosslinker"] = pd.Series([CROSSLINKER for i in range(spectronaut.shape[0])])
