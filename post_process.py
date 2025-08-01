@@ -112,6 +112,7 @@ def generate_fragment_index(spectronaut: pd.DataFrame, index: dict) -> Dict[str,
             fragment_annotation[key] = {"matched_number_ions_a": 0,
                                         "matched_number_ions_b": 0,
                                         "fragments": list(),
+                                        "fragments_rows": list(),
                                         "ion_types": set()}
         # current fragment ion from spectronaut row
         ion = float(row[SPECTRONAUT_FRAGMENT_MZ_COLUMN_NAME])
@@ -149,6 +150,7 @@ def generate_fragment_index(spectronaut: pd.DataFrame, index: dict) -> Dict[str,
                             fragment_annotation[key]["ion_types"].add(
                                 f"{current_ion['FragmentType']};{current_ion['FragmentNumber']};1"
                             )
+                    fragment_annotation[key]["fragments_rows"].append(current_ion)
             # we do not break here, because we want to check the rest of the spec lib ions in case the spectronaut ion matches
             # for both peptide a and peptide b
         if not matched:
