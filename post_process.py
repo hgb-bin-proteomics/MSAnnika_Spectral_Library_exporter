@@ -489,6 +489,7 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     spectronaut["PP.SequenceCoverageFull"] = spectronaut.progress_apply(lambda row: (float(row["PP.SequenceCoverageAlpha"]) + float(row["PP.SequenceCoverageBeta"])) / 2.0, axis = 1)
 
     def annotate_UniScore(row: pd.Series, fragment_annotation: dict, alpha: bool) -> float:
+        # TODO
         #
         #    1  2  3  4  5  6  7
         #    P  E  P  T  I  D  E
@@ -516,6 +517,10 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
                 else:
                     raise RuntimeError(f"Found not-suppored ion type: {ion_type}")
         return len(unique_seq_positions) / len(peptide)
+
+    def annotate_CrosslinkFragments(row: pd.Series, fragment_annotation: dict, alpha: bool) -> int:
+        # TODO
+        return 0
 
     spectronaut["PP.PseudoScanNumber"] = pd.Series(range(spectronaut.shape[0]))
     spectronaut["PP.Crosslinker"] = pd.Series([CROSSLINKER for i in range(spectronaut.shape[0])])
