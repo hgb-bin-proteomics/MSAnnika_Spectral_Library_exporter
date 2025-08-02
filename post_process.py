@@ -16,7 +16,7 @@
 
 
 # version tracking
-__version = "1.2.4"
+__version = "1.2.5"
 __date = "2025-08-02"
 
 # PARAMETERS
@@ -59,8 +59,9 @@ def get_kmers(unique_seq_positions: set) -> list:
             if sorted_pos[i + 1] == pos + 1:
                 current_kmer += 1
             else:
-                kmers.append(current_kmer)
-                current_kmer = 1
+                if current_kmer > 1:
+                    kmers.append(current_kmer)
+                    current_kmer = 1
         else:
             if current_kmer > 1:
                 kmers.append(current_kmer)
