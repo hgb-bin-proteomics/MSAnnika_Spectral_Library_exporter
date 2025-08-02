@@ -27,6 +27,7 @@ jobs:
     - name: Copy scripts and data to "/tests"
       run: |
         cp create_spectral_library.py tests
+        cp post_process.py tests
         cp config.py tests
         cp data/test_filter.xlsx .
         cp data/test_reverse_mods.xlsx .

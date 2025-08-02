@@ -87,6 +87,17 @@ The following additional columns are annotated:
 - `PP.SequenceCoverageAlpha`: Sequence coverage of the alpha peptide covered by all ions (range: 0-1)
 - `PP.SequenceCoverageBeta`: Sequence coverage of the beta peptide covered by all ions (range: 0-1)
 - `PP.SequenceCoverageFull`: Sequence coverage of the full crosslink covered by all ions (range: 0-1)
+- `PP.UniScoreAlpha`: The [UniScore](https://doi.org/10.1016/j.mcpro.2025.101010) of the alpha peptide
+- `PP.UniScoreBeta`: The [UniScore](https://doi.org/10.1016/j.mcpro.2025.101010) of the beta peptide
+- `PP.UniScoreFull`: The [UniScore](https://doi.org/10.1016/j.mcpro.2025.101010) of the crosslink, which is the minimum UniScore
+- `PP.PepLenAlpha`: The length of the alpha peptide (number of amino acids)
+- `PP.PepLenBeta`: The length of the beta peptide (number of amino acids)
+- `PP.NumberCrosslinkFragmentsAlpha`: The number of fragment ions that contain a crosslink modification for the alpha peptide
+- `PP.NumberCrosslinkFragmentsBeta`: The number of fragment ions that contain a crosslink modification for the beta peptide
+- `PP.NumberCrosslinkFragmentsFull`: The number of fragment ions that contain a crosslink modification for the full crosslink
+- `PP.NormalizedCrosslinkFragmentsAlpha`: `PP.NumberCrosslinkFragmentsAlpha` but normalized by peptide length
+- `PP.NormalizedCrosslinkFragmentsBeta`: `PP.NumberCrosslinkFragmentsBeta` but normalized by peptide length
+- `PP.NormalizedCrosslinkFragmentsFull`: `PP.NumberCrosslinkFragmentsFull` but normalized by the sum of peptide lengths
 - `PP.PseudoScanNumber`: An iterative number that acts as an ID to create pseudo CSMs
 - `PP.Crosslinker`: Name of the crosslinker
 - `PP.CrosslinkerMass`: Delta mass of the crosslinker

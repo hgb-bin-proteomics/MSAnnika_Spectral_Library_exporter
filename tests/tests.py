@@ -352,3 +352,19 @@ def test12_spectral_library_exporter():
             assert float(row["Combined Score"]) == pytest.approx(8.71)
             checked += 1
     assert checked == 2
+
+# check kmers calculation
+def test13_test_kmers():
+
+    from post_process import get_kmers
+
+    unique_seq_positions = {1,2,3,7,8,11,10,15,16,17,18}
+    assert get_kmers(unique_seq_positions) == [3,2,2,4]
+    unique_seq_positions = {1,3,5}
+    assert get_kmers(unique_seq_positions) == []
+    unique_seq_positions = {0,1}
+    assert get_kmers(unique_seq_positions) == [2]
+    unique_seq_positions = {0,1,3,7,9}
+    assert get_kmers(unique_seq_positions) == [2]
+    unique_seq_positions = {0,1,3,7,8,9,15}
+    assert get_kmers(unique_seq_positions) == [2,3]
