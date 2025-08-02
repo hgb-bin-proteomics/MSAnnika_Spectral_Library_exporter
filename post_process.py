@@ -15,7 +15,7 @@
 
 
 # version tracking
-__version = "1.2.3"
+__version = "1.2.4"
 __date = "2025-08-02"
 
 # PARAMETERS
@@ -48,6 +48,36 @@ def get_mz_key(mz: float) -> float:
 
 def get_fragment_key(mz: float) -> str:
     return f"{round(mz, 4):.4f}"
+
+def get_kmers(unique_seq_positions: set) -> list:
+    sorted_pos = sorted(unique_seq_positions)
+    kmers = list()
+    current_kmer = 1
+    for i, pos in enumerate(sorted_pos):
+        if i + 1 < len(unique_seq_positions):
+            if sorted_pos[i + 1] == pos + 1:
+                current_kmer += 1
+            else:
+                kmers.append(current_kmer)
+                current_kmer = 1
+        else:
+            if current_kmer > 1:
+                kmers.append(current_kmer)
+    return kmers
+
+def get_bool_from_value(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    elif isinstance(value, int):
+        if value in [0, 1]:
+            return bool(value)
+        else:
+            raise ValueError(f"Cannot parse bool value from the given input {value}.")
+    elif isinstance(value, str):
+        return "t" in value.lower()
+    else:
+        raise ValueError(f"Cannot parse bool value from the given input {value}.")
+    return False
 
 def get_key_spec_lib(row: pd.Series) -> str:
     # ModifiedPeptide
@@ -489,22 +519,6 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     tqdm.pandas(desc = "Annotating sequence coverage for full crosslink...")
     spectronaut["PP.SequenceCoverageFull"] = spectronaut.progress_apply(lambda row: (float(row["PP.SequenceCoverageAlpha"]) + float(row["PP.SequenceCoverageBeta"])) / 2.0, axis = 1)
 
-    def get_kmers(unique_seq_positions: set) -> list:
-        sorted_pos = sorted(unique_seq_positions)
-        kmers = list()
-        current_kmer = 1
-        for i, pos in enumerate(sorted_pos):
-            if i + 1 < len(unique_seq_positions):
-                if sorted_pos[i + 1] == pos + 1:
-                    current_kmer += 1
-                else:
-                    kmers.append(current_kmer)
-                    current_kmer = 1
-            else:
-                if current_kmer > 1:
-                    kmers.append(current_kmer)
-        return kmers
-
     def annotate_UniScore(row: pd.Series, fragment_annotation: dict, alpha: bool) -> float:
         key = get_key_spectronaut(row)
         ion_types = fragment_annotation[key]["ion_types"]
@@ -551,7 +565,7 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
         pep_id_lookup = 0 if alpha else 1
         nr_of_crosslink_fragments = 0
         for ion in ions_as_full_spec_lib_rows:
-            if ion["FragmentPepId"] == pep_id_lookup and ion["CLContainingFragment "]:
+            if ion["FragmentPepId"] == pep_id_lookup and get_bool_from_value(ion["CLContainingFragment"]):
                 nr_of_crosslink_fragments += 1
         return nr_of_crosslink_fragments
 
@@ -562,7 +576,7 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     spectronaut["PP.NumberCrosslinkFragmentsBeta"] = spectronaut.progress_apply(lambda row: annotate_CrosslinkFragments(row, fragment_annotation, False), axis = 1)
 
     tqdm.pandas(desc = "Annotating number of crosslink fragments for full crosslinks...")
-    spectronaut["PP.NumberCrosslinkFragmentsFull"] = spectronaut.progress_apply(lambda row: row["PP.NumberCrosslinkFragmentsAlpha"]) + row["PP.NumberCrosslinkFragmentsBeta"], axis = 1)
+    spectronaut["PP.NumberCrosslinkFragmentsFull"] = spectronaut.progress_apply(lambda row: row["PP.NumberCrosslinkFragmentsAlpha"] + row["PP.NumberCrosslinkFragmentsBeta"], axis = 1)
 
     tqdm.pandas(desc = "Annotating number of crosslink fragments (normalized) for alpha peptide...")
     spectronaut["PP.NormalizedCrosslinkFragmentsAlpha"] = spectronaut.progress_apply(lambda row: row["PP.NumberCrosslinkFragmentsAlpha"] / row["PP.PepLenAlpha"], axis = 1)
@@ -571,7 +585,7 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     spectronaut["PP.NormalizedCrosslinkFragmentsBeta"] = spectronaut.progress_apply(lambda row: row["PP.NumberCrosslinkFragmentsBeta"] / row["PP.PepLenBeta"], axis = 1)
 
     tqdm.pandas(desc = "Annotating number of crosslink fragments (normalized) for full crosslinks...")
-    spectronaut["PP.NormalizedCrosslinkFragmentsFull"] = spectronaut.progress_apply(lambda row: (row["PP.NumberCrosslinkFragmentsAlpha"]) + row["PP.NumberCrosslinkFragmentsBeta"]) / (row["PP.PepLenAlpha"] + row["PP.PepLenBeta"]), axis = 1)
+    spectronaut["PP.NormalizedCrosslinkFragmentsFull"] = spectronaut.progress_apply(lambda row: (row["PP.NumberCrosslinkFragmentsAlpha"] + row["PP.NumberCrosslinkFragmentsBeta"]) / (row["PP.PepLenAlpha"] + row["PP.PepLenBeta"]), axis = 1)
 
     spectronaut["PP.PseudoScanNumber"] = pd.Series(range(spectronaut.shape[0]))
     spectronaut["PP.Crosslinker"] = pd.Series([CROSSLINKER for i in range(spectronaut.shape[0])])
