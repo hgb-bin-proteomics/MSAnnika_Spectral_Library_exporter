@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+#
+# /// script
+# requires-python = ">=3.7"
+# dependencies = [
+#   "pandas",
+#   "openpyxl",
+#   "tqdm",
+#   "pyteomics",
+# ]
+# ///
 
 # MS ANNIKA SPECTRAL LIBRARY EXPORTER
 # 2023 (c) Micha Johannes Birklbauer
