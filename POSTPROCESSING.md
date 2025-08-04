@@ -95,9 +95,9 @@ The following additional columns are annotated:
 - `PP.NumberCrosslinkFragmentsAlpha`: The number of fragment ions that contain a crosslink modification for the alpha peptide
 - `PP.NumberCrosslinkFragmentsBeta`: The number of fragment ions that contain a crosslink modification for the beta peptide
 - `PP.NumberCrosslinkFragmentsFull`: The number of fragment ions that contain a crosslink modification for the full crosslink
-- `PP.NormalizedCrosslinkFragmentsAlpha`: `PP.NumberCrosslinkFragmentsAlpha` but normalized by peptide length
-- `PP.NormalizedCrosslinkFragmentsBeta`: `PP.NumberCrosslinkFragmentsBeta` but normalized by peptide length
-- `PP.NormalizedCrosslinkFragmentsFull`: `PP.NumberCrosslinkFragmentsFull` but normalized by the sum of peptide lengths
+- `PP.NormalizedCrosslinkFragmentsAlpha`: `PP.NumberCrosslinkFragmentsAlpha` but normalized by total ion count
+- `PP.NormalizedCrosslinkFragmentsBeta`: `PP.NumberCrosslinkFragmentsBeta` but normalized by total ion count
+- `PP.NormalizedCrosslinkFragmentsFull`: `PP.NumberCrosslinkFragmentsFull` but normalized by the sum of total ion counts
 - `PP.PseudoScanNumber`: An iterative number that acts as an ID to create pseudo CSMs
 - `PP.Crosslinker`: Name of the crosslinker
 - `PP.CrosslinkerMass`: Delta mass of the crosslinker
