@@ -15,8 +15,8 @@
 
 
 # version tracking
-__version = "1.2.5"
-__date = "2025-08-02"
+__version = "1.2.6"
+__date = "2025-08-04"
 
 # PARAMETERS
 
@@ -580,13 +580,13 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     spectronaut["PP.NumberCrosslinkFragmentsFull"] = spectronaut.progress_apply(lambda row: row["PP.NumberCrosslinkFragmentsAlpha"] + row["PP.NumberCrosslinkFragmentsBeta"], axis = 1)
 
     tqdm.pandas(desc = "Annotating number of crosslink fragments (normalized) for alpha peptide...")
-    spectronaut["PP.NormalizedCrosslinkFragmentsAlpha"] = spectronaut.progress_apply(lambda row: row["PP.NumberCrosslinkFragmentsAlpha"] / row["PP.PepLenAlpha"], axis = 1)
+    spectronaut["PP.NormalizedCrosslinkFragmentsAlpha"] = spectronaut.progress_apply(lambda row: row["PP.NumberCrosslinkFragmentsAlpha"] / row["PP.TotalIonsA"], axis = 1)
 
     tqdm.pandas(desc = "Annotating number of crosslink fragments (normalized) for beta peptide...")
-    spectronaut["PP.NormalizedCrosslinkFragmentsBeta"] = spectronaut.progress_apply(lambda row: row["PP.NumberCrosslinkFragmentsBeta"] / row["PP.PepLenBeta"], axis = 1)
+    spectronaut["PP.NormalizedCrosslinkFragmentsBeta"] = spectronaut.progress_apply(lambda row: row["PP.NumberCrosslinkFragmentsBeta"] / row["PP.TotalIonsB"], axis = 1)
 
     tqdm.pandas(desc = "Annotating number of crosslink fragments (normalized) for full crosslinks...")
-    spectronaut["PP.NormalizedCrosslinkFragmentsFull"] = spectronaut.progress_apply(lambda row: (row["PP.NumberCrosslinkFragmentsAlpha"] + row["PP.NumberCrosslinkFragmentsBeta"]) / (row["PP.PepLenAlpha"] + row["PP.PepLenBeta"]), axis = 1)
+    spectronaut["PP.NormalizedCrosslinkFragmentsFull"] = spectronaut.progress_apply(lambda row: (row["PP.NumberCrosslinkFragmentsAlpha"] + row["PP.NumberCrosslinkFragmentsBeta"]) / (row["PP.TotalIonsA"] + row["PP.TotalIonsB"]), axis = 1)
 
     spectronaut["PP.PseudoScanNumber"] = pd.Series(range(spectronaut.shape[0]))
     spectronaut["PP.Crosslinker"] = pd.Series([CROSSLINKER for i in range(spectronaut.shape[0])])
