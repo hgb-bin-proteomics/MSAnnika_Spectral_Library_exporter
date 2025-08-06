@@ -31,3 +31,6 @@ MATCH_TOLERANCE = 0.02
 iRT_PARAMS = {"iRT_m": 1.3066, "iRT_t": 29.502}
 # regex pattern used for parsing scan number from the spectrum title
 PARSER_PATTERN = "\\.\\d+\\."
+# Only take the best CSM per unique precursor? This should be false if you want to create
+# a consensus spectral library, otherwise true!
+GROUP_PRECURSORS = True

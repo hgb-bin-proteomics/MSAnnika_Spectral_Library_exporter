@@ -16,8 +16,8 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.4.11"
-__date = "2025-07-29"
+__version = "1.4.12"
+__date = "2025-08-06"
 
 # REQUIREMENTS
 # pip install pandas
@@ -38,6 +38,7 @@ from config import MATCH_TOLERANCE
 from config import iRT_PARAMS
 from config import ORGANISM
 from config import PARSER_PATTERN
+from config import GROUP_PRECURSORS
 
 ######################
 
@@ -1066,6 +1067,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
          match_tolerance: float = MATCH_TOLERANCE,
          iRT_m: float = iRT_PARAMS["iRT_m"],
          iRT_t: float = iRT_PARAMS["iRT_t"],
+         group_precursors: bool = GROUP_PRECURSORS,
          is_streamlit: bool = False,
          save_output: bool = True) -> Dict[str, pd.DataFrame]:
 
@@ -1098,8 +1100,13 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
             raw_csms.to_excel(csms_file + ".converted.xlsx", index = False)
     print("INFO: Done reading CSMs! Filtering for unique residue pairs...")
 
-    csms = filter_df_for_unique_residue_pairs(raw_csms)
-    print("INFO: Done filtering for unique residue pairs! Starting spectral library creation...")
+    if group_precursors:
+        csms = filter_df_for_unique_residue_pairs(raw_csms)
+        print("INFO: Done filtering for unique residue pairs! Starting spectral library creation...")
+    else:
+        csms = raw_csms
+        print("INFO: Skipping step. Please create consensus library post spectral library creation!")
+        print("INFO: Starting spectral library creation...")
 
     # columns
     linkId_s = list()
