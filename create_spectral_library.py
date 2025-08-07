@@ -1105,8 +1105,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         print("INFO: Done filtering for unique residue pairs! Starting spectral library creation...")
     else:
         csms = raw_csms
-        print("INFO: Skipping step. Please create consensus library post spectral library creation!")
-        print("INFO: Starting spectral library creation...")
+        print("INFO: Not filtering for unique residue pairs! Starting spectral library creation...")
 
     # columns
     linkId_s = list()
