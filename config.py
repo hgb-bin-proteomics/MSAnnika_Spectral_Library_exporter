@@ -31,3 +31,5 @@ MATCH_TOLERANCE = 0.02
 iRT_PARAMS = {"iRT_m": 1.3066, "iRT_t": 29.502}
 # regex pattern used for parsing scan number from the spectrum title
 PARSER_PATTERN = "\\.\\d+\\."
+# only take the best CSM per unique peptidoform and charge (True) or not (False)
+GROUP_PRECURSORS = True

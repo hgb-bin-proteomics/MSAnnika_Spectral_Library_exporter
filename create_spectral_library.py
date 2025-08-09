@@ -16,13 +16,14 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.4.11"
-__date = "2025-07-29"
+__version = "1.4.12"
+__date = "2025-08-06"
 
 # REQUIREMENTS
 # pip install pandas
 # pip install openpyxl
 # pip install pyteomics
+# pip install tqdm
 
 ##### PARAMETERS #####
 
@@ -38,12 +39,14 @@ from config import MATCH_TOLERANCE
 from config import iRT_PARAMS
 from config import ORGANISM
 from config import PARSER_PATTERN
+from config import GROUP_PRECURSORS
 
 ######################
 
 # import packages
 import re
 import pandas as pd
+from tqdm import tqdm
 from pyteomics import mgf, mass
 
 from typing import Dict
@@ -290,9 +293,11 @@ def read_multiple_spectra(filenames: List[str]) -> Dict[str, Dict[int, Dict]]:
 
     result_dict = dict()
 
-    for filename in filenames:
+    for i, filename in enumerate(filenames):
         current_spectra_file = ".".join(filename.split(".")[:-1]).strip()
         result_dict[current_spectra_file] = read_spectra(filename)
+        print(f"INFO: Read all spectra from file {filename}.")
+        print(f"INFO: Read {i + 1}/{len(filenames)} files...")
 
     return result_dict
 
@@ -1066,15 +1071,16 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
          match_tolerance: float = MATCH_TOLERANCE,
          iRT_m: float = iRT_PARAMS["iRT_m"],
          iRT_t: float = iRT_PARAMS["iRT_t"],
+         group_precursors: bool = GROUP_PRECURSORS,
          is_streamlit: bool = False,
          save_output: bool = True) -> Dict[str, pd.DataFrame]:
 
     if is_streamlit:
-        print("INFO: Creating spectral library with input files:\nSpectra: " +
+        print("INFO: Creating spectral library with input files:\nSpectra:\n" +
               "\n".join([spectrum_file.name for spectrum_file in spectra_file]) +
               "\nCSMs: " + str(csms_file.name))
     else:
-        print("INFO: Creating spectral library with input files:\nSpectra: " + "\n".join(spectra_file) + "\nCSMs: " + csms_file)
+        print("INFO: Creating spectral library with input files:\nSpectra:\n" + "\n".join(spectra_file) + "\nCSMs: " + csms_file)
     print("INFO: Using the following modifications:")
     print(modifications)
     print("INFO: Using the following ion types:")
@@ -1098,8 +1104,12 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
             raw_csms.to_excel(csms_file + ".converted.xlsx", index = False)
     print("INFO: Done reading CSMs! Filtering for unique residue pairs...")
 
-    csms = filter_df_for_unique_residue_pairs(raw_csms)
-    print("INFO: Done filtering for unique residue pairs! Starting spectral library creation...")
+    if group_precursors:
+        csms = filter_df_for_unique_residue_pairs(raw_csms)
+        print("INFO: Done filtering for unique residue pairs! Starting spectral library creation...")
+    else:
+        csms = raw_csms
+        print("INFO: Not filtering for unique residue pairs! Starting spectral library creation...")
 
     # columns
     linkId_s = list()
@@ -1238,7 +1248,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     Peptide_Positions_s_decoy_td = list()
 
     # process CSMs
-    for i, row in csms.iterrows():
+    for i, row in tqdm(csms.iterrows(), total=csms.shape[0], desc="INFO: Processing CSMs..."):
         # target
         link_Id = get_linkId(row)
         ProteinID = get_ProteinID(row)
@@ -1490,9 +1500,6 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 Decoy_Type_s_decoy_td.append("TD")
                 Peptide_Positions_s_decoy_td.append(peptide_positions_str)
                 decoy_frag_mzs_td.append(decoy_frag_td["FragmentMz"])
-
-        if (i + 1) % 100 == 0:
-            print("INFO: Processed " + str(i + 1) + " CSMs in total...")
 
     # generate dataframe
     tt_dict = {"linkId": linkId_s,
