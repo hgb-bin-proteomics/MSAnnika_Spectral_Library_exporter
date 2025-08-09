@@ -23,6 +23,7 @@ __date = "2025-08-06"
 # pip install pandas
 # pip install openpyxl
 # pip install pyteomics
+# pip install tqdm
 
 ##### PARAMETERS #####
 
@@ -45,6 +46,7 @@ from config import GROUP_PRECURSORS
 # import packages
 import re
 import pandas as pd
+from tqdm import tqdm
 from pyteomics import mgf, mass
 
 from typing import Dict
@@ -1244,7 +1246,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     Peptide_Positions_s_decoy_td = list()
 
     # process CSMs
-    for i, row in csms.iterrows():
+    for i, row in tqdm(csms.iterrows(), total=csms.shape[0], desc="INFO: Processing CSMs..."):
         # target
         link_Id = get_linkId(row)
         ProteinID = get_ProteinID(row)
@@ -1496,9 +1498,6 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
                 Decoy_Type_s_decoy_td.append("TD")
                 Peptide_Positions_s_decoy_td.append(peptide_positions_str)
                 decoy_frag_mzs_td.append(decoy_frag_td["FragmentMz"])
-
-        if (i + 1) % 100 == 0:
-            print("INFO: Processed " + str(i + 1) + " CSMs in total...")
 
     # generate dataframe
     tt_dict = {"linkId": linkId_s,
