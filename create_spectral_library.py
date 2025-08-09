@@ -293,9 +293,11 @@ def read_multiple_spectra(filenames: List[str]) -> Dict[str, Dict[int, Dict]]:
 
     result_dict = dict()
 
-    for filename in filenames:
+    for i, filename in enumerate(filenames):
         current_spectra_file = ".".join(filename.split(".")[:-1]).strip()
         result_dict[current_spectra_file] = read_spectra(filename)
+        print(f"INFO: Read all spectra from file {filename}.")
+        print(f"INFO: Read {i + 1}/{len(filenames)} files...")
 
     return result_dict
 
@@ -1074,11 +1076,11 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
          save_output: bool = True) -> Dict[str, pd.DataFrame]:
 
     if is_streamlit:
-        print("INFO: Creating spectral library with input files:\nSpectra: " +
+        print("INFO: Creating spectral library with input files:\nSpectra:\n" +
               "\n".join([spectrum_file.name for spectrum_file in spectra_file]) +
               "\nCSMs: " + str(csms_file.name))
     else:
-        print("INFO: Creating spectral library with input files:\nSpectra: " + "\n".join(spectra_file) + "\nCSMs: " + csms_file)
+        print("INFO: Creating spectral library with input files:\nSpectra:\n" + "\n".join(spectra_file) + "\nCSMs: " + csms_file)
     print("INFO: Using the following modifications:")
     print(modifications)
     print("INFO: Using the following ion types:")
