@@ -327,13 +327,13 @@ def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
                     raise RuntimeError(f"Could not parse scan number for spectrum {spectrum}. Please adjust PARSER_PATTERN in the config file!")
                 scan_nr = parser_result[1]
                 spectrum_dict = dict()
-                spectrum_dict["precursor"] = spectrum["params"]["pepmass"]
-                spectrum_dict["charge"] = spectrum["params"]["charge"]
-                spectrum_dict["rt"] = spectrum["params"]["rtinseconds"] if "rtinseconds" in spectrum["params"] else 0.0
+                spectrum_dict["precursor"] = float(spectrum["params"]["pepmass"])
+                spectrum_dict["charge"] = int(spectrum["params"]["charge"])
+                spectrum_dict["rt"] = float(spectrum["params"]["rtinseconds"]) if "rtinseconds" in spectrum["params"] else 0.0
                 spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"])) if len(spectrum["intensity array"]) > 0 else 0.0
                 peaks = dict()
                 for i, mz in enumerate(spectrum["m/z array"]):
-                    peaks[mz] = spectrum["intensity array"][i]
+                    peaks[float(mz)] = float(spectrum["intensity array"][i])
                 spectrum_dict["peaks"] = peaks
                 result_dict[scan_nr] = spectrum_dict
             reader.close()
