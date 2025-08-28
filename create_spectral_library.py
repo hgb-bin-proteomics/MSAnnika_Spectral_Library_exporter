@@ -6,7 +6,7 @@
 #   "pandas",
 #   "openpyxl",
 #   "tqdm",
-#   "pyteomics",
+#   "pyteomics[XML]",
 # ]
 # ///
 
@@ -16,7 +16,7 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.4.12"
+__version = "1.4.13"
 __date = "2025-08-06"
 
 # REQUIREMENTS
@@ -47,7 +47,7 @@ from config import GROUP_PRECURSORS
 import re
 import pandas as pd
 from tqdm import tqdm
-from pyteomics import mgf, mass
+from pyteomics import mgf, mzml, mass
 
 from typing import Dict
 from typing import List
@@ -261,23 +261,41 @@ def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
 
     result_dict = dict()
 
-    with mgf.read(filename) as reader:
-        for spectrum in reader:
-            parser_result = parse_scannr(spectrum["params"])
-            if parser_result[0] != 0:
-                raise RuntimeError(f"Could not parse scan number for spectrum {spectrum}. Please adjust PARSER_PATTERN in the config file!")
-            scan_nr = parser_result[1]
-            spectrum_dict = dict()
-            spectrum_dict["precursor"] = spectrum["params"]["pepmass"]
-            spectrum_dict["charge"] = spectrum["params"]["charge"]
-            spectrum_dict["rt"] = spectrum["params"]["rtinseconds"] if "rtinseconds" in spectrum["params"] else 0.0
-            spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"])) if len(spectrum["intensity array"]) > 0 else 0.0
-            peaks = dict()
-            for i, mz in enumerate(spectrum["m/z array"]):
-                peaks[mz] = spectrum["intensity array"][i]
-            spectrum_dict["peaks"] = peaks
-            result_dict[scan_nr] = spectrum_dict
-        reader.close()
+    if isinstance(filename, str) and filename.split(".")[-1].lower() == "mzml":
+        print("Reading mzML file...")
+        with mzml.read(filename) as reader:
+            for spectrum in reader:
+                scan_nr = int(str(spectrum["id"]).split("scan=")[1].split()[0])
+                ms_level = int(spectrum["ms level"])
+                if ms_level != 2:
+                    continue
+                if (
+                    "scanList" not in spectrum
+                    or "scan" not in spectrum["scanList"]
+                    or len(spectrum["scanList"]["scan"]) != 1
+                ):
+                    raise RuntimeError(f"Can't get retention time for spectrum: {spectrum}")
+                rt_in_min = float(spectrum["scanList"]["scan"][0]["scan start time"])
+                rt_in_sec = rt_in_min * 60.0
+    else:
+        print("Reading MGF file...")
+        with mgf.read(filename) as reader:
+            for spectrum in reader:
+                parser_result = parse_scannr(spectrum["params"])
+                if parser_result[0] != 0:
+                    raise RuntimeError(f"Could not parse scan number for spectrum {spectrum}. Please adjust PARSER_PATTERN in the config file!")
+                scan_nr = parser_result[1]
+                spectrum_dict = dict()
+                spectrum_dict["precursor"] = spectrum["params"]["pepmass"]
+                spectrum_dict["charge"] = spectrum["params"]["charge"]
+                spectrum_dict["rt"] = spectrum["params"]["rtinseconds"] if "rtinseconds" in spectrum["params"] else 0.0
+                spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"])) if len(spectrum["intensity array"]) > 0 else 0.0
+                peaks = dict()
+                for i, mz in enumerate(spectrum["m/z array"]):
+                    peaks[mz] = spectrum["intensity array"][i]
+                spectrum_dict["peaks"] = peaks
+                result_dict[scan_nr] = spectrum_dict
+            reader.close()
 
     return result_dict
 
