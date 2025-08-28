@@ -275,8 +275,49 @@ def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
                     or len(spectrum["scanList"]["scan"]) != 1
                 ):
                     raise RuntimeError(f"Can't get retention time for spectrum: {spectrum}")
-                rt_in_min = float(spectrum["scanList"]["scan"][0]["scan start time"])
+                rt_in_min = 0.0
+                try:
+                    rt_in_min = float(spectrum["scanList"]["scan"][0]["scan start time"])
+                except Exception as e:
+                    pass
                 rt_in_sec = rt_in_min * 60.0
+                if "precursorList" not in spectrum:
+                    raise RuntimeError(
+                        f"[precursorList] No precursor for MS2 spectrum found: {spectrum}"
+                    )
+                if (
+                    "precursor" not in spectrum["precursorList"]
+                    or len(spectrum["precursorList"]["precursor"]) != 1
+                ):
+                    raise RuntimeError(
+                        f"[precursor] No precursor for MS2 spectrum found: {spectrum}"
+                    )
+                for precursor in spectrum["precursorList"]["precursor"]:
+                    if "selectedIonList" not in precursor:
+                        raise RuntimeError(
+                            f"[selectedIonList] No precursor for MS2 spectrum found: {spectrum}"
+                        )
+                    if (
+                        "selectedIon" not in precursor["selectedIonList"]
+                        or len(precursor["selectedIonList"]["selectedIon"]) != 1
+                    ):
+                        raise RuntimeError(
+                            f"[selectedIon] No precursor for MS2 spectrum found: {spectrum}"
+                        )
+                    for ion in precursor["selectedIonList"]["selectedIon"]:
+                        spectrum_dict = dict()
+                        spectrum_dict["precursor"] = float(ion["selected ion m/z"])
+                        spectrum_dict["charge"] = int(ion["charge state"])
+                        spectrum_dict["rt"] = rt_in_sec
+                        spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"])) if len(spectrum["intensity array"]) > 0 else 0.0
+                        peaks = dict()
+                        for i, mz in enumerate(spectrum["m/z array"]):
+                            peaks[float(mz)] = float(spectrum["intensity array"][i])
+                        spectrum_dict["peaks"] = peaks
+                        if scan_nr in result_dict:
+                            raise RuntimeError(f"Spectrum with scan number {scan_nr} already exists!")
+                        result_dict[scan_nr] = spectrum_dict
+            reader.close()
     else:
         print("Reading MGF file...")
         with mgf.read(filename) as reader:
