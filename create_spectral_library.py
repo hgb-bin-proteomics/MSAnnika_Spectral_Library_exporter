@@ -361,12 +361,12 @@ def read_multiple_spectra(filenames: List[str]) -> Dict[str, Dict[int, Dict]]:
         current_spectra_file = ".".join(filename.split(".")[:-1]).strip()
         try:
             result_dict[current_spectra_file] = read_spectra(filename)
+            print(f"INFO: Read all spectra from file {filename}.")
         except Exception as e:
             print(f"Error while reading file: {filename}")
             print("Error details:")
             print(e)
             errors.append(filename)
-        print(f"INFO: Read all spectra from file {filename}.")
         print(f"INFO: Read {i + 1}/{len(filenames)} files...")
 
     if len(errors) > 0:
