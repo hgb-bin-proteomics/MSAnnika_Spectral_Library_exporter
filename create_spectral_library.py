@@ -39,7 +39,11 @@ from config import MATCH_TOLERANCE
 from config import iRT_PARAMS
 from config import ORGANISM
 from config import PARSER_PATTERN
-from config import GROUP_PRECURSORS
+
+try:
+    from config import GROUP_PRECURSORS
+except ImportError as e:
+    GROUP_PRECURSORS = True
 
 ######################
 
