@@ -332,7 +332,7 @@ def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
                 scan_nr = parser_result[1]
                 spectrum_dict = dict()
                 spectrum_dict["precursor"] = float(spectrum["params"]["pepmass"][0])
-                spectrum_dict["charge"] = int(spectrum["params"]["charge"])
+                spectrum_dict["charge"] = int(spectrum["params"]["charge"][0])
                 spectrum_dict["rt"] = float(spectrum["params"]["rtinseconds"]) if "rtinseconds" in spectrum["params"] else 0.0
                 spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"])) if len(spectrum["intensity array"]) > 0 else 0.0
                 peaks = dict()
