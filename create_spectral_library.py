@@ -351,13 +351,28 @@ def read_multiple_spectra(filenames: List[str]) -> Dict[str, Dict[int, Dict]]:
     """
 
     result_dict = dict()
+    errors = list()
 
     for i, filename in enumerate(filenames):
         current_spectra_file = ".".join(filename.split(".")[:-1]).strip()
-        result_dict[current_spectra_file] = read_spectra(filename)
+        try:
+            result_dict[current_spectra_file] = read_spectra(filename)
+        except Exception as e:
+            print(f"Error while reading file: {filename}")
+            print("Error details:")
+            print(e)
+            errors.append(filename)
         print(f"INFO: Read all spectra from file {filename}.")
         print(f"INFO: Read {i + 1}/{len(filenames)} files...")
 
+    if len(errors) > 0:
+        print("Found errors in the following files:")
+        for error in errors:
+            print(error)
+        print("Exiting spectral library creation...")
+        raise RuntimeError("Errors while reading spectra files!")
+
+    print("Read all spectra files successfully!")
     return result_dict
 
 # read multiple spectra files - streamlit version
