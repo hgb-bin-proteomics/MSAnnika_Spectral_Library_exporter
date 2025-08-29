@@ -370,7 +370,7 @@ def read_multiple_spectra(filenames: List[str]) -> Dict[str, Dict[int, Dict]]:
         print(f"INFO: Read {i + 1}/{len(filenames)} files...")
 
     if len(errors) > 0:
-        print("Found errors in the following files:")
+        print("Found errors in the following file(s):")
         for error in errors:
             print(error)
         print("Exiting spectral library creation...")
