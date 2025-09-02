@@ -685,3 +685,10 @@ def test23_spectral_library_exporter():
     assert str(sl.loc[67, "CLContainingFragment"]) == "True"
     assert str(sl.loc[67, "IsDecoy"]) == "True"
     assert str(sl.loc[67, "DecoyType"]) == "TD"
+
+def test24_spectral_library_exporter():
+
+    from create_spectral_library import main
+
+    with pytest.raises(RuntimeError):
+        sl = main(spectra_file=["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_002.mzML"])
