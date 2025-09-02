@@ -11,7 +11,7 @@ Generate a spectral library for [Spectronaut](https://biognosys.com/software/spe
 - Install python 3.7+: [https://www.python.org/downloads/](https://www.python.org/downloads/)
 - Install requirements: `pip install -r requirements.txt`
 - Export MS Annika CSMs from Proteome Discoverer to Microsoft Excel format. Filter out decoys beforehand and filter for high-confidence CSMs (see below).
-- Convert any RAW files to *.mgf format, e.g. using [ThermoRawFileParser](https://github.com/compomics/ThermoRawFileParser).
+- Convert any RAW files to *.mgf or *.mzML format, e.g. using [ThermoRawFileParser](https://github.com/compomics/ThermoRawFileParser).
 - Set your desired parameters in `config.py` (see below).
 - Run `python create_spectral_library.py`.
 - If the script successfully finishes, the target spectral library should be generated with the extension `_spectralLibrary.csv`.
@@ -44,7 +44,7 @@ The following parameters need to be adjusted for your needs in the `config.py` f
 ```python
 ##### PARAMETERS #####
 
-# name of the mgf file containing the MS2 spectra
+# name of the mgf or mzML file(s) containing the MS2 spectra
 SPECTRA_FILE = ["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf"]
 # you can process multiple files like this:
 # SPECTRA_FILE = ["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf", "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_002.mgf"]
@@ -82,9 +82,9 @@ In case you have more than one `SPECTRA_FILE` you can specify that like this:
 ```python
 ##### PARAMETERS #####
 
-# name of the mgf file containing the MS2 spectra
-SPECTRA_FILE = ["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf",
-                "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_002.mgf"]
+# name of the mgf or mzML file(s) containing the MS2 spectra
+SPECTRA_FILE = ["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mzML",
+                "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_002.mzML"]
 # name of the CSM file exported from Proteome Discoverer
 ## <code omitted> ##
 ```
