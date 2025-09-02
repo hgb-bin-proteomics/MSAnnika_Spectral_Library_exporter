@@ -19,6 +19,7 @@ __date = "2025-09-02"
 # REQUIREMENTS
 # pip install pyteomics
 
+import re
 import sys
 from pyteomics import mgf, mzml
 from typing import Dict, List, Tuple, Union, BinaryIO
