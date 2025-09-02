@@ -32,6 +32,7 @@ jobs:
         cp data/test_filter.xlsx .
         cp data/test_reverse_mods.xlsx .
         cp data/20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf .
+        cp data/20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mzML .
         cp data/20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.xlsx .
     - name: Install dependencies
       run: |
