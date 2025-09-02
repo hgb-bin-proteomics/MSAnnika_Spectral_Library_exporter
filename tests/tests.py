@@ -688,6 +688,7 @@ def test23_spectral_library_exporter():
 
 def test24_spectral_library_exporter():
 
+    import pytest
     from create_spectral_library import main
 
     with pytest.raises(RuntimeError):
