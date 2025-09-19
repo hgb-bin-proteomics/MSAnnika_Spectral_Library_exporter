@@ -64,7 +64,7 @@ import warnings
 
 ##################### FILE READERS #####################
 
-def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
+def parse_xi(result_file: str) -> pd.DataFrame:
     """Parses the xiFDR CSM result file and returns it in MS Annika format for
     spectral library creation.
     """
@@ -153,12 +153,11 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
 
         return mod_str
 
-    def xi_get_rt(row: pd.Series, spectra: Dict[str, Any]) -> float:
-        spec_file_name = ".".join(str(row["PeakListFileName"]).split(".")[:-1]).strip()
-        rt = spectra[spec_file_name][int(row["scan"])]["rt"]
-        return rt / 60.0
+    def xi_get_rt(row: pd.Series) -> float:
+        # this we get later from the spectrum itself
+        return 0.0
 
-    def xi_get_cv(row: pd.Series, spectra: Dict[str, Any]) -> float:
+    def xi_get_cv(row: pd.Series) -> float:
         # I don't think we get this from the MGF file?
         return 0.0
 
@@ -1084,23 +1083,36 @@ def get_LabeledSequence(row: pd.Series,
 
     return get_ModifiedPeptide(row, crosslinker)
 
+# get retention time from a spectrum
+def __get_RT(row: pd.Series
+           spectra: Dict[str, Dict[int, Dict]],
+           unit: str) -> float:
+    spectrum_file = ".".join(str(row["Spectrum File"]).split(".")[:-1]).strip()
+    scan_nr = int(row["First Scan"])
+    if unit == "s":
+        return spectra[spectra_file][scan_nr]["rt"]
+    return return spectra[spectra_file][scan_nr]["rt"] / 60.0
+
 # get the iRT value
 def get_iRT(row: pd.Series,
+            spectra: Dict[str, Dict[int, Dict]],
+            unit: str,
             iRT_t: float = iRT_PARAMS["iRT_t"],
             iRT_m: float = iRT_PARAMS["iRT_m"]) -> float:
     """
     Returns the calculated iRT using the values specified in config.py.
     """
-
-    return (float(row["RT [min]"]) - iRT_t) / iRT_m
+    rt = __get_RT(row, spectra, unit)
+    return (rt - iRT_t) / iRT_m
 
 # get the RT value
-def get_RT(row: pd.Series) -> float:
+def get_RT(row: pd.Series
+           spectra: Dict[str, Dict[int, Dict]],
+           unit: str) -> float:
     """
     Returns the RT of a CSM.
     """
-
-    return float(row["RT [min]"])
+    return __get_RT(row, spectra, unit)
 
 # get the CCS value
 def get_CCS() -> float:
