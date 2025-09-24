@@ -16,7 +16,7 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.4.14"
+__version = "1.4.15"
 __date = "2025-09-24"
 
 # REQUIREMENTS
@@ -48,6 +48,7 @@ except ImportError as e:
 ######################
 
 # import packages
+import gc
 import re
 import pandas as pd
 from tqdm import tqdm
@@ -362,20 +363,20 @@ def read_multiple_spectra(filenames: List[str]) -> Dict[str, Dict[int, Dict]]:
             result_dict[current_spectra_file] = read_spectra(filename)
             print(f"INFO: Read all spectra from file {filename}.")
         except Exception as e:
-            print(f"Error while reading file: {filename}")
+            print(f"ERROR: Error while reading file: {filename}")
             print("Error details:")
             print(e)
             errors.append(filename)
         print(f"INFO: Read {i + 1}/{len(filenames)} files...")
 
     if len(errors) > 0:
-        print("Found errors in the following file(s):")
+        print("ERROR: Found errors in the following file(s):")
         for error in errors:
             print(error)
-        print("Exiting spectral library creation...")
+        print("ERROR: Exiting spectral library creation...")
         raise RuntimeError("Errors while reading spectra files!")
 
-    print("Read all spectra files successfully!")
+    print("INFO: Read all spectra files successfully!")
     return result_dict
 
 # read multiple spectra files - streamlit version
@@ -1349,6 +1350,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     for i, row in tqdm(csms.iterrows(), total=csms.shape[0], desc="INFO: Processing CSMs..."):
         current_spectrum_file = ".".join(row["Spectrum File"].split(".")[:-1]).strip()
         if current_spectrum_file not in spectra:
+            del spectra
+            gc.collect()
             print("Found unseen spectrum file! Trying to read spectrum file...")
             local_spectrum_file_name = __get_local_spectrum_file_name(current_spectrum_file, spectra_file)
             spectra = read_multiple_spectra([local_spectrum_file_name])
