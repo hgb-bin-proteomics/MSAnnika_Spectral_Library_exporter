@@ -1091,7 +1091,7 @@ def __get_RT(row: pd.Series,
     scan_nr = int(row["First Scan"])
     if unit == "s":
         return spectra[spectra_file][scan_nr]["rt"]
-    return return spectra[spectra_file][scan_nr]["rt"] / 60.0
+    return spectra[spectra_file][scan_nr]["rt"] / 60.0
 
 # get the iRT value
 def get_iRT(row: pd.Series,
