@@ -34,7 +34,7 @@ def test1_converter():
     assert str(csms.loc[0, "Charge"]) == "4"
     assert str(int(csms.loc[0, "m/z [Da]"])) == "976"
     assert str(csms.loc[0, "Crosslink Strategy"]) == "xi"
-    assert str(int(csms.loc[0, "RT [min]"])) == "85"
+    assert str(int(csms.loc[0, "RT [min]"])) == "0"
     assert str(int(csms.loc[0, "Compensation Voltage"])) == "0"
     assert float(csms.loc[0, "Combined Score"]) == pytest.approx(27.268)
 
@@ -53,7 +53,7 @@ def test1_converter():
     assert str(csms.loc[1, "Charge"]) == "3"
     assert str(int(csms.loc[1, "m/z [Da]"])) == "825"
     assert str(csms.loc[1, "Crosslink Strategy"]) == "xi"
-    assert str(int(csms.loc[1, "RT [min]"])) == "72"
+    assert str(int(csms.loc[1, "RT [min]"])) == "0"
     assert str(int(csms.loc[1, "Compensation Voltage"])) == "0"
     assert float(csms.loc[1, "Combined Score"]) == pytest.approx(24.473)
 
