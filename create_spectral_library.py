@@ -1145,8 +1145,8 @@ def get_fragment_values(csm: pd.Series,
 
     return {"Fragments_A": fragments_A, "Fragments_B": fragments_B}
 
-def __get_local_spectrum_file_name(current_spectrum_file: str) -> str:
-    for spectrum_file in SPECTRA_FILE:
+def __get_local_spectrum_file_name(current_spectrum_file: str, spectra_file: List[str]) -> str:
+    for spectrum_file in spectra_file:
         if current_spectrum_file in spectrum_file:
             return spectrum_file
     raise RuntimeError("Could not find local file for spectrum file {current_spectrum_file}!")
@@ -1350,7 +1350,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         current_spectrum_file = ".".join(row["Spectrum File"].split(".")[:-1]).strip()
         if current_spectrum_file not in spectra:
             print("Found unseen spectrum file! Trying to read spectrum file...")
-            local_spectrum_file_name = __get_local_spectrum_file_name(current_spectrum_file)
+            local_spectrum_file_name = __get_local_spectrum_file_name(current_spectrum_file, spectra_file)
             spectra = read_multiple_spectra([local_spectrum_file_name])
         # target
         link_Id = get_linkId(row)
