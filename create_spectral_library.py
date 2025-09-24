@@ -1084,7 +1084,7 @@ def get_LabeledSequence(row: pd.Series,
     return get_ModifiedPeptide(row, crosslinker)
 
 # get retention time from a spectrum
-def __get_RT(row: pd.Series
+def __get_RT(row: pd.Series,
              spectra: Dict[str, Dict[int, Dict]],
              unit: str) -> float:
     spectrum_file = ".".join(str(row["Spectrum File"]).split(".")[:-1]).strip()
@@ -1106,7 +1106,7 @@ def get_iRT(row: pd.Series,
     return (rt - iRT_t) / iRT_m
 
 # get the RT value
-def get_RT(row: pd.Series
+def get_RT(row: pd.Series,
            spectra: Dict[str, Dict[int, Dict]],
            unit: str) -> float:
     """
