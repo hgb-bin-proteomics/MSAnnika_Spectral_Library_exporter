@@ -182,8 +182,8 @@ def parse_xi(result_file: str) -> pd.DataFrame:
         ms_annika_struc["Charge"].append(int(row["exp charge"]))
         ms_annika_struc["m/z [Da]"].append(float(row["exp m/z"]))
         ms_annika_struc["Crosslink Strategy"].append("xi")
-        ms_annika_struc["RT [min]"].append(xi_get_rt(row, spectra))
-        ms_annika_struc["Compensation Voltage"].append(xi_get_cv(row, spectra))
+        ms_annika_struc["RT [min]"].append(xi_get_rt(row))
+        ms_annika_struc["Compensation Voltage"].append(xi_get_cv(row))
         ms_annika_struc["Combined Score"].append(xi_get_score(row))
 
     return pd.DataFrame(ms_annika_struc)
@@ -1090,8 +1090,8 @@ def __get_RT(row: pd.Series,
     spectrum_file = ".".join(str(row["Spectrum File"]).split(".")[:-1]).strip()
     scan_nr = int(row["First Scan"])
     if unit == "s":
-        return spectra[spectra_file][scan_nr]["rt"]
-    return spectra[spectra_file][scan_nr]["rt"] / 60.0
+        return spectra[spectrum_file][scan_nr]["rt"]
+    return spectra[spectrum_file][scan_nr]["rt"] / 60.0
 
 # get the iRT value
 def get_iRT(row: pd.Series,
