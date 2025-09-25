@@ -50,6 +50,7 @@ except ImportError as e:
 # import packages
 import gc
 import re
+import datetime
 import pandas as pd
 from tqdm import tqdm
 from pyteomics import mgf, mzml, mass
@@ -1173,6 +1174,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
          is_streamlit: bool = False,
          save_output: bool = True) -> Dict[str, pd.DataFrame]:
 
+    print(f"INFO: Spectral library creation started at {datetime.datetime.now()}.")
+
     if is_streamlit:
         print("INFO: Creating spectral library with input files:\nSpectra:\n" +
               "\n".join([spectrum_file.name for spectrum_file in spectra_file]) +
@@ -1770,6 +1773,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         merged_spec_lib.to_csv(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryFULL.csv", index = True)
         print("SUCCESS: Merged spectral library created with filename:")
         print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryFULL.csv")
+
+    print(f"SUCCESS: Spectral library creation finished at {datetime.datetime.now()}.")
 
     return {"TargetLib": spectral_library, "DecoyLib": spectral_library_decoy_dd, "DecoyLib_DT": spectral_library_decoy_dt, "DecoyLib_TD": spectral_library_decoy_td, "FullLib": merged_spec_lib}
 
