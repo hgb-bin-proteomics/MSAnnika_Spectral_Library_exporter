@@ -16,8 +16,8 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.4.13"
-__date = "2025-08-06"
+__version = "1.4.16"
+__date = "2025-09-25"
 
 # REQUIREMENTS
 # pip install pandas
@@ -48,7 +48,9 @@ except ImportError as e:
 ######################
 
 # import packages
+import gc
 import re
+import datetime
 import pandas as pd
 from tqdm import tqdm
 from pyteomics import mgf, mzml, mass
@@ -64,7 +66,7 @@ import warnings
 
 ##################### FILE READERS #####################
 
-def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
+def parse_xi(result_file: str) -> pd.DataFrame:
     """Parses the xiFDR CSM result file and returns it in MS Annika format for
     spectral library creation.
     """
@@ -153,12 +155,11 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
 
         return mod_str
 
-    def xi_get_rt(row: pd.Series, spectra: Dict[str, Any]) -> float:
-        spec_file_name = ".".join(str(row["PeakListFileName"]).split(".")[:-1]).strip()
-        rt = spectra[spec_file_name][int(row["scan"])]["rt"]
-        return rt / 60.0
+    def xi_get_rt(row: pd.Series) -> float:
+        # this we get later from the spectrum itself
+        return 0.0
 
-    def xi_get_cv(row: pd.Series, spectra: Dict[str, Any]) -> float:
+    def xi_get_cv(row: pd.Series) -> float:
         # I don't think we get this from the MGF file?
         return 0.0
 
@@ -183,8 +184,8 @@ def parse_xi(result_file: str, spectra: Dict[str, Any]) -> pd.DataFrame:
         ms_annika_struc["Charge"].append(int(row["exp charge"]))
         ms_annika_struc["m/z [Da]"].append(float(row["exp m/z"]))
         ms_annika_struc["Crosslink Strategy"].append("xi")
-        ms_annika_struc["RT [min]"].append(xi_get_rt(row, spectra))
-        ms_annika_struc["Compensation Voltage"].append(xi_get_cv(row, spectra))
+        ms_annika_struc["RT [min]"].append(xi_get_rt(row))
+        ms_annika_struc["Compensation Voltage"].append(xi_get_cv(row))
         ms_annika_struc["Combined Score"].append(xi_get_score(row))
 
     return pd.DataFrame(ms_annika_struc)
@@ -363,20 +364,20 @@ def read_multiple_spectra(filenames: List[str]) -> Dict[str, Dict[int, Dict]]:
             result_dict[current_spectra_file] = read_spectra(filename)
             print(f"INFO: Read all spectra from file {filename}.")
         except Exception as e:
-            print(f"Error while reading file: {filename}")
+            print(f"ERROR: Error while reading file: {filename}")
             print("Error details:")
             print(e)
             errors.append(filename)
         print(f"INFO: Read {i + 1}/{len(filenames)} files...")
 
     if len(errors) > 0:
-        print("Found errors in the following file(s):")
+        print("ERROR: Found errors in the following file(s):")
         for error in errors:
             print(error)
-        print("Exiting spectral library creation...")
+        print("ERROR: Exiting spectral library creation...")
         raise RuntimeError("Errors while reading spectra files!")
 
-    print("Read all spectra files successfully!")
+    print("INFO: Read all spectra files successfully!")
     return result_dict
 
 # read multiple spectra files - streamlit version
@@ -1084,23 +1085,36 @@ def get_LabeledSequence(row: pd.Series,
 
     return get_ModifiedPeptide(row, crosslinker)
 
+# get retention time from a spectrum
+def __get_RT(row: pd.Series,
+             spectra: Dict[str, Dict[int, Dict]],
+             unit: str) -> float:
+    spectrum_file = ".".join(str(row["Spectrum File"]).split(".")[:-1]).strip()
+    scan_nr = int(row["First Scan"])
+    if unit == "s":
+        return spectra[spectrum_file][scan_nr]["rt"]
+    return spectra[spectrum_file][scan_nr]["rt"] / 60.0
+
 # get the iRT value
 def get_iRT(row: pd.Series,
+            spectra: Dict[str, Dict[int, Dict]],
+            unit: str,
             iRT_t: float = iRT_PARAMS["iRT_t"],
             iRT_m: float = iRT_PARAMS["iRT_m"]) -> float:
     """
     Returns the calculated iRT using the values specified in config.py.
     """
-
-    return (float(row["RT [min]"]) - iRT_t) / iRT_m
+    rt = __get_RT(row, spectra, unit)
+    return (rt - iRT_t) / iRT_m
 
 # get the RT value
-def get_RT(row: pd.Series) -> float:
+def get_RT(row: pd.Series,
+           spectra: Dict[str, Dict[int, Dict]],
+           unit: str) -> float:
     """
     Returns the RT of a CSM.
     """
-
-    return float(row["RT [min]"])
+    return __get_RT(row, spectra, unit)
 
 # get the CCS value
 def get_CCS() -> float:
@@ -1133,6 +1147,13 @@ def get_fragment_values(csm: pd.Series,
 
     return {"Fragments_A": fragments_A, "Fragments_B": fragments_B}
 
+def __get_local_spectrum_file_name(current_spectrum_file: str, spectra_file: List[str]) -> str:
+    for spectrum_file in spectra_file:
+        if current_spectrum_file in spectrum_file:
+            return spectrum_file
+    raise RuntimeError(f"Could not find local file in config for spectrum file {current_spectrum_file}!")
+    return "err"
+
 ##### MAIN FUNCTION #####
 
 # generates the spectral library
@@ -1153,6 +1174,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
          is_streamlit: bool = False,
          save_output: bool = True) -> Dict[str, pd.DataFrame]:
 
+    print(f"INFO: Spectral library creation started at {datetime.datetime.now()}.")
+
     if is_streamlit:
         print("INFO: Creating spectral library with input files:\nSpectra:\n" +
               "\n".join([spectrum_file.name for spectrum_file in spectra_file]) +
@@ -1168,15 +1191,11 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     print("INFO: Using a match tolerance of: " + str(match_tolerance) + " Da")
     print("INFO: Starting annotation process...")
 
-    print("INFO: Reading spectra...")
-    spectra = read_multiple_spectra(spectra_file) if not is_streamlit else read_multiple_spectra_streamlit(spectra_file)
-    print("INFO: Done reading spectra!")
-
     print("INFO: Reading CSMs...")
     if "xlsx" in csms_file.split(".")[-1]:
         raw_csms = pd.read_excel(csms_file)
     else:
-        raw_csms = parse_xi(csms_file, spectra)
+        raw_csms = parse_xi(csms_file)
         raw_csms.to_csv(csms_file + ".converted.csv", index = False)
         if raw_csms.shape[0] < 1000000:
             raw_csms.to_excel(csms_file + ".converted.xlsx", index = False)
@@ -1184,10 +1203,14 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
 
     if group_precursors:
         csms = filter_df_for_unique_residue_pairs(raw_csms)
-        print("INFO: Done filtering for unique residue pairs! Starting spectral library creation...")
+        print("INFO: Done filtering for unique residue pairs!")
     else:
         csms = raw_csms
-        print("INFO: Not filtering for unique residue pairs! Starting spectral library creation...")
+        print("INFO: Not filtering for unique residue pairs!")
+
+    print("INFO: Sorting CSMs...")
+    csms = csms.sort_values(by=["Spectrum File"])
+    print("INFO: Finished sorting CSMs! Starting spectral library creation...")
 
     # columns
     linkId_s = list()
@@ -1326,7 +1349,15 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
     Peptide_Positions_s_decoy_td = list()
 
     # process CSMs
+    spectra = dict()
     for i, row in tqdm(csms.iterrows(), total=csms.shape[0], desc="INFO: Processing CSMs..."):
+        current_spectrum_file = ".".join(row["Spectrum File"].split(".")[:-1]).strip()
+        if current_spectrum_file not in spectra:
+            del spectra
+            gc.collect()
+            print("Found unseen spectrum file! Trying to read spectrum file...")
+            local_spectrum_file_name = __get_local_spectrum_file_name(current_spectrum_file, spectra_file)
+            spectra = read_multiple_spectra([local_spectrum_file_name])
         # target
         link_Id = get_linkId(row)
         ProteinID = get_ProteinID(row)
@@ -1343,8 +1374,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         searchID = get_searchID(row)
         crosslinkedResidues = get_crosslinkedResidues(row)
         LabeledSequence = get_LabeledSequence(row)
-        iRT = get_iRT(row, iRT_t, iRT_m)
-        RT = get_RT(row)
+        iRT = get_iRT(row, spectra, "m", iRT_t, iRT_m)
+        RT = get_RT(row, spectra, "m")
         CCS = get_CCS()
         IonMobility = get_IonMobility(row)
         fragments = get_fragment_values(row, spectra, crosslinker, modifications, ion_types, max_charge, match_tolerance)
@@ -1404,8 +1435,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         decoy_searchID = get_searchID(decoy_csm)
         decoy_crosslinkedResidues = get_crosslinkedResidues(decoy_csm)
         decoy_LabeledSequence = get_LabeledSequence(decoy_csm)
-        decoy_iRT = get_iRT(decoy_csm, iRT_t, iRT_m)
-        decoy_RT = get_RT(decoy_csm)
+        decoy_iRT = get_iRT(decoy_csm, spectra, "m", iRT_t, iRT_m)
+        decoy_RT = get_RT(decoy_csm, spectra, "m")
         decoy_CCS = get_CCS()
         decoy_IonMobility = get_IonMobility(decoy_csm)
         decoy_fragments = {"Fragments_A": get_decoy_fragments(decoy_csm, fragments["Fragments_A"], modifications, crosslinker),
@@ -1468,8 +1499,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         decoy_searchID_dt = get_searchID(decoy_csm_dt)
         decoy_crosslinkedResidues_dt = get_crosslinkedResidues(decoy_csm_dt)
         decoy_LabeledSequence_dt = get_LabeledSequence(decoy_csm_dt)
-        decoy_iRT_dt = get_iRT(decoy_csm_dt, iRT_t, iRT_m)
-        decoy_RT_dt = get_RT(decoy_csm_dt)
+        decoy_iRT_dt = get_iRT(decoy_csm_dt, spectra, "m", iRT_t, iRT_m)
+        decoy_RT_dt = get_RT(decoy_csm_dt, spectra, "m")
         decoy_CCS_dt = get_CCS()
         decoy_IonMobility_dt = get_IonMobility(decoy_csm_dt)
         decoy_fragments_dt = {"Fragments_A": get_decoy_fragments(decoy_csm, fragments["Fragments_A"], modifications, crosslinker),
@@ -1532,8 +1563,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         decoy_searchID_td = get_searchID(decoy_csm_td)
         decoy_crosslinkedResidues_td = get_crosslinkedResidues(decoy_csm_td)
         decoy_LabeledSequence_td = get_LabeledSequence(decoy_csm_td)
-        decoy_iRT_td = get_iRT(decoy_csm_td, iRT_t, iRT_m)
-        decoy_RT_td = get_RT(decoy_csm_td)
+        decoy_iRT_td = get_iRT(decoy_csm_td, spectra, "m", iRT_t, iRT_m)
+        decoy_RT_td = get_RT(decoy_csm_td, spectra, "m")
         decoy_CCS_td = get_CCS()
         decoy_IonMobility_td = get_IonMobility(decoy_csm_td)
         decoy_fragments_td = {"Fragments_A": fragments["Fragments_A"],
@@ -1742,6 +1773,8 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         merged_spec_lib.to_csv(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryFULL.csv", index = True)
         print("SUCCESS: Merged spectral library created with filename:")
         print(".".join(csms_file.split(".")[:-1]) + "_spectralLibraryFULL.csv")
+
+    print(f"SUCCESS: Spectral library creation finished at {datetime.datetime.now()}.")
 
     return {"TargetLib": spectral_library, "DecoyLib": spectral_library_decoy_dd, "DecoyLib_DT": spectral_library_decoy_dt, "DecoyLib_TD": spectral_library_decoy_td, "FullLib": merged_spec_lib}
 
