@@ -1150,7 +1150,7 @@ def __get_local_spectrum_file_name(current_spectrum_file: str, spectra_file: Lis
     for spectrum_file in spectra_file:
         if current_spectrum_file in spectrum_file:
             return spectrum_file
-    raise RuntimeError("Could not find local file for spectrum file {current_spectrum_file}!")
+    raise RuntimeError(f"Could not find local file in config for spectrum file {current_spectrum_file}!")
     return "err"
 
 ##### MAIN FUNCTION #####
