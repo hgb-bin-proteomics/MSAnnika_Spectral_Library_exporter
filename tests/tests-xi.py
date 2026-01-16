@@ -245,7 +245,7 @@ def test11_spectral_library_exporter():
 
     from create_spectral_library import main
 
-    sl = main(spectra_file="20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf",
+    sl = main(spectra_file=["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf"],
               csms_file="example_CSM_xiFDR2.2.1_adapted.csv")
     sl = sl["FullLib"]
 
@@ -261,7 +261,7 @@ def test12_spectral_library_exporter():
 
     from create_spectral_library import main
 
-    sl = main(spectra_file="20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mzML",
+    sl = main(spectra_file=["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mzML"],
               csms_file="example_CSM_xiFDR2.2.1_adapted.csv")
     sl = sl["FullLib"]
 
