@@ -17,7 +17,9 @@ def test1_converter():
     csms = pd.read_csv(CSMS_FILE + ".converted.csv")
 
     assert csms.shape[0] == 2
-    assert csms.shape[1] == 18
+    assert csms.shape[1] == 17
+    
+    assert "Compensation Voltage" not in csms
 
     assert str(csms.loc[0, "Sequence A"]) == "KIECFDSVEISGVEDR"
     assert str(csms.loc[0, "Modifications A"]) == "C4(Carbamidomethyl);K1(BS3)"
@@ -35,7 +37,6 @@ def test1_converter():
     assert str(int(csms.loc[0, "m/z [Da]"])) == "976"
     assert str(csms.loc[0, "Crosslink Strategy"]) == "xi"
     assert str(int(csms.loc[0, "RT [min]"])) == "0"
-    assert str(int(csms.loc[0, "Compensation Voltage"])) == "0"
     assert float(csms.loc[0, "Combined Score"]) == pytest.approx(27.268)
 
     assert str(csms.loc[1, "Sequence A"]) == "MIAKSEQEIGK"
@@ -54,7 +55,6 @@ def test1_converter():
     assert str(int(csms.loc[1, "m/z [Da]"])) == "825"
     assert str(csms.loc[1, "Crosslink Strategy"]) == "xi"
     assert str(int(csms.loc[1, "RT [min]"])) == "0"
-    assert str(int(csms.loc[1, "Compensation Voltage"])) == "0"
     assert float(csms.loc[1, "Combined Score"]) == pytest.approx(24.473)
 
 # check output shape target
@@ -240,3 +240,35 @@ def test10_spectral_library_exporter():
     assert str(sl.loc[217, "CLContainingFragment"]) == "True"
     assert str(sl.loc[217, "IsDecoy"]) == "True"
     assert str(sl.loc[217, "DecoyType"]) == "TD"
+
+def test11_spectral_library_exporter():
+
+    from create_spectral_library import main
+
+    sl = main(spectra_file="20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf",
+              csms_file="example_CSM_xiFDR2.2.1_adapted.csv")
+    sl = sl["FullLib"]
+
+    assert str(sl.loc[0, "ModifiedPeptide"]) == "KIEC[Carbamidomethyl]FDSVEISGVEDR_KIEC[Carbamidomethyl]FDSVEISGVEDR"
+    assert str(sl.loc[0, "scanID"]) == "2059"
+    assert str(sl.loc[0, "IonMobility"]) == "0.0"
+
+    assert str(sl.loc[-1, "ModifiedPeptide"]) == "MIAKSEQEIGK_VKYFQFDR"
+    assert str(sl.loc[-1, "scanID"]) == "2061"
+    assert str(sl.loc[-1, "IonMobility"]) == "0.0"
+
+def test12_spectral_library_exporter():
+
+    from create_spectral_library import main
+
+    sl = main(spectra_file="20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mzML",
+              csms_file="example_CSM_xiFDR2.2.1_adapted.csv")
+    sl = sl["FullLib"]
+
+    assert str(sl.loc[0, "ModifiedPeptide"]) == "KIEC[Carbamidomethyl]FDSVEISGVEDR_KIEC[Carbamidomethyl]FDSVEISGVEDR"
+    assert str(sl.loc[0, "scanID"]) == "2059"
+    assert str(sl.loc[0, "IonMobility"]) == "-50.0"
+
+    assert str(sl.loc[-1, "ModifiedPeptide"]) == "MIAKSEQEIGK_VKYFQFDR"
+    assert str(sl.loc[-1, "scanID"]) == "2061"
+    assert str(sl.loc[-1, "IonMobility"]) == "-50.0"
