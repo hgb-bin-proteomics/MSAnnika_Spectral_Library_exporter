@@ -693,3 +693,177 @@ def test24_spectral_library_exporter():
 
     with pytest.raises(RuntimeError):
         sl = main(spectra_file=["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_002.mzML"])
+
+# test ion mobility/compensation voltage mgf
+def test25_spectral_library_exporter():
+
+    from create_spectral_library import main
+
+    sl = main(csms_file="20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001_noCV.xlsx")
+    sl = sl["FullLib"]
+
+    assert str(sl.loc[0, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
+    assert str(sl.loc[0, "FragmentCharge"]) == "1"
+    assert str(sl.loc[0, "FragmentType"]) == "y"
+    assert str(sl.loc[0, "FragmentNumber"]) == "1"
+    assert str(sl.loc[0, "FragmentPepId"]) == "0"
+    assert str(sl.loc[0, "CLContainingFragment"]) == "False"
+    assert str(sl.loc[0, "IsDecoy"]) == "False"
+    assert str(sl.loc[0, "DecoyType"]) == "TT"
+    assert str(sl.loc[0, "IonMobility"]) == "0.0"
+
+    assert str(sl.loc[1, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
+    assert str(sl.loc[1, "FragmentCharge"]) == "1"
+    assert str(sl.loc[1, "FragmentType"]) == "b"
+    assert str(sl.loc[1, "FragmentNumber"]) == "2"
+    assert str(sl.loc[1, "FragmentPepId"]) == "0"
+    assert str(sl.loc[1, "CLContainingFragment"]) == "True"
+    assert str(sl.loc[1, "IsDecoy"]) == "False"
+    assert str(sl.loc[1, "DecoyType"]) == "TT"
+    assert str(sl.loc[1, "IonMobility"]) == "0.0"
+
+    assert str(sl.loc[2, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
+    assert str(sl.loc[2, "FragmentCharge"]) == "1"
+    assert str(sl.loc[2, "FragmentType"]) == "b"
+    assert str(sl.loc[2, "FragmentNumber"]) == "2"
+    assert str(sl.loc[2, "FragmentPepId"]) == "0"
+    assert str(sl.loc[2, "CLContainingFragment"]) == "True"
+    assert str(sl.loc[2, "IsDecoy"]) == "False"
+    assert str(sl.loc[2, "DecoyType"]) == "TT"
+    assert str(sl.loc[2, "IonMobility"]) == "0.0"
+
+    assert str(sl.loc[3, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
+    assert str(sl.loc[3, "FragmentCharge"]) == "1"
+    assert str(sl.loc[3, "FragmentType"]) == "y"
+    assert str(sl.loc[3, "FragmentNumber"]) == "3"
+    assert str(sl.loc[3, "FragmentPepId"]) == "0"
+    assert str(sl.loc[3, "CLContainingFragment"]) == "False"
+    assert str(sl.loc[3, "IsDecoy"]) == "False"
+    assert str(sl.loc[3, "DecoyType"]) == "TT"
+    assert str(sl.loc[3, "IonMobility"]) == "0.0"
+
+    assert str(sl.loc[67, "ModifiedPeptide"]) == "KQQGHR_HGQQKR"
+    assert str(sl.loc[67, "FragmentCharge"]) == "1"
+    assert str(sl.loc[67, "FragmentType"]) == "y"
+    assert str(sl.loc[67, "FragmentNumber"]) == "5"
+    assert str(sl.loc[67, "FragmentPepId"]) == "1"
+    assert str(sl.loc[67, "CLContainingFragment"]) == "True"
+    assert str(sl.loc[67, "IsDecoy"]) == "True"
+    assert str(sl.loc[67, "DecoyType"]) == "TD"
+    assert str(sl.loc[67, "IonMobility"]) == "0.0"
+
+# test ion mobility/compensation voltage mzml
+def test26_spectral_library_exporter():
+
+    from create_spectral_library import main
+
+    sl = main(spectra_file=["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mzML"],
+              csms_file="20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001_noCV.xlsx")
+    sl = sl["FullLib"]
+
+    assert str(sl.loc[0, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
+    assert str(sl.loc[0, "FragmentCharge"]) == "1"
+    assert str(sl.loc[0, "FragmentType"]) == "y"
+    assert str(sl.loc[0, "FragmentNumber"]) == "1"
+    assert str(sl.loc[0, "FragmentPepId"]) == "0"
+    assert str(sl.loc[0, "CLContainingFragment"]) == "False"
+    assert str(sl.loc[0, "IsDecoy"]) == "False"
+    assert str(sl.loc[0, "DecoyType"]) == "TT"
+    assert str(sl.loc[0, "IonMobility"]) == "-50.0"
+
+    assert str(sl.loc[1, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
+    assert str(sl.loc[1, "FragmentCharge"]) == "1"
+    assert str(sl.loc[1, "FragmentType"]) == "b"
+    assert str(sl.loc[1, "FragmentNumber"]) == "2"
+    assert str(sl.loc[1, "FragmentPepId"]) == "0"
+    assert str(sl.loc[1, "CLContainingFragment"]) == "True"
+    assert str(sl.loc[1, "IsDecoy"]) == "False"
+    assert str(sl.loc[1, "DecoyType"]) == "TT"
+    assert str(sl.loc[1, "IonMobility"]) == "-50.0"
+
+    assert str(sl.loc[2, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
+    assert str(sl.loc[2, "FragmentCharge"]) == "1"
+    assert str(sl.loc[2, "FragmentType"]) == "b"
+    assert str(sl.loc[2, "FragmentNumber"]) == "2"
+    assert str(sl.loc[2, "FragmentPepId"]) == "0"
+    assert str(sl.loc[2, "CLContainingFragment"]) == "True"
+    assert str(sl.loc[2, "IsDecoy"]) == "False"
+    assert str(sl.loc[2, "DecoyType"]) == "TT"
+    assert str(sl.loc[2, "IonMobility"]) == "-50.0"
+
+    assert str(sl.loc[3, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
+    assert str(sl.loc[3, "FragmentCharge"]) == "1"
+    assert str(sl.loc[3, "FragmentType"]) == "y"
+    assert str(sl.loc[3, "FragmentNumber"]) == "3"
+    assert str(sl.loc[3, "FragmentPepId"]) == "0"
+    assert str(sl.loc[3, "CLContainingFragment"]) == "False"
+    assert str(sl.loc[3, "IsDecoy"]) == "False"
+    assert str(sl.loc[3, "DecoyType"]) == "TT"
+    assert str(sl.loc[3, "IonMobility"]) == "-50.0"
+
+    assert str(sl.loc[67, "ModifiedPeptide"]) == "KQQGHR_HGQQKR"
+    assert str(sl.loc[67, "FragmentCharge"]) == "1"
+    assert str(sl.loc[67, "FragmentType"]) == "y"
+    assert str(sl.loc[67, "FragmentNumber"]) == "5"
+    assert str(sl.loc[67, "FragmentPepId"]) == "1"
+    assert str(sl.loc[67, "CLContainingFragment"]) == "True"
+    assert str(sl.loc[67, "IsDecoy"]) == "True"
+    assert str(sl.loc[67, "DecoyType"]) == "TD"
+    assert str(sl.loc[67, "IonMobility"]) == "-50.0"
+
+def test27_spectral_library_exporter():
+
+    from create_spectral_library import main
+
+    sl = main()
+    sl = sl["FullLib"]
+
+    assert str(sl.loc[0, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
+    assert str(sl.loc[0, "FragmentCharge"]) == "1"
+    assert str(sl.loc[0, "FragmentType"]) == "y"
+    assert str(sl.loc[0, "FragmentNumber"]) == "1"
+    assert str(sl.loc[0, "FragmentPepId"]) == "0"
+    assert str(sl.loc[0, "CLContainingFragment"]) == "False"
+    assert str(sl.loc[0, "IsDecoy"]) == "False"
+    assert str(sl.loc[0, "DecoyType"]) == "TT"
+    assert str(sl.loc[0, "IonMobility"]) == "-50.0"
+
+    assert str(sl.loc[1, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
+    assert str(sl.loc[1, "FragmentCharge"]) == "1"
+    assert str(sl.loc[1, "FragmentType"]) == "b"
+    assert str(sl.loc[1, "FragmentNumber"]) == "2"
+    assert str(sl.loc[1, "FragmentPepId"]) == "0"
+    assert str(sl.loc[1, "CLContainingFragment"]) == "True"
+    assert str(sl.loc[1, "IsDecoy"]) == "False"
+    assert str(sl.loc[1, "DecoyType"]) == "TT"
+    assert str(sl.loc[1, "IonMobility"]) == "-50.0"
+
+    assert str(sl.loc[2, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
+    assert str(sl.loc[2, "FragmentCharge"]) == "1"
+    assert str(sl.loc[2, "FragmentType"]) == "b"
+    assert str(sl.loc[2, "FragmentNumber"]) == "2"
+    assert str(sl.loc[2, "FragmentPepId"]) == "0"
+    assert str(sl.loc[2, "CLContainingFragment"]) == "True"
+    assert str(sl.loc[2, "IsDecoy"]) == "False"
+    assert str(sl.loc[2, "DecoyType"]) == "TT"
+    assert str(sl.loc[2, "IonMobility"]) == "-50.0"
+
+    assert str(sl.loc[3, "ModifiedPeptide"]) == "KQQGHR_KQQGHR"
+    assert str(sl.loc[3, "FragmentCharge"]) == "1"
+    assert str(sl.loc[3, "FragmentType"]) == "y"
+    assert str(sl.loc[3, "FragmentNumber"]) == "3"
+    assert str(sl.loc[3, "FragmentPepId"]) == "0"
+    assert str(sl.loc[3, "CLContainingFragment"]) == "False"
+    assert str(sl.loc[3, "IsDecoy"]) == "False"
+    assert str(sl.loc[3, "DecoyType"]) == "TT"
+    assert str(sl.loc[3, "IonMobility"]) == "-50.0"
+
+    assert str(sl.loc[67, "ModifiedPeptide"]) == "KQQGHR_HGQQKR"
+    assert str(sl.loc[67, "FragmentCharge"]) == "1"
+    assert str(sl.loc[67, "FragmentType"]) == "y"
+    assert str(sl.loc[67, "FragmentNumber"]) == "5"
+    assert str(sl.loc[67, "FragmentPepId"]) == "1"
+    assert str(sl.loc[67, "CLContainingFragment"]) == "True"
+    assert str(sl.loc[67, "IsDecoy"]) == "True"
+    assert str(sl.loc[67, "DecoyType"]) == "TD"
+    assert str(sl.loc[67, "IonMobility"]) == "-50.0"
