@@ -16,7 +16,7 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.4.17"
+__version = "1.4.18"
 __date = "2026-01-16"
 
 # REQUIREMENTS
@@ -1132,8 +1132,8 @@ def get_IonMobility(csm: pd.Series,
     """
     if "Compensation Voltage" in csm:
         return float(csm["Compensation Voltage"])
-    spectrum_file = ".".join(str(row["Spectrum File"]).split(".")[:-1]).strip()
-    scan_nr = int(row["First Scan"])
+    spectrum_file = ".".join(str(csm["Spectrum File"]).split(".")[:-1]).strip()
+    scan_nr = int(csm["First Scan"])
     return spectra[spectrum_file][scan_nr]["compensation_voltage"]
 
 # get the values for all fragments of a CSM
