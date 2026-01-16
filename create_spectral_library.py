@@ -16,8 +16,8 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.4.16"
-__date = "2025-09-25"
+__version = "1.4.18"
+__date = "2026-01-16"
 
 # REQUIREMENTS
 # pip install pandas
@@ -88,7 +88,7 @@ def parse_xi(result_file: str) -> pd.DataFrame:
     # m/z [Da]
     # Crosslink Strategy
     # RT [min]
-    # Compensation Voltage
+    # Compensation Voltage -> omitted to signal value retrieval from spectrum
     ms_annika_struc = {"Sequence A": [],
                        "Modifications A": [],
                        "Sequence B": [],
@@ -105,7 +105,6 @@ def parse_xi(result_file: str) -> pd.DataFrame:
                        "m/z [Da]": [],
                        "Crosslink Strategy": [],
                        "RT [min]": [],
-                       "Compensation Voltage": [],
                        "Combined Score": []}
 
     # parsing functions
@@ -159,10 +158,6 @@ def parse_xi(result_file: str) -> pd.DataFrame:
         # this we get later from the spectrum itself
         return 0.0
 
-    def xi_get_cv(row: pd.Series) -> float:
-        # I don't think we get this from the MGF file?
-        return 0.0
-
     def xi_get_score(row: pd.Series) -> float:
         return float(row["Score"])
 
@@ -185,7 +180,6 @@ def parse_xi(result_file: str) -> pd.DataFrame:
         ms_annika_struc["m/z [Da]"].append(float(row["exp m/z"]))
         ms_annika_struc["Crosslink Strategy"].append("xi")
         ms_annika_struc["RT [min]"].append(xi_get_rt(row))
-        ms_annika_struc["Compensation Voltage"].append(xi_get_cv(row))
         ms_annika_struc["Combined Score"].append(xi_get_score(row))
 
     return pd.DataFrame(ms_annika_struc)
@@ -257,11 +251,12 @@ def parse_scannr(params: Dict, pattern: str = PARSER_PATTERN, i: int = 0) -> Tup
 def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
     """
     Returns a dictionary that maps scan numbers to spectra:
-    Dict[int -> Dict["precursor"        -> float
-                     "charge"           -> int
-                     "rt"               -> float
-                     "max_intensity"    -> float
-                     "peaks"            -> Dict[m/z -> intensity]]
+    Dict[int -> Dict["precursor"            -> float
+                     "charge"               -> int
+                     "rt"                   -> float
+                     "max_intensity"        -> float
+                     "compensation_voltage" -> float
+                     "peaks"                -> Dict[m/z -> intensity]]
     """
 
     result_dict = dict()
@@ -315,6 +310,7 @@ def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
                         spectrum_dict["charge"] = int(ion["charge state"])
                         spectrum_dict["rt"] = rt_in_sec
                         spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"])) if len(spectrum["intensity array"]) > 0 else 0.0
+                        spectrum_dict["compensation_voltage"] = float(spectrum["FAIMS compensation voltage"]) if "FAIMS compensation voltage" in spectrum else 0.0
                         peaks = dict()
                         for i, mz in enumerate(spectrum["m/z array"]):
                             peaks[float(mz)] = float(spectrum["intensity array"][i])
@@ -336,6 +332,7 @@ def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
                 spectrum_dict["charge"] = int(spectrum["params"]["charge"][0])
                 spectrum_dict["rt"] = float(spectrum["params"]["rtinseconds"]) if "rtinseconds" in spectrum["params"] else 0.0
                 spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"])) if len(spectrum["intensity array"]) > 0 else 0.0
+                spectrum_dict["compensation_voltage"] = 0.0  # can't get this from the MGF file
                 peaks = dict()
                 for i, mz in enumerate(spectrum["m/z array"]):
                     peaks[float(mz)] = float(spectrum["intensity array"][i])
@@ -349,10 +346,12 @@ def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
 def read_multiple_spectra(filenames: List[str]) -> Dict[str, Dict[int, Dict]]:
     """
     Returns a dictionary that maps filenames to scan numbers to spectra:
-    Dict[str -> Dict[int -> Dict["precursor"        -> float
-                                 "charge"           -> int
-                                 "max_intensity"    -> float
-                                 "peaks"            -> Dict[m/z -> intensity]]
+    Dict[str -> Dict[int -> Dict["precursor"            -> float
+                                 "charge"               -> int
+                                 "rt"                   -> float
+                                 "max_intensity"        -> float
+                                 "compensation_voltage" -> float
+                                 "peaks"                -> Dict[m/z -> intensity]]
     """
 
     result_dict = dict()
@@ -384,10 +383,12 @@ def read_multiple_spectra(filenames: List[str]) -> Dict[str, Dict[int, Dict]]:
 def read_multiple_spectra_streamlit(st_files) -> Dict[str, Dict[int, Dict]]:
     """
     Returns a dictionary that maps filenames to scan numbers to spectra:
-    Dict[str -> Dict[int -> Dict["precursor"        -> float
-                                 "charge"           -> int
-                                 "max_intensity"    -> float
-                                 "peaks"            -> Dict[m/z -> intensity]]
+    Dict[str -> Dict[int -> Dict["precursor"            -> float
+                                 "charge"               -> int
+                                 "rt"                   -> float
+                                 "max_intensity"        -> float
+                                 "compensation_voltage" -> float
+                                 "peaks"                -> Dict[m/z -> intensity]]
     """
 
     result_dict = dict()
@@ -1124,11 +1125,16 @@ def get_CCS() -> float:
     return 0.0
 
 # get the IonMobility value
-def get_IonMobility(csm: pd.Series) -> float:
+def get_IonMobility(csm: pd.Series,
+                    spectra: Dict[str, Dict[int, Dict]]) -> float:
     """
-    Dummy function.
+    Retrieve compensation voltage from CSM or spectrum.
     """
-    return float(csm["Compensation Voltage"])
+    if "Compensation Voltage" in csm:
+        return float(csm["Compensation Voltage"])
+    spectrum_file = ".".join(str(csm["Spectrum File"]).split(".")[:-1]).strip()
+    scan_nr = int(csm["First Scan"])
+    return spectra[spectrum_file][scan_nr]["compensation_voltage"]
 
 # get the values for all fragments of a CSM
 def get_fragment_values(csm: pd.Series,
@@ -1377,7 +1383,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         iRT = get_iRT(row, spectra, "m", iRT_t, iRT_m)
         RT = get_RT(row, spectra, "m")
         CCS = get_CCS()
-        IonMobility = get_IonMobility(row)
+        IonMobility = get_IonMobility(row, spectra)
         fragments = get_fragment_values(row, spectra, crosslinker, modifications, ion_types, max_charge, match_tolerance)
         peptide_positions = get_positions_in_protein_peptides(row)
         peptide_positions_str = f"{peptide_positions['A']}_{peptide_positions['B']}"
@@ -1438,7 +1444,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         decoy_iRT = get_iRT(decoy_csm, spectra, "m", iRT_t, iRT_m)
         decoy_RT = get_RT(decoy_csm, spectra, "m")
         decoy_CCS = get_CCS()
-        decoy_IonMobility = get_IonMobility(decoy_csm)
+        decoy_IonMobility = get_IonMobility(decoy_csm, spectra)
         decoy_fragments = {"Fragments_A": get_decoy_fragments(decoy_csm, fragments["Fragments_A"], modifications, crosslinker),
                            "Fragments_B": get_decoy_fragments(decoy_csm, fragments["Fragments_B"], modifications, crosslinker)}
 
@@ -1502,7 +1508,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         decoy_iRT_dt = get_iRT(decoy_csm_dt, spectra, "m", iRT_t, iRT_m)
         decoy_RT_dt = get_RT(decoy_csm_dt, spectra, "m")
         decoy_CCS_dt = get_CCS()
-        decoy_IonMobility_dt = get_IonMobility(decoy_csm_dt)
+        decoy_IonMobility_dt = get_IonMobility(decoy_csm_dt, spectra)
         decoy_fragments_dt = {"Fragments_A": get_decoy_fragments(decoy_csm, fragments["Fragments_A"], modifications, crosslinker),
                               "Fragments_B": fragments["Fragments_B"]}
 
@@ -1566,7 +1572,7 @@ def main(spectra_file: Union[List[str], List[BinaryIO]] = SPECTRA_FILE,
         decoy_iRT_td = get_iRT(decoy_csm_td, spectra, "m", iRT_t, iRT_m)
         decoy_RT_td = get_RT(decoy_csm_td, spectra, "m")
         decoy_CCS_td = get_CCS()
-        decoy_IonMobility_td = get_IonMobility(decoy_csm_td)
+        decoy_IonMobility_td = get_IonMobility(decoy_csm_td, spectra)
         decoy_fragments_td = {"Fragments_A": fragments["Fragments_A"],
                               "Fragments_B": get_decoy_fragments(decoy_csm, fragments["Fragments_B"], modifications, crosslinker)}
 
