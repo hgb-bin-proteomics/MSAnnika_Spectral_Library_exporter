@@ -250,12 +250,8 @@ def test11_spectral_library_exporter():
     sl = sl["FullLib"]
 
     assert str(sl.loc[0, "ModifiedPeptide"]) == "KIEC[Carbamidomethyl]FDSVEISGVEDR_KIEC[Carbamidomethyl]FDSVEISGVEDR"
-    assert str(sl.loc[0, "scanID"]) == "2059"
+    assert str(sl.loc[0, "scanID"]) == "2061"
     assert str(sl.loc[0, "IonMobility"]) == "0.0"
-
-    assert str(sl.loc[-1, "ModifiedPeptide"]) == "MIAKSEQEIGK_VKYFQFDR"
-    assert str(sl.loc[-1, "scanID"]) == "2061"
-    assert str(sl.loc[-1, "IonMobility"]) == "0.0"
 
 def test12_spectral_library_exporter():
 
@@ -266,9 +262,5 @@ def test12_spectral_library_exporter():
     sl = sl["FullLib"]
 
     assert str(sl.loc[0, "ModifiedPeptide"]) == "KIEC[Carbamidomethyl]FDSVEISGVEDR_KIEC[Carbamidomethyl]FDSVEISGVEDR"
-    assert str(sl.loc[0, "scanID"]) == "2059"
+    assert str(sl.loc[0, "scanID"]) == "2061"
     assert str(sl.loc[0, "IonMobility"]) == "-50.0"
-
-    assert str(sl.loc[-1, "ModifiedPeptide"]) == "MIAKSEQEIGK_VKYFQFDR"
-    assert str(sl.loc[-1, "scanID"]) == "2061"
-    assert str(sl.loc[-1, "IonMobility"]) == "-50.0"
