@@ -89,13 +89,15 @@ def parse_scannr(params: Dict, pattern: str = "\\.\\d+\\.", i: int = 0) -> Tuple
 def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
     """
     Returns a dictionary that maps scan numbers to spectra:
-    Dict[int -> Dict["precursor"        -> float
-                     "charge"           -> int
-                     "rt"               -> float
-                     "max_intensity"    -> float
-                     "peaks"            -> Dict[m/z -> intensity]]
+    Dict[int -> Dict["precursor"            -> float
+                     "charge"               -> int
+                     "rt"                   -> float
+                     "max_intensity"        -> float
+                     "compensation_voltage" -> float
+                     "peaks"                -> Dict[m/z -> intensity]]
     """
-
+    nr_spectra = 0
+    nr_spectra_no_peaks = 0
     result_dict = dict()
 
     if isinstance(filename, str) and filename.split(".")[-1].lower() == "mzml":
@@ -146,14 +148,19 @@ def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
                         spectrum_dict["precursor"] = float(ion["selected ion m/z"])
                         spectrum_dict["charge"] = int(ion["charge state"])
                         spectrum_dict["rt"] = rt_in_sec
-                        spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"])) if len(spectrum["intensity array"]) > 0 else 0.0
+                        spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"])) if "intensity array" in spectrum and len(spectrum["intensity array"]) > 0 else 0.0
+                        spectrum_dict["compensation_voltage"] = float(spectrum["FAIMS compensation voltage"]) if "FAIMS compensation voltage" in spectrum else 0.0
                         peaks = dict()
-                        for i, mz in enumerate(spectrum["m/z array"]):
-                            peaks[float(mz)] = float(spectrum["intensity array"][i])
+                        if "m/z array" in spectrum:
+                            for i, mz in enumerate(spectrum["m/z array"]):
+                                peaks[float(mz)] = float(spectrum["intensity array"][i])
+                        else:
+                            nr_spectra_no_peaks += 1
                         spectrum_dict["peaks"] = peaks
                         if scan_nr in result_dict:
                             raise RuntimeError(f"Spectrum with scan number {scan_nr} already exists!")
                         result_dict[scan_nr] = spectrum_dict
+                nr_spectra += 1
             reader.close()
     else:
         print("Reading MGF file...")
@@ -167,26 +174,25 @@ def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
                 spectrum_dict["precursor"] = float(spectrum["params"]["pepmass"][0])
                 spectrum_dict["charge"] = int(spectrum["params"]["charge"][0])
                 spectrum_dict["rt"] = float(spectrum["params"]["rtinseconds"]) if "rtinseconds" in spectrum["params"] else 0.0
-                spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"])) if len(spectrum["intensity array"]) > 0 else 0.0
+                spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"])) if "intensity array" in spectrum and len(spectrum["intensity array"]) > 0 else 0.0
+                spectrum_dict["compensation_voltage"] = 0.0  # can't get this from the MGF file
                 peaks = dict()
-                for i, mz in enumerate(spectrum["m/z array"]):
-                    peaks[float(mz)] = float(spectrum["intensity array"][i])
+                if "m/z array" in spectrum:
+                    for i, mz in enumerate(spectrum["m/z array"]):
+                        peaks[float(mz)] = float(spectrum["intensity array"][i])
+                else:
+                    nr_spectra_no_peaks += 1
                 spectrum_dict["peaks"] = peaks
                 result_dict[scan_nr] = spectrum_dict
+                nr_spectra += 1
             reader.close()
+    if isinstance(filename, str):
+        print(f"Found {nr_spectra_no_peaks}/{nr_spectra} spectra without peaks in file {filename}!")
 
     return result_dict
 
 # read multiple spectra files
 def read_multiple_spectra(filenames: List[str]) -> None:
-    """
-    Returns a dictionary that maps filenames to scan numbers to spectra:
-    Dict[str -> Dict[int -> Dict["precursor"        -> float
-                                 "charge"           -> int
-                                 "max_intensity"    -> float
-                                 "peaks"            -> Dict[m/z -> intensity]]
-    """
-
     result_dict = dict()
     errors = list()
 
@@ -196,20 +202,20 @@ def read_multiple_spectra(filenames: List[str]) -> None:
             result_dict = read_spectra(filename)
             print(f"INFO: Read all spectra successfully from file {filename}.")
         except Exception as e:
-            print(f"Error while reading file: {filename}")
+            print(f"ERROR: Error while reading file: {filename}")
             print("Error details:")
             print(e)
             errors.append(filename)
         print(f"INFO: Read {i + 1}/{len(filenames)} files...")
 
     if len(errors) > 0:
-        print("Found errors in the following file(s):")
+        print("ERROR: Found errors in the following file(s):")
         for error in errors:
             print(error)
-        print("Exiting spectral library creation...")
+        print("ERROR: Exiting spectral library creation...")
         raise RuntimeError("Errors while reading spectra files!")
 
-    print("Read all spectra files successfully!")
+    print("INFO: Read all spectra files successfully!")
     return
 
 def main():
