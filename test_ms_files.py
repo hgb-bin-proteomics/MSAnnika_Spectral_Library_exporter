@@ -13,8 +13,8 @@
 # micha.birklbauer@gmail.com
 
 # version tracking
-__version = "1.0.0"
-__date = "2025-09-02"
+__version = "1.0.1"
+__date = "2026-01-20"
 
 # REQUIREMENTS
 # pip install pyteomics
