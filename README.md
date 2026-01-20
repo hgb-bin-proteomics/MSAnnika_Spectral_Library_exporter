@@ -6,6 +6,11 @@ Generate a spectral library for [Spectronaut](https://biognosys.com/software/spe
 
 ![Screenshot](screenshot.png)
 
+## Requirements
+
+- You need to install python: [https://www.python.org/downloads/](https://www.python.org/downloads/)
+- We recommend at least 32 GB of memory for larger MS files!
+
 ## Usage
 
 - Install python 3.7+: [https://www.python.org/downloads/](https://www.python.org/downloads/)
