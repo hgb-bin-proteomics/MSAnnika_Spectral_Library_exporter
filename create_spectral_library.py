@@ -1150,7 +1150,7 @@ def get_IonMobility(csm: pd.Series,
     """
     if "Compensation Voltage" in csm:
         if not pd.isna(csm["Compensation Voltage"]):
-            if float(csm["Compensation Voltage"]) > 0.0:
+            if abs(float(csm["Compensation Voltage"])) > 0.0:
                 return float(csm["Compensation Voltage"])
     spectrum_file = ".".join(str(csm["Spectrum File"]).split(".")[:-1]).strip()
     scan_nr = int(csm["First Scan"])
