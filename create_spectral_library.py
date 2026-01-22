@@ -48,7 +48,7 @@ except ImportError as e:
 try:
     from config import ERROR_ON_NO_FAIMS
 except ImportError as e:
-    ERROR_ON_NO_FAIMS = False
+    ERROR_ON_NO_FAIMS = True
 
 ######################
 
