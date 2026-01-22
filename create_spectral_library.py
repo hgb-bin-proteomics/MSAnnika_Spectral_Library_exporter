@@ -45,6 +45,11 @@ try:
 except ImportError as e:
     GROUP_PRECURSORS = True
 
+try:
+    from config import ERROR_ON_NO_FAIMS
+except ImportError as e:
+    ERROR_ON_NO_FAIMS = False
+
 ######################
 
 # import packages
@@ -311,6 +316,8 @@ def read_spectra(filename: Union[str, BinaryIO]) -> Dict[int, Dict]:
                         spectrum_dict["charge"] = int(ion["charge state"])
                         spectrum_dict["rt"] = rt_in_sec
                         spectrum_dict["max_intensity"] = float(max(spectrum["intensity array"])) if "intensity array" in spectrum and len(spectrum["intensity array"]) > 0 else 0.0
+                        if ERROR_ON_NO_FAIMS and "FAIMS compensation voltage" not in spectrum:
+                            raise RuntimeError(f"Spectrum with scan number {scan_nr} does not contain FAIMS compensation voltage!")
                         spectrum_dict["compensation_voltage"] = float(spectrum["FAIMS compensation voltage"]) if "FAIMS compensation voltage" in spectrum else 0.0
                         peaks = dict()
                         if "m/z array" in spectrum:
@@ -1142,7 +1149,9 @@ def get_IonMobility(csm: pd.Series,
     Retrieve compensation voltage from CSM or spectrum.
     """
     if "Compensation Voltage" in csm:
-        return float(csm["Compensation Voltage"])
+        if not pd.isna(csm["Compensation Voltage"]):
+            if float(csm["Compensation Voltage"]) > 0.0:
+                return float(csm["Compensation Voltage"])
     spectrum_file = ".".join(str(csm["Spectrum File"]).split(".")[:-1]).strip()
     scan_nr = int(csm["First Scan"])
     return spectra[spectrum_file][scan_nr]["compensation_voltage"]

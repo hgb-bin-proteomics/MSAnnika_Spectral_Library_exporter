@@ -33,3 +33,5 @@ iRT_PARAMS = {"iRT_m": 1.3066, "iRT_t": 29.502}
 PARSER_PATTERN = "\\.\\d+\\."
 # only take the best CSM per unique peptidoform and charge (True) or not (False)
 GROUP_PRECURSORS = True
+# raise an error if spectra do not contain FAIMS compensation voltage information
+ERROR_ON_NO_FAIMS = True
