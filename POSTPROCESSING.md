@@ -6,6 +6,24 @@ this purpose we have created a post processing script that uses the Spectronaut
 result file and the spectral library and creates a result file that can then be
 used with [xiFDR](https://www.rappsilberlab.org/software/xifdr/) for validation.
 
+## Required Spectronaut Columns
+
+The following columns need to be included in the Spectronaut result file:
+- `R.FileName`
+- `R.Condition`
+- `PG.ProteinNames` should look like:
+  - ➡️ `"P10771_P10771-113_46"` (crosslinked_proteins-crosslinked_positions(1-based)) _or_
+  - ➡️ `"P10771_P10771"` (crosslinked_proteins)
+- `EG.Library` should look like:
+  - ➡️ `"my_spectral_library.csv"` (the filename of the spectral library)
+- `EG.PrecursorId` should look like:
+  - ➡️ `"AAHHADGLAKGLHETC[Carbamidomethyl]K_M[Oxidation]FIPKSHTK.5"` (peptidoformAlpha_peptidoformBeta.charge)
+- `EG.Cscore` (or whatever Cscore is should be used for rescoring, controlled via `SPECTRONAUT_CSCORE_COLUMN_NAME`)
+- `FG.Charge`
+- `FG.Comment` this is only required if `PG.ProteinNames` does not include the crosslinked positions, and should look like:
+  - ➡️ `"113_46"` (crosslinked_positions(1-based))
+- `F.CalibratedMz`(or whatever fragment m/z column should be used for matching, controlled via `SPECTRONAUT_FRAGMENT_MZ_COLUMN_NAME`)
+
 ## Usage of the post processing script
 
 - First you need to set a few parameters in the `post_process.py` script:

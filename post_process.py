@@ -15,8 +15,8 @@
 
 
 # version tracking
-__version = "1.2.6"
-__date = "2025-08-04"
+__version = "1.2.9"
+__date = "2026-03-13"
 
 # PARAMETERS
 
@@ -30,6 +30,8 @@ SPECTRONAUT_CSCORE_COLUMN_NAME = "EG.Cscore" # which Cscore to use for re-soring
 SPECTRAL_LIBRARY_FRAGMENT_MZ_COLUMN_NAME = ["FragmentMz", "FragmentTheoMz"][0] # which Spectral Library column to use for fragment matching
 
 # import packages
+import datetime
+import logging
 import argparse
 import os
 
@@ -39,6 +41,15 @@ from tqdm import tqdm
 from typing import Any
 from typing import Dict
 from typing import List
+
+logger = logging.getLogger(__name__)
+
+######################### UTIL #########################
+
+def print_and_log(msg: str) -> None:
+    logger.info(msg)
+    print(msg)
+    return
 
 ##################### POST PROCESS #####################
 
@@ -188,7 +199,7 @@ def generate_fragment_index(spectronaut: pd.DataFrame, index: dict) -> Dict[str,
         if not matched:
             nr_unmatched += 1
 
-    print(f"[Fragment index] Nr. of unmatched ions: {nr_unmatched} <-> {(nr_unmatched / spectronaut.shape[0]) * 100} %")
+    print_and_log(f"[Fragment index] Nr. of unmatched ions: {nr_unmatched} <-> {(nr_unmatched / spectronaut.shape[0]) * 100} %")
     return fragment_annotation
 
 def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
@@ -647,6 +658,10 @@ def export_to_xiFDR(data: pd.DataFrame) -> pd.DataFrame:
     return data[cols_to_keep]
 
 def main(argv = None) -> None:
+    log_filename = f"spec_lib_r_pp_{datetime.datetime.now():%Y-%m-%d_%H-%M-%S}.log"
+    logging.basicConfig(filename=log_filename, level=logging.INFO)
+    logger.info(f"Running post processing script version {__version}")
+    logger.info("Starting post processing...")
     parser = argparse.ArgumentParser()
     parser.add_argument(metavar = "f",
                         dest = "file",
@@ -678,21 +693,21 @@ def main(argv = None) -> None:
     output_2 = output_1 + "_grouped_by_residue_pair.csv"
     output_3 = output_2 + "_xiFDR.csv"
 
-    print("Writing annotated Spectronaut result to file...")
+    print_and_log("Writing annotated Spectronaut result to file...")
     r.to_csv(output_1, index = False)
-    print(f"Finished writing {output_1}.")
-    print("Writing grouped Spectronaut result to file...")
+    print_and_log(f"Finished writing {output_1}.")
+    print_and_log("Writing grouped Spectronaut result to file...")
     g = group_by_residue_pair(r)
     g.to_csv(output_2, index = False)
-    print(f"Finished writing {output_2}.")
-    print("Writing grouped Spectronaut result in xiFDR format to file...")
+    print_and_log(f"Finished writing {output_2}.")
+    print_and_log("Writing grouped Spectronaut result in xiFDR format to file...")
     x = export_to_xiFDR(g)
     x.to_csv(output_3, index = False)
-    print(f"Finished writing {output_3}.")
-    print("Finished post processing!")
+    print_and_log(f"Finished writing {output_3}.")
+    print_and_log("Finished post processing!")
 
     return 0
 
 if __name__ == "__main__":
 
-    print(main())
+    print_and_log(f"exit={main()}")
