@@ -17,11 +17,12 @@
 import polars as pl
 
 # version tracking
-__version = "1.0.1"
+__version = "1.0.2"
 __date = "2026-03-13"
 
 INPUT = "THIDDIAXL003_DIAmethodEval_SN20c4_Report_FM_crosslinking_plusDecoy_allCol.tsv"
 OUTPUT = "THIDDIAXL003_DIAmethodEval_SN20c4_Report_FM_crosslinking_plusDecoy_req.csv"
+CONDITIONS = ["DIA12_CV486075", "DIA12_CV48"]
 COLS = [
     "R.FileName",
     "R.Condition",
@@ -34,7 +35,6 @@ COLS = [
     "FG.Comment",
     "F.CalibratedMz",
 ]
-CONDITIONS = ["DIA12_CV486075", "DIA12_CV48"]
 PQVALUES = [
     "PG.Pvalue",
     "PG.PValue (Run-Wise)",
@@ -56,7 +56,7 @@ PQVALUES = [
 def shrink(csv: str, sep: str, conditions: list[str], out: str) -> int:
     q = (
         pl.scan_csv(csv, separator=sep)
-        .select(COLS)
+        .select(COLS+PQVALUES)
         .filter(pl.col("R.Condition").is_in(conditions))
     )
     df = q.collect()
@@ -65,7 +65,7 @@ def shrink(csv: str, sep: str, conditions: list[str], out: str) -> int:
 
 
 def main():
-    return shrink(INPUT, sep="\t", conditions=CONDITIONS+PQVALUES, out=OUTPUT)
+    return shrink(INPUT, sep="\t", conditions=CONDITIONS, out=OUTPUT)
 
 
 if __name__ == "__main__":
