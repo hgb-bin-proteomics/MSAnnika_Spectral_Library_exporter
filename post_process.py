@@ -15,7 +15,7 @@
 
 
 # version tracking
-__version = "1.2.8"
+__version = "1.2.9"
 __date = "2026-03-13"
 
 # PARAMETERS
@@ -658,7 +658,7 @@ def export_to_xiFDR(data: pd.DataFrame) -> pd.DataFrame:
     return data[cols_to_keep]
 
 def main(argv = None) -> None:
-    log_filename = f"spec_lib_r_pp_{datetime.datetime.now():%Y-%m-%d_%H-%M-%S}_{requested_file_id_name}.log"
+    log_filename = f"spec_lib_r_pp_{datetime.datetime.now():%Y-%m-%d_%H-%M-%S}.log"
     logging.basicConfig(filename=log_filename, level=logging.INFO)
     logger.info(f"Running post processing script version {__version}")
     logger.info("Starting post processing...")
