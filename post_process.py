@@ -15,8 +15,8 @@
 
 
 # version tracking
-__version = "1.2.9"
-__date = "2026-03-13"
+__version = "1.2.10"
+__date = "2026-03-24"
 
 # PARAMETERS
 
@@ -606,16 +606,19 @@ def annotate_spectronaut_result(filename: str) -> pd.DataFrame:
     return spectronaut
 
 def group_by_residue_pair(data: pd.DataFrame) -> pd.DataFrame:
-    rows = list()
-    seen_residue_pairs = set()
+    residue_pairs = dict()
 
     for i, row in tqdm(data.iterrows(), total = data.shape[0], desc = "Grouping results by residue pairs..."):
         key = get_key_spectronaut(row)
-        if key not in seen_residue_pairs:
-            seen_residue_pairs.add(key)
-            rows.append(row)
+        if key not in residue_pairs:
+            residue_pairs[key] = row
+        else:
+            old_score = float(residue_pairs[key][SPECTRONAUT_CSCORE_COLUMN_NAME])
+            new_score = float(row[SPECTRONAUT_CSCORE_COLUMN_NAME])
+            if new_score > old_score:
+                residue_pairs[key] = row
 
-    return pd.concat(rows, axis = 1).T
+    return pd.concat(list(residue_pairs.values()), axis = 1).T
 
 def export_to_xiFDR(data: pd.DataFrame) -> pd.DataFrame:
     # col matching
