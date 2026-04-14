@@ -123,6 +123,11 @@ resolved using the `MODIFICATIONS` parameter!
 
 For post processing and validation of Spectronaut result files, please read further [here](POSTPROCESSING.md).
 
+## Rescoring
+
+We also explored rescoring of the results with [Mokapot](https://github.com/wfondrie/mokapot).
+You can find out more about that in the `/rescoring` git submodule or [here](https://github.com/hgb-bin-proteomics/MSAnnika_Spectral_Library_exporter_rescoring).
+
 ## Known Issues
 
 [List of known issues](https://github.com/hgb-bin-proteomics/MSAnnika_Spectral_Library_exporter/issues)
