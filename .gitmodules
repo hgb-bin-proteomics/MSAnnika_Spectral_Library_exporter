@@ -1,0 +1,3 @@
+[submodule "rescoring"]
+	path = rescoring
+	url = https://github.com/hgb-bin-proteomics/MSAnnika_Spectral_Library_exporter_rescoring.git
