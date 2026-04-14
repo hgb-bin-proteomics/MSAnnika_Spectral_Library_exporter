@@ -9,9 +9,14 @@ Generate a spectral library for [Spectronaut](https://biognosys.com/software/spe
 ## Requirements
 
 - You need to install python: [https://www.python.org/downloads/](https://www.python.org/downloads/)
+  - Alternatively you can also use [uv](https://docs.astral.sh/uv/getting-started/installation/).
 - We recommend at least 32 GB of memory for larger MS files!
 
 ## Usage
+
+> [!IMPORTANT]
+> We also support [uv](https://docs.astral.sh/uv/) via inline script metadata.
+> To run with uv simply replace `python` with `uv run`, e.g. `uv run create_spectral_library.py`!
 
 - Install python 3.7+: [https://www.python.org/downloads/](https://www.python.org/downloads/)
 - Install requirements: `pip install -r requirements.txt`
@@ -51,8 +56,6 @@ The following parameters need to be adjusted for your needs in the `config.py` f
 
 # name of the mgf or mzML file(s) containing the MS2 spectra
 SPECTRA_FILE = ["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf"]
-# you can process multiple files like this:
-# SPECTRA_FILE = ["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.mgf", "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_002.mgf"]
 # name of the CSM file exported from Proteome Discoverer
 CSMS_FILE = "20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_stepHCD_OT_001.xlsx"
 # name of the experiment / run (any descriptive text is allowed)
@@ -98,9 +101,32 @@ SPECTRA_FILE = ["20220215_Eclipse_LC6_PepMap50cm-cartridge_mainlib_DSSO_3CV_step
 ## <code omitted> ##
 ```
 
+### About `MODIFICATIONS` and `MODIFICATIONS_XI`
+
+The `MODIFICATIONS` parameter needs to contain the exact names (as displayed in the MS Annika result file) and delta monoisotopic
+masses of all post-translational-modifications identified in the result file. This includes the crosslinker modification that is
+given in the `CROSSLINKER` parameter (and that was used in the search).
+
+For cleavable crosslinkers the mass of all stubs should be given, for example for DSSO (also given in the config file):
+- Alkene stub: `54.01056`
+- Thiol stub: `85.98264`
+- Sulfenic acid stub (thiol + H2O): `103.99320`
+
+For non-cleavable crosslinkers the complete delta mass should be given, for example:
+- DSS: `138.06808`
+
+The `MODIFICATIONS_XI` parameter is similar and needs to map modification symbols of the xiSearch/xiFDR output to their amino acids
+and modification names. Modification names need to match the names in the `MODIFICATIONS` parameter because delta masses are
+resolved using the `MODIFICATIONS` parameter!
+
 ## Post processing
 
 For post processing and validation of Spectronaut result files, please read further [here](POSTPROCESSING.md).
+
+## Rescoring
+
+We also explored rescoring of the results with [Mokapot](https://github.com/wfondrie/mokapot).
+You can find out more about that in the `/rescoring` git submodule or [here](https://github.com/hgb-bin-proteomics/MSAnnika_Spectral_Library_exporter_rescoring).
 
 ## Known Issues
 
@@ -108,7 +134,7 @@ For post processing and validation of Spectronaut result files, please read furt
 
 ## Citing
 
-If you are using MS Annika please cite as described [here](https://github.com/hgb-bin-proteomics/MSAnnika?tab=readme-ov-file#citing).
+Manuscript in preparation.
 
 ## License
 
