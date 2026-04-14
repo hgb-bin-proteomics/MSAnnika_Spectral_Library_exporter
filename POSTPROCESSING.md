@@ -1,10 +1,17 @@
 # Post Processing
 
 After running a search with [Spectronaut](https://biognosys.com/software/spectronaut/)
-using the created spectral library you will want to validate your results. For
-this purpose we have created a post processing script that uses the Spectronaut
-result file and the spectral library and creates a result file that can then be
-used with [xiFDR](https://www.rappsilberlab.org/software/xifdr/) for validation.
+you may want to add information from the spectral library back into your Spectronaut
+result file for further down-stream analysis. For this purpose we have created a post
+processing script that uses the Spectronaut result file and the spectral library as input
+and creates a result file with additional annotations. Moreover, this file can then be
+used with [xiFDR](https://www.rappsilberlab.org/software/xifdr/) for external validation
+or rescoring.
+
+> [!IMPORTANT]
+> We have shown that using the Qvalues calculated by Spectronaut are outperforming
+> any kind of validation or rescoring we tried - both qualitatively and quantitively!
+> We therefore don't recommend external validation!
 
 ## Required Spectronaut Columns
 
@@ -55,7 +62,8 @@ The following columns need to be included in the Spectronaut result file:
 - When the script is finished it will create three new files:
   - `*_annotated.csv`: The Spectronaut result file with additionally calculated scores.
   - `*_grouped_by_residue_pair.csv`: Additionally to the previous file, the results
-    are grouped by residue pair to create "pseudo CSMs". This file can be used in
+    are grouped by residue pair to create "pseudo CSMs". This file can be used for
+    down-stream analysis, external validation, rescoring, and with
     xiFDR, but you will most likely need to manually map a few columns in the xiFDR
     GUI.
   - `*_xiFDR.csv`: Like the last file but this time only the necessary columns for
