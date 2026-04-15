@@ -4,7 +4,7 @@
 
 Generate a spectral library for [Spectronaut](https://biognosys.com/software/spectronaut/) from [MS Annika](https://github.com/hgb-bin-proteomics/MSAnnika) results.
 
-![Screenshot](screenshot.png)
+![spectral library generation workflow image](img/spec_lib_wf.png)
 
 ## Requirements
 
@@ -43,7 +43,7 @@ xiFDR (e.g. usually ending with extension `CSM_xiFDR*.*.*.csv` where `*` denotes
 
 The script uses a Micrsoft Excel files as input, for that MS Annika results need to be exported from Proteome Discoverer. It is recommended to first filter results according to your needs, e.g. filter for high-confidence CSMs and filter out decoy CSMs as depicted below.
 
-![PDFilter](filter.png)
+![PDFilter](img/filter.png)
 
 Results can then be exported by selecting `File > Export > To Microsoft Excel… > Level 1: CSMs > Export` in Proteome Discoverer.
 
