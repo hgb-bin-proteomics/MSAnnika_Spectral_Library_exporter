@@ -58,6 +58,7 @@ Here is a minimal example (we are using [uv](https://docs.astral.sh/uv/) here):
   ```
 - The script should run for about one minute and you should see output like this:
   <details><summary>Expand for output!</summary>
+  
   ```text
   INFO: Spectral library creation started at 2026-05-12 15:34:30.616870.
   INFO: Creating spectral library with input files:
@@ -77,13 +78,13 @@ Here is a minimal example (we are using [uv](https://docs.astral.sh/uv/) here):
   INFO: Done filtering for unique residue pairs!
   INFO: Sorting CSMs...
   INFO: Finished sorting CSMs! Starting spectral library creation...
-  INFO: Processing CSMs...:   0%|                                                                                              | 0/382 [00:00<?, ?it/s]Found unseen spectrum file! Trying to read spectrum file...
+  INFO: Processing CSMs...:   0%|      | 0/382 [00:00<?, ?it/s]Found unseen spectrum file! Trying to read spectrum file...
   Reading mzML file...
   Found 0/10951 spectra without peaks in file XLpeplib_Beveridge_QEx-HFX_DSS_R2.mzML!
   INFO: Read all spectra from file XLpeplib_Beveridge_QEx-HFX_DSS_R2.mzML.
   INFO: Read 1/1 files...
   INFO: Read all spectra files successfully!
-  INFO: Processing CSMs...: 100%|████████████████████████████████████████████████████████████████████████████████████| 382/382 [00:14<00:00, 27.15it/s]
+  INFO: Processing CSMs...: 100%|██████| 382/382 [00:14<00:00, 27.15it/s]
   SUCCESS: Spectral library created with filename:
   XLpeplib_Beveridge_QEx-HFX_DSS_R2_CSMs_spectralLibrary.csv
   SUCCESS: Decoy Spectral libraries created with filenames:
@@ -95,6 +96,7 @@ Here is a minimal example (we are using [uv](https://docs.astral.sh/uv/) here):
   XLpeplib_Beveridge_QEx-HFX_DSS_R2_CSMs_spectralLibraryFULL.csv
   SUCCESS: Spectral library creation finished at 2026-05-12 15:34:45.473506.
   ```
+  
   </details>
 - You should see the following files created:
   - `XLpeplib_Beveridge_QEx-HFX_DSS_R2_CSMs_spectralLibrary.csv` ➡️ Target(-Target) spectral library
