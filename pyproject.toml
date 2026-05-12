@@ -1,0 +1,12 @@
+[project]
+name = "msannika-spectral-library-exporter"
+version = "1.4.22"
+description = "Generate a spectral library for Spectronaut from MS Annika results."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "openpyxl>=3.1.5",
+    "pandas>=3.0.3",
+    "pyteomics[xml]>=4.7.5",
+    "tqdm>=4.67.3",
+]
