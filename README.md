@@ -38,9 +38,9 @@ Generate a spectral library for [Spectronaut](https://biognosys.com/software/spe
 
 ## Example
 
-Here is a minimal example (we are using [uv](https://docs.astral.sh/uv/) here):
+Here is a minimal example (we are using [uv](https://docs.astral.sh/uv/) to run the script here):
 
-- You can download some example data from [here](http://u.pc.cd/omH).
+- You can download some example data from [here](http://u.pc.cd/omH) which uses data from this study: [manuscript](https://doi.org/10.1038/s41467-020-14608-2) / [PRIDE](https://www.ebi.ac.uk/pride/archive/projects/PXD014337).
 - Clone this repository:
   ```bash
   git clone https://github.com/hgb-bin-proteomics/MSAnnika_Spectral_Library_exporter.git 
@@ -56,7 +56,7 @@ Here is a minimal example (we are using [uv](https://docs.astral.sh/uv/) here):
   ```bash
   uv run create_spectral_library.py
   ```
-- The script should run for about one minute and you should see output like this:
+- The script should run for **about one minute** and you should see output like this:
   <details><summary>Expand for output!</summary>
   
   ```text
