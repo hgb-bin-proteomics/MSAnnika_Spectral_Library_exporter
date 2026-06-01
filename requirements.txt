@@ -1,4 +1,5 @@
 tqdm
 pandas
 openpyxl
-pyteomics[XML]
+pyteomics[XML]<5.0.0; python_version<'3.10'
+pyteomics[XML]; python_version>='3.10'
